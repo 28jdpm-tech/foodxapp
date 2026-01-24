@@ -23,28 +23,6 @@ const StorageManager = {
         localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
     },
 
-    // Add new order
-    addOrder(order) {
-        const orders = this.getOrders();
-        order.id = generateId();
-        order.createdAt = new Date().toISOString();
-        orders.push(order);
-        this.saveOrders(orders);
-        return order;
-    },
-
-    // Update order
-    updateOrder(orderId, updates) {
-        const orders = this.getOrders();
-        const index = orders.findIndex(o => o.id === orderId);
-        if (index !== -1) {
-            orders[index] = { ...orders[index], ...updates, modifiedAt: new Date().toISOString() };
-            this.saveOrders(orders);
-            return orders[index];
-        }
-        return null;
-    },
-
     // Delete order
     deleteOrder(orderId) {
         let orders = this.getOrders();
@@ -109,10 +87,75 @@ const StorageManager = {
     // Get orders by specific date (YYYY-MM-DD)
     getOrdersByDate(dateStr) {
         if (!dateStr) return [];
-        // Normalize search date to start/end of day or simple match on toDateString
-        // For simple match, we convert the dateStr (2024-05-20) to a date object then string
         const searchDate = new Date(dateStr + 'T00:00:00').toDateString();
         return this.getOrders().filter(o => new Date(o.createdAt).toDateString() === searchDate);
+    },
+
+    // --- Firebase Sync Methods ---
+
+    // Sync order to Cloud
+    async syncOrderToCloud(order) {
+        try {
+            await db.collection('orders').doc(order.id).set(order);
+        } catch (e) {
+            console.error("Error syncing order:", e);
+        }
+    },
+
+    // Listen for Cloud changes
+    initCloudSync(callback) {
+        db.collection('orders').onSnapshot((snapshot) => {
+            let orders = this.getOrders();
+            let hasChanges = false;
+
+            snapshot.docChanges().forEach((change) => {
+                const cloudOrder = change.doc.data();
+                const localIndex = orders.findIndex(o => o.id === cloudOrder.id);
+
+                if (change.type === "added" || change.type === "modified") {
+                    if (localIndex === -1) {
+                        orders.push(cloudOrder);
+                        hasChanges = true;
+                    } else if (JSON.stringify(orders[localIndex]) !== JSON.stringify(cloudOrder)) {
+                        orders[localIndex] = cloudOrder;
+                        hasChanges = true;
+                    }
+                }
+                if (change.type === "removed" && localIndex !== -1) {
+                    orders.splice(localIndex, 1);
+                    hasChanges = true;
+                }
+            });
+
+            if (hasChanges) {
+                this.saveOrders(orders);
+                if (callback) callback();
+            }
+        });
+    },
+
+    // --- Original methods with cloud hooks ---
+
+    addOrder(order) {
+        order.id = generateId();
+        order.createdAt = new Date().toISOString();
+        const orders = this.getOrders();
+        orders.push(order);
+        this.saveOrders(orders);
+        this.syncOrderToCloud(order); // Hook
+        return order;
+    },
+
+    updateOrder(orderId, updates) {
+        const orders = this.getOrders();
+        const index = orders.findIndex(o => o.id === orderId);
+        if (index !== -1) {
+            orders[index] = { ...orders[index], ...updates, modifiedAt: new Date().toISOString() };
+            this.saveOrders(orders);
+            this.syncOrderToCloud(orders[index]); // Hook
+            return orders[index];
+        }
+        return null;
     },
 
     // Clear all data (for testing)
