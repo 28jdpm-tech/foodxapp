@@ -113,6 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
         historyTicketContent: document.getElementById('historyTicketContent'),
         backToHistoryBtn: document.getElementById('backToHistoryBtn'),
         reprintOrderBtn: document.getElementById('reprintOrderBtn'),
+        // Reports
+        reportDatePicker: document.getElementById('reportDatePicker'),
+        searchReportBtn: document.getElementById('searchReportBtn'),
     };
 
     // ============================================
@@ -161,6 +164,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (page === 'history') {
                 renderHistoryPage();
             } else if (page === 'reports') {
+                // Initialize report date to today
+                if (elements.reportDatePicker && !elements.reportDatePicker.value) {
+                    elements.reportDatePicker.value = new Date().toISOString().split('T')[0];
+                }
                 renderReportsPage();
             } else if (page === 'admin') {
                 renderAdminPage();
@@ -815,8 +822,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================
 
     function renderReportsPage() {
-        const todayOrders = StorageManager.getTodayOrders();
-        const paidOrders = todayOrders.filter(o => o.paid);
+        const filterDate = elements.reportDatePicker?.value;
+        const orders = filterDate
+            ? StorageManager.getOrdersByDate(filterDate)
+            : StorageManager.getTodayOrders();
+
+        const paidOrders = orders.filter(o => o.paid);
 
         const totalSales = paidOrders.reduce((sum, o) => sum + o.totalPrice, 0);
         const totalOrders = paidOrders.length;
@@ -856,6 +867,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         lucide.createIcons();
+    }
+
+    if (elements.searchReportBtn) {
+        elements.searchReportBtn.addEventListener('click', () => {
+            renderReportsPage();
+        });
     }
 
     // ============================================
