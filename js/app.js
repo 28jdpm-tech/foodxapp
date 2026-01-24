@@ -155,6 +155,12 @@ document.addEventListener('DOMContentLoaded', () => {
             state.currentPage = page;
             elements.navDrawer.classList.remove('open');
 
+            // Show/Hide footer based on page
+            const appFooter = document.getElementById('appFooter');
+            if (appFooter) {
+                appFooter.style.display = (page === 'new-order') ? 'flex' : 'none';
+            }
+
             if (page === 'kitchen') {
                 renderKitchenPage();
             } else if (page === 'checkout') {
