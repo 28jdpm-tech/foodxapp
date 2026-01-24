@@ -2196,15 +2196,17 @@ body {
     }
 
     .ticket-content {
-        font-family: 'Courier New', Courier, monospace !important;
-        font-size: 11px !important;
-        font-weight: bold !important;
-        line-height: 1.4 !important;
+        font-family: 'Lucida Console', Monaco, 'Courier New', monospace !important;
+        font-size: 12px !important;
+        font-weight: 900 !important;
+        letter-spacing: 0.5px !important;
+        line-height: 1.5 !important;
         white-space: pre !important;
-        color: black !important;
+        color: #000000 !important;
         background: white !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        text-shadow: 0 0 0 black !important;
     }
 
     /* Hide buttons and overlays */
