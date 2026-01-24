@@ -76,6 +76,9 @@ const StorageManager = {
 
         // Update the global object too so the app uses latest
         Object.assign(FOODX_DATA, config);
+
+        // Sync to cloud
+        this.syncConfigToCloud(config);
     },
 
     // Today's orders
@@ -102,8 +105,18 @@ const StorageManager = {
         }
     },
 
-    // Listen for Cloud changes
-    initCloudSync(callback) {
+    // Sync config to Cloud
+    async syncConfigToCloud(config) {
+        try {
+            await db.collection('config').doc('main').set(config);
+        } catch (e) {
+            console.error("Error syncing config:", e);
+        }
+    },
+
+    // Listen for Cloud changes (orders + config)
+    initCloudSync(callback, configCallback) {
+        // Orders sync
         db.collection('orders').onSnapshot((snapshot) => {
             let orders = this.getOrders();
             let hasChanges = false;
@@ -130,6 +143,29 @@ const StorageManager = {
             if (hasChanges) {
                 this.saveOrders(orders);
                 if (callback) callback();
+            }
+        });
+
+        // Config sync
+        db.collection('config').doc('main').onSnapshot((doc) => {
+            if (doc.exists) {
+                const cloudConfig = doc.data();
+                const localConfig = this.getConfig();
+
+                // Check if config changed
+                if (JSON.stringify(cloudConfig) !== JSON.stringify(localConfig)) {
+                    // Save locally
+                    if (cloudConfig.categories) localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(cloudConfig.categories));
+                    if (cloudConfig.flavors) localStorage.setItem(STORAGE_KEYS.FLAVORS, JSON.stringify(cloudConfig.flavors));
+                    if (cloudConfig.extras) localStorage.setItem(STORAGE_KEYS.EXTRAS, JSON.stringify(cloudConfig.extras));
+                    if (cloudConfig.observations) localStorage.setItem('foodx_observations', JSON.stringify(cloudConfig.observations));
+                    if (cloudConfig.prices) localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(cloudConfig.prices));
+
+                    // Update global
+                    Object.assign(FOODX_DATA, cloudConfig);
+
+                    if (configCallback) configCallback();
+                }
             }
         });
     },

@@ -1353,11 +1353,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize Cloud Sync
     if (typeof StorageManager.initCloudSync === 'function') {
-        StorageManager.initCloudSync(() => {
-            if (state.currentPage === 'checkout') renderCheckoutPage();
-            if (state.currentPage === 'history') renderHistoryPage();
-            if (state.currentPage === 'new-order') updateOrderTotal();
-        });
+        StorageManager.initCloudSync(
+            // Orders callback
+            () => {
+                if (state.currentPage === 'checkout') renderCheckoutPage();
+                if (state.currentPage === 'history') renderHistoryPage();
+                if (state.currentPage === 'new-order') updateOrderTotal();
+            },
+            // Config callback (Admin changes from other devices)
+            () => {
+                if (state.currentPage === 'admin') renderAdminPage();
+                if (state.currentPage === 'new-order') {
+                    initializeCategories();
+                    refreshOrderPageUI();
+                }
+                console.log('Config synced from cloud');
+            }
+        );
     }
 
     // Initialize
