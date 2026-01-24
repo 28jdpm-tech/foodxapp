@@ -248,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const flavors = config.flavors[category] || [];
         const flavorOptions = flavors.map(f => `<option value="${f.id}">${f.name.substring(0, 8)}</option>`).join('');
         const extraOptions = config.extras.filter(e => e.active).map(e =>
-            `<option value="${e.id}">${e.name.substring(0, 10)} +$${(e.price / 1000).toFixed(0)}k</option>`
+            `<option value="${e.id}">${e.name}</option>`
         ).join('');
         const obsOptions = config.observations.filter(o => o.active).map(o =>
             `<option value="${o.id}">${o.name.substring(0, 12)}</option>`
@@ -310,13 +310,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 ` : ''}
-                <div class="field-col price-col">
-                    <label>PRECIO</label>
-                    <div class="field-content">
-                        <span class="row-size-badge ${isBebida ? 'hidden' : ''}">--</span>
-                        <span class="row-total-price">$0</span>
-                    </div>
-                </div>
                 <div class="field-col action-col">
                     <label>&nbsp;</label>
                     <div class="field-content">
