@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FoodX POS - Sistema de Pedidos</title>
+    <meta name="description" content="Sistema POS para restaurante de comida rápida FoodX">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#f59e0b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-brand">
+                <span class="brand-name">FOODX POS PRO</span>
+                <span class="brand-subtitle">ORDERING</span>
+            </div>
+            <button class="menu-btn" id="menuBtn">
+                <i data-lucide="menu"></i>
+            </button>
+        </header>
+
+        <!-- Mobile Navigation Drawer -->
+        <div class="nav-drawer" id="navDrawer">
+            <div class="drawer-overlay" id="drawerOverlay"></div>
+            <div class="drawer-content">
+                <div class="drawer-header">
+                    <span class="brand-name">FOODX POS</span>
+                    <button class="close-drawer" id="closeDrawer">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <nav class="drawer-nav">
+                    <a href="#" class="drawer-item active" data-page="new-order">
+                        <i data-lucide="plus-circle"></i>
+                        <span>Nuevo Pedido</span>
+                    </a>
+
+                    <a href="#" class="drawer-item" data-page="checkout">
+                        <i data-lucide="banknote"></i>
+                        <span>Cobro</span>
+                    </a>
+                    <a href="#" class="drawer-item" data-page="history">
+                        <i data-lucide="history"></i>
+                        <span>Historial</span>
+                    </a>
+                    <a href="#" class="drawer-item" data-page="reports">
+                        <i data-lucide="bar-chart-3"></i>
+                        <span>Reportes</span>
+                    </a>
+                    <a href="#" class="drawer-item" data-page="admin">
+                        <i data-lucide="settings"></i>
+                        <span>Admin</span>
+                    </a>
+                </nav>
+                <div class="drawer-footer">
+                    <div class="user-badge">
+                        <i data-lucide="user"></i>
+                        <span>Cajero 1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- New Order Page -->
+            <div class="page active" id="page-new-order">
+                <!-- Service Type Tabs -->
+                <div class="service-tabs">
+                    <button class="service-tab active" data-service="salon">SALÓN</button>
+                    <button class="service-tab" data-service="llevar">LLEVAR</button>
+                    <button class="service-tab" data-service="domicilio">DOMICILIO</button>
+                </div>
+
+                <!-- Order Categories -->
+                <div class="order-categories" id="orderCategories">
+                    <!-- Hamburguesas -->
+                    <div class="category-section" data-category="hamburguesas">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <span class="category-name">HAMBURGUESAS</span>
+                                <span class="category-total-price" data-value="0">$0</span>
+                            </div>
+                            <button class="add-row-btn">
+                                <span>CLIENTE</span>
+                                <i data-lucide="plus"></i>
+                            </button>
+                        </div>
+
+                        <!-- Dynamic rows container -->
+                        <div class="category-rows-container">
+                            <!-- Rows will be added dynamically by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Perros Calientes -->
+                    <div class="category-section" data-category="perros">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <span class="category-name">PERROS CALIENTES</span>
+                                <span class="category-total-price" data-value="0">$0</span>
+                            </div>
+                            <button class="add-row-btn">
+                                <span>CLIENTE</span>
+                                <i data-lucide="plus"></i>
+                            </button>
+                        </div>
+
+                        <!-- Dynamic rows container -->
+                        <div class="category-rows-container">
+                            <!-- Rows will be added dynamically by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Salchipapas -->
+                    <div class="category-section" data-category="salchipapas">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <span class="category-name">SALCHIPAPAS</span>
+                                <span class="category-total-price" data-value="0">$0</span>
+                            </div>
+                            <button class="add-row-btn">
+                                <span>CLIENTE</span>
+                                <i data-lucide="plus"></i>
+                            </button>
+                        </div>
+
+                        <!-- Dynamic rows container -->
+                        <div class="category-rows-container">
+                            <!-- Rows will be added dynamically by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Bebidas -->
+                    <div class="category-section" data-category="bebidas">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <span class="category-name">BEBIDAS</span>
+                                <span class="category-total-price" data-value="0">$0</span>
+                            </div>
+                            <button class="add-row-btn">
+                                <span>CLIENTE</span>
+                                <i data-lucide="plus"></i>
+                            </button>
+                        </div>
+
+                        <!-- Dynamic rows container -->
+                        <div class="category-rows-container">
+                            <!-- Rows will be added dynamically by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kitchen (KDS) Page -->
+            <div class="page" id="page-kitchen">
+                <div class="page-title-bar">
+                    <h2>Cocina (KDS)</h2>
+                </div>
+                <div class="kitchen-board">
+                    <div class="kitchen-column pending">
+                        <div class="column-header">
+                            <i data-lucide="clock"></i>
+                            <h3>Pendientes</h3>
+                            <span class="count" id="countPending">0</span>
+                        </div>
+                        <div class="column-cards" id="listPending"></div>
+                    </div>
+                    <div class="kitchen-column preparing">
+                        <div class="column-header">
+                            <i data-lucide="flame"></i>
+                            <h3>Preparando</h3>
+                            <span class="count" id="countPreparing">0</span>
+                        </div>
+                        <div class="column-cards" id="listPreparing"></div>
+                    </div>
+                    <div class="kitchen-column ready">
+                        <div class="column-header">
+                            <i data-lucide="check-circle"></i>
+                            <h3>Listos</h3>
+                            <span class="count" id="countReady">0</span>
+                        </div>
+                        <div class="column-cards" id="listReady"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checkout/Payment Page -->
+            <div class="page" id="page-checkout">
+                <div class="page-title-bar">
+                    <h2>Cobro de Pedidos</h2>
+                </div>
+
+                <!-- Checkout Tabs -->
+                <div class="checkout-tabs">
+                    <button class="checkout-tab active" data-tab="pending">
+                        <i data-lucide="credit-card"></i>
+                        Por Cobrar
+                        <span class="tab-count" id="pendingPaymentCount">0</span>
+                    </button>
+                    <button class="checkout-tab" data-tab="paid">
+                        <i data-lucide="check-circle"></i>
+                        Pagadas
+                        <span class="tab-count" id="paidOrdersCount">0</span>
+                    </button>
+                </div>
+
+                <!-- Pending Payment Orders -->
+                <div class="checkout-orders-list" id="pendingPaymentList">
+                    <!-- Orders pending payment will be rendered here -->
+                </div>
+
+                <!-- Paid Orders -->
+                <div class="checkout-orders-list hidden" id="paidOrdersList">
+                    <!-- Paid orders will be rendered here -->
+                </div>
+
+                <!-- Payment Modal -->
+                <div class="payment-modal hidden" id="paymentModal">
+                    <div class="payment-modal-content">
+                        <div class="payment-header">
+                            <h3>Cobrar Pedido</h3>
+                            <span class="order-num" id="paymentOrderNum"></span>
+                        </div>
+                        <div class="payment-ticket">
+                            <pre class="ticket-content" id="paymentTicketContent"></pre>
+                        </div>
+                        <div class="payment-total-row">
+                            <span>TOTAL A COBRAR:</span>
+                            <span class="payment-total" id="paymentTotal"></span>
+                        </div>
+                        <div class="payment-actions">
+                            <button class="btn-cancel" id="cancelPayment">Cancelar</button>
+                            <button class="btn-pay" id="confirmPayment">
+                                <i data-lucide="banknote"></i>
+                                Marcar como Pagado
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Page -->
+            <div class="page" id="page-orders">
+                <div class="page-title-bar">
+                    <h2>Comandas Activas</h2>
+                </div>
+                <div class="orders-list" id="ordersList"></div>
+            </div>
+
+            <!-- History Page -->
+            <div class="page" id="page-history">
+                <div class="page-title-bar">
+                    <h2>Historial de Comandas</h2>
+                </div>
+
+                <!-- History Tabs -->
+                <div class="history-tabs">
+                    <button class="history-tab active" data-tab="today">Comandas del Día</button>
+                    <button class="history-tab" data-tab="date">Por Fecha</button>
+                </div>
+
+                <!-- Date Picker (hidden by default) -->
+                <div class="date-picker-container hidden" id="datePickerContainer">
+                    <input type="date" id="historyDatePicker" class="date-picker-input">
+                    <button class="search-date-btn" id="searchDateBtn">
+                        <i data-lucide="search"></i>
+                        Buscar
+                    </button>
+                </div>
+
+                <!-- History Orders List -->
+                <div class="history-orders-list" id="historyOrdersList">
+                    <!-- Orders will be rendered here -->
+                </div>
+
+                <!-- Order Detail Modal -->
+                <div class="history-order-detail hidden" id="historyOrderDetail">
+                    <div class="detail-header">
+                        <button class="back-btn" id="backToHistoryBtn">
+                            <i data-lucide="arrow-left"></i>
+                            Volver
+                        </button>
+                        <button class="reprint-btn" id="reprintOrderBtn">
+                            <i data-lucide="printer"></i>
+                            Reimprimir
+                        </button>
+                    </div>
+                    <div class="detail-ticket">
+                        <pre class="ticket-content" id="historyTicketContent"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Page -->
+            <div class="page" id="page-reports">
+                <div class="page-title-bar">
+                    <h2>Reportes de Ventas</h2>
+                </div>
+                <div class="reports-grid">
+                    <div class="report-stat-card">
+                        <div class="stat-icon sales"><i data-lucide="dollar-sign"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Ventas Hoy</span>
+                            <span class="stat-value" id="reportDailySales">$0</span>
+                        </div>
+                    </div>
+                    <div class="report-stat-card">
+                        <div class="stat-icon orders"><i data-lucide="shopping-cart"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Pedidos Hoy</span>
+                            <span class="stat-value" id="reportDailyOrders">0</span>
+                        </div>
+                    </div>
+                    <div class="report-stat-card">
+                        <div class="stat-icon avg"><i data-lucide="trending-up"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Ticket Promedio</span>
+                            <span class="stat-value" id="reportAvgTicket">$0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="report-section">
+                    <h3>Ventas por Categoría</h3>
+                    <div class="category-sales-list" id="categorySalesList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Page -->
+            <div class="page" id="page-admin">
+                <div class="page-title-bar">
+                    <h2>Administración del Sistema</h2>
+                </div>
+
+                <div class="admin-tabs">
+                    <button class="admin-tab active" data-tab="categories">Categorías</button>
+                    <button class="admin-tab" data-tab="flavors">Sabores</button>
+                    <button class="admin-tab" data-tab="extras">Adicionales</button>
+                    <button class="admin-tab" data-tab="observations">Observaciones</button>
+                </div>
+
+                <div class="admin-content">
+                    <!-- Categories Panel -->
+                    <div class="admin-panel active" id="panel-categories">
+                        <div class="panel-header">
+                            <h3>Gestionar Categorías</h3>
+                            <button class="btn-add" id="addCategoryBtn">
+                                <i data-lucide="plus"></i> Nueva Categoría
+                            </button>
+                        </div>
+                        <div class="admin-list" id="adminCategoriesList"></div>
+                    </div>
+
+                    <!-- Flavors Panel -->
+                    <div class="admin-panel" id="panel-flavors">
+                        <div class="panel-header">
+                            <h3>Gestionar Sabores</h3>
+                            <select id="adminCategorySelect" class="admin-select">
+                                <!-- Categories populated via JS -->
+                            </select>
+                        </div>
+                        <div class="admin-list" id="adminFlavorsList"></div>
+                        <button class="btn-add-inline" id="addFlavorBtn">
+                            <i data-lucide="plus"></i> Agregar Sabor
+                        </button>
+                    </div>
+
+                    <!-- Extras Panel -->
+                    <div class="admin-panel" id="panel-extras">
+                        <div class="panel-header">
+                            <h3>Gestionar Adicionales</h3>
+                            <button class="btn-add" id="addExtraBtn">
+                                <i data-lucide="plus"></i> Nuevo Adicional
+                            </button>
+                        </div>
+                        <div class="admin-list" id="adminExtrasList"></div>
+                    </div>
+
+                    <!-- Observations Panel -->
+                    <div class="admin-panel" id="panel-observations">
+                        <div class="panel-header">
+                            <h3>Gestionar Observaciones</h3>
+                            <button class="btn-add" id="addObsBtn">
+                                <i data-lucide="plus"></i> Nueva Observación
+                            </button>
+                        </div>
+                        <div class="admin-list" id="adminObsList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generic Admin Modal -->
+            <div class="modal" id="adminModal">
+                <div class="modal-overlay"></div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 id="adminModalTitle">Editar Elemento</h3>
+                        <button class="close-modal" id="closeAdminModal">&times;</button>
+                    </div>
+                    <div class="modal-body" id="adminModalBody">
+                        <!-- Form fields generated by JS -->
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-cancel" id="cancelAdminModal">Cancelar</button>
+                        <button class="btn-confirm" id="confirmAdminModal">Guardar Cambios</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer Actions -->
+        <footer class="app-footer" id="appFooter">
+            <button class="send-kitchen-btn" id="sendToKitchenBtn">
+                <i data-lucide="send"></i>
+                <span>ENVIAR A COCINA</span>
+            </button>
+            <div class="total-display">
+                <span class="total-label">TOTAL VENTA</span>
+                <span class="total-amount" id="totalAmount">$0</span>
+            </div>
+        </footer>
+
+        <!-- Client Info Modal (only for adding to order) -->
+        <div class="modal" id="clientModal">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="clientModalTitle">Mesa / Cliente</h3>
+                    <button class="modal-close" id="closeClientModal">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="clientInput" placeholder="Número de mesa o nombre" class="modal-input"
+                        autofocus>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-cancel" id="cancelClientModal">Cancelar</button>
+                    <button class="btn-confirm" id="confirmClientModal">Agregar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ticket Modal -->
+        <div class="modal" id="ticketModal">
+            <div class="modal-overlay"></div>
+            <div class="ticket-modal-content">
+                <div class="ticket-container" id="ticketContainer">
+                    <div class="ticket-title">VISTA PREVIA DE TIQUETE</div>
+                    <pre class="ticket-content" id="ticketContent"></pre>
+                </div>
+                <div class="ticket-actions">
+                    <button class="btn-cancel" id="cancelTicket">Cancelar</button>
+                    <button class="btn-print" id="printTicket">
+                        <i data-lucide="printer"></i>
+                        Confirmar e Imprimir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW Registered'))
+                    .catch(err => console.log('SW Error:', err));
+            });
+        }
+    </script>
+</body>
+
+</html>
