@@ -78,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
         paymentOrderNum: document.getElementById('paymentOrderNum'),
         paymentTicketContent: document.getElementById('paymentTicketContent'),
         paymentTotal: document.getElementById('paymentTotal'),
+        printPaymentTicket: document.getElementById('printPaymentTicket'),
         cancelPayment: document.getElementById('cancelPayment'),
         confirmPayment: document.getElementById('confirmPayment'),
         // Ticket Modal
@@ -768,6 +769,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 showNotification(`Pedido ${selectedPaymentOrder.orderNumber} pagado`);
                 elements.paymentModal.classList.add('hidden');
                 renderCheckoutPage();
+            }
+        });
+    }
+
+    // Print button in payment modal
+    if (elements.printPaymentTicket) {
+        elements.printPaymentTicket.addEventListener('click', () => {
+            if (selectedPaymentOrder) {
+                window.print();
             }
         });
     }

@@ -2137,6 +2137,33 @@ body {
     height: 18px;
 }
 
+.btn-print-checkout {
+    height: 44px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    padding: 0 var(--space-md);
+    transition: all var(--transition-fast);
+}
+
+.btn-print-checkout:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-print-checkout svg {
+    width: 16px;
+    height: 16px;
+}
+
 /* ============================================
    Print Styles - 80mm Thermal
    ============================================ */
@@ -2155,7 +2182,12 @@ body {
     .ticket-modal-content *,
     .ticket-container,
     .ticket-container *,
-    .ticket-content {
+    .ticket-content,
+    .payment-modal,
+    .payment-modal *,
+    .payment-ticket,
+    .payment-ticket *,
+    #paymentTicketContent {
         visibility: visible !important;
     }
 
@@ -2195,7 +2227,8 @@ body {
         display: none !important;
     }
 
-    .ticket-content {
+    .ticket-content,
+    #paymentTicketContent {
         font-family: 'Lucida Console', Monaco, 'Courier New', monospace !important;
         font-size: 14px !important;
         font-weight: 900 !important;
@@ -2213,9 +2246,29 @@ body {
     .ticket-actions,
     .modal-overlay,
     .btn-cancel,
-    .btn-print {
+    .btn-print,
+    .btn-print-checkout,
+    .btn-pay,
+    .payment-actions,
+    .payment-header,
+    .payment-total-row {
         display: none !important;
         visibility: hidden !important;
+    }
+
+    /* Position payment modal for printing */
+    .payment-modal {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 80mm !important;
+        background: white !important;
+    }
+
+    .payment-ticket {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
     }
 }
 
