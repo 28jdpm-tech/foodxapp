@@ -600,6 +600,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (section) {
                 const container = section.querySelector('.category-rows-container');
                 container.innerHTML = '';
+
+                // Reset category total to $0
+                const priceEl = section.querySelector('.category-total-price');
+                if (priceEl) {
+                    priceEl.textContent = '$0';
+                    priceEl.dataset.value = '0';
+                }
             }
         });
 
@@ -610,6 +617,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tab.dataset.service === 'salon') tab.classList.add('active');
         });
 
+        // Reset order total
+        state.orderTotal = 0;
         updateOrderTotal();
     }
 
