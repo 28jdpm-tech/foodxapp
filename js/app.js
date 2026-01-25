@@ -240,8 +240,8 @@ document.addEventListener('DOMContentLoaded', () => {
             id: rowId,
             qty: 1,
             blocks: ['', '', ''],
-            extra: '',
-            observation: ''
+            extras: [],
+            observations: []
         };
 
         const config = StorageManager.getConfig();
@@ -300,8 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="field-col flavor-col">
                     <label>ADI</label>
                     <div class="field-content">
-                        <select class="extra-select">
-                            <option value="">Sel.</option>
+                        <select class="extra-select" multiple size="2">
                             ${extraOptions}
                         </select>
                     </div>
@@ -309,8 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="field-col flavor-col">
                     <label>OBS</label>
                     <div class="field-content">
-                        <select class="obs-select">
-                            <option value="">Sel.</option>
+                        <select class="obs-select" multiple size="2">
                             ${obsOptions}
                         </select>
                     </div>
@@ -374,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
             extraSelect.addEventListener('change', () => {
                 const data = getRowData();
                 if (data) {
-                    data.extra = extraSelect.value;
+                    data.extras = Array.from(extraSelect.selectedOptions).map(o => o.value);
                     updateCategoryTotal(category);
                     updateOrderTotal();
                 }
@@ -386,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
             obsSelect.addEventListener('change', () => {
                 const data = getRowData();
                 if (data) {
-                    data.observation = obsSelect.value;
+                    data.observations = Array.from(obsSelect.selectedOptions).map(o => o.value);
                 }
             });
         }
@@ -420,9 +418,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const size = calculateSize(filledBlocks);
                     sizeLabel = size;
                     const basePrice = config.prices[category][size];
-                    const extraData = data.extra ? config.extras.find(e => e.id === data.extra) : null;
-                    const extraPrice = extraData ? extraData.price : 0;
-                    rowPrice = (basePrice + extraPrice) * data.qty;
+                    // Sum all selected extras
+                    let extrasTotal = 0;
+                    if (data.extras && data.extras.length > 0) {
+                        data.extras.forEach(extraId => {
+                            const extraData = config.extras.find(e => e.id === extraId);
+                            if (extraData) extrasTotal += extraData.price;
+                        });
+                    }
+                    rowPrice = (basePrice + extrasTotal) * data.qty;
                 }
                 total += rowPrice;
             }
@@ -491,12 +495,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         return flavor ? flavor.name : '';
                     });
 
-                    const extraData = rowData.extra ? config.extras.find(e => e.id === rowData.extra) : null;
-                    const extraName = extraData ? extraData.name : '';
-                    const extraPrice = extraData ? extraData.price : 0;
+                    // Handle multiple extras
+                    const extraNames = [];
+                    let extrasTotal = 0;
+                    if (rowData.extras && rowData.extras.length > 0) {
+                        rowData.extras.forEach(extraId => {
+                            const extraData = config.extras.find(e => e.id === extraId);
+                            if (extraData) {
+                                extraNames.push(extraData.name);
+                                extrasTotal += extraData.price;
+                            }
+                        });
+                    }
 
-                    const obsData = rowData.observation ? config.observations.find(o => o.id === rowData.observation) : null;
-                    const obsName = obsData ? obsData.name : '';
+                    // Handle multiple observations
+                    const obsNames = [];
+                    if (rowData.observations && rowData.observations.length > 0) {
+                        rowData.observations.forEach(obsId => {
+                            const obsData = config.observations.find(o => o.id === obsId);
+                            if (obsData) obsNames.push(obsData.name);
+                        });
+                    }
 
                     let basePrice = 0;
                     if (isBebida) {
@@ -514,9 +533,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         qty: rowData.qty,
                         size: size,
                         flavors: flavorNames,
-                        extras: extraName ? [extraName] : [],
-                        observations: obsName,
-                        price: (basePrice + extraPrice) * rowData.qty
+                        extras: extraNames,
+                        observations: obsNames.join(', '),
+                        price: (basePrice + extrasTotal) * rowData.qty
                     });
                 });
             });
@@ -1040,7 +1059,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ticket += `${pad(item.qty, 2)} | ${pad(fullName, 15, true)}\n`;
                 } else {
                     const flavorStr = item.flavors.map(f => abbr(f)).join('-');
-                    const extraStr = item.extras.length > 0 ? item.extras[0].substring(0, 6).toUpperCase() : '----';
+                    const extraStr = item.extras.length > 0 ? item.extras.map(e => e.substring(0, 4)).join(',').toUpperCase() : '----';
 
                     ticket += `${pad(item.qty, 2)} | ${pad(flavorStr, 11, true)} | ${extraStr}\n`;
                 }
