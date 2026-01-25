@@ -91,7 +91,16 @@ const FOODX_DATA = {
 };
 
 // Size calculation based on number of blocks
-function calculateSize(blocksCount) {
+function calculateSize(blocksCount, category = '') {
+    if (category === 'combos') {
+        switch (blocksCount) {
+            case 1: return 'HB';
+            case 2: return 'PE';
+            case 3: return 'SA';
+            default: return 'HB';
+        }
+    }
+
     switch (blocksCount) {
         case 1: return 'XS';
         case 2: return 'XM';

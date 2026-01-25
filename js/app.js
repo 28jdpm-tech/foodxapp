@@ -31,6 +31,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             StorageManager.saveConfig(config);
         }
+
+        // New Combos Category Sync
+        const hasCombos = config.categories.some(c => c.id === 'combos');
+        if (!hasCombos) {
+            config.categories.push({ id: 'combos', name: 'COMBINADOS', icon: '🍱', active: true });
+            config.prices['combos'] = { HB: 15000, PE: 15000, SA: 15000 };
+            const existingFlavors = [...config.flavors['hamburguesas'] || [], ...config.flavors['perros'] || []];
+            config.flavors['combos'] = existingFlavors.slice(0, 8).map((f, i) => ({ ...f, id: 'c' + (i + 1) }));
+            StorageManager.saveConfig(config);
+        }
     })();
 
     // Initialize all categories (including those added dynamically or via sync)
@@ -273,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="field-col flavor-col">
-                    <label>${isBebida ? 'BEBIDA' : 'S1'}</label>
+                    <label>${isBebida ? 'BEBIDA' : (category === 'combos' ? 'HB' : 'S1')}</label>
                     <div class="field-content">
                         <select class="flavor-select" data-block="1">
                             <option value="">Sel.</option>
@@ -283,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 ${!isBebida ? `
                 <div class="field-col flavor-col">
-                    <label>S2</label>
+                    <label>${category === 'combos' ? 'PE' : 'S2'}</label>
                     <div class="field-content">
                         <select class="flavor-select" data-block="2">
                             <option value="">Sel.</option>
@@ -292,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="field-col flavor-col">
-                    <label>S3</label>
+                    <label>${category === 'combos' ? 'SA' : 'S3'}</label>
                     <div class="field-content">
                         <select class="flavor-select" data-block="3">
                             <option value="">Sel.</option>
@@ -420,7 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     rowPrice = (flavor ? flavor.price : 0) * data.qty;
                     sizeLabel = '';
                 } else {
-                    const size = calculateSize(filledBlocks);
+                    const size = calculateSize(filledBlocks, category);
                     sizeLabel = size;
                     const basePrice = config.prices[category][size];
                     const extraData = data.extra ? config.extras.find(e => e.id === data.extra) : null;
@@ -487,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (filledBlocks.length === 0) return;
 
                     const isBebida = category === 'bebidas';
-                    const size = isBebida ? '' : calculateSize(filledBlocks.length);
+                    const size = isBebida ? '' : calculateSize(filledBlocks.length, category);
 
                     const flavorNames = rowData.blocks.filter(b => b).map(b => {
                         const flavor = config.flavors[category].find(f => f.id === b);
@@ -1243,13 +1253,18 @@ document.addEventListener('DOMContentLoaded', () => {
         let html = '';
         if (type === 'category') {
             const item = config.categories.find(c => c.id === id);
+            const isCombos = id === 'combos';
+            const L1 = isCombos ? 'HB' : 'XS';
+            const L2 = isCombos ? 'PE' : 'XM';
+            const L3 = isCombos ? 'SA' : 'XL';
+
             html = `<div class="form-group"><label>Nombre</label><input type="text" id="editName" value="${item.name}"></div>
                     <div class="form-group"><label>Icono</label><input type="text" id="editIcon" value="${item.icon}"></div>
                     <div class="form-row">
-                        <div class="form-group"><label>XS</label><input type="number" id="priceXS" value="${config.prices[id].XS}"></div>
-                        <div class="form-group"><label>XM</label><input type="number" id="priceXM" value="${config.prices[id].XM}"></div>
+                        <div class="form-group"><label>${L1}</label><input type="number" id="priceXS" value="${config.prices[id][L1] || 0}"></div>
+                        <div class="form-group"><label>${L2}</label><input type="number" id="priceXM" value="${config.prices[id][L2] || 0}"></div>
                     </div>
-                    <div class="form-group"><label>XL</label><input type="number" id="priceXL" value="${config.prices[id].XL}"></div>`;
+                    <div class="form-group"><label>${L3}</label><input type="number" id="priceXL" value="${config.prices[id][L3] || 0}"></div>`;
         } else if (type === 'flavor') {
             const item = config.flavors[parentId].find(f => f.id === id);
             const isBebida = parentId === 'bebidas';
@@ -1308,7 +1323,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cat = id ? config.categories.find(c => c.id === id) : { id: 'cat_' + Date.now() };
                 cat.name = name; cat.icon = document.getElementById('editIcon').value;
                 if (!id) { config.categories.push(cat); config.flavors[cat.id] = []; }
-                config.prices[cat.id] = { XS: +document.getElementById('priceXS').value, XM: +document.getElementById('priceXM').value, XL: +document.getElementById('priceXL').value };
+
+                const isCombos = cat.id === 'combos';
+                const p1 = +document.getElementById('priceXS').value;
+                const p2 = +document.getElementById('priceXM').value;
+                const p3 = +document.getElementById('priceXL').value;
+
+                if (isCombos) {
+                    config.prices[cat.id] = { HB: p1, PE: p2, SA: p3 };
+                } else {
+                    config.prices[cat.id] = { XS: p1, XM: p2, XL: p3 };
+                }
             } else if (type === 'flavor') {
                 const f = id ? config.flavors[parentId].find(x => x.id === id) : { id: 'f_' + Date.now() };
                 f.name = name;
