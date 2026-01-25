@@ -70,8 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
         totalAmount: document.getElementById('totalAmount'),
         sendToKitchenBtn: document.getElementById('sendToKitchenBtn'),
         // Checkout / Payment
+        toPrintCount: document.getElementById('toPrintCount'),
         pendingPaymentCount: document.getElementById('pendingPaymentCount'),
         paidOrdersCount: document.getElementById('paidOrdersCount'),
+        toPrintList: document.getElementById('toPrintList'),
         pendingPaymentList: document.getElementById('pendingPaymentList'),
         paidOrdersList: document.getElementById('paidOrdersList'),
         paymentModal: document.getElementById('paymentModal'),
@@ -536,7 +538,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 totalPrice: items.reduce((sum, item) => sum + item.price, 0),
                 createdBy: 'Cajero 1',
                 needsPrint: true,
-                printed: false
+                printed: false,
+                checkoutPrinted: false
             };
 
             showTicketModal(pendingOrder);
@@ -604,27 +607,44 @@ document.addEventListener('DOMContentLoaded', () => {
     // Checkout / Payment
     // ============================================
 
-    let checkoutMode = 'pending';
+    let checkoutMode = 'to-print';
     let selectedPaymentOrder = null;
 
     function renderCheckoutPage() {
         const orders = StorageManager.getOrders();
-        const pending = orders.filter(o => !o.paid);
+
+        // Filter logic:
+        // to-print: Not paid AND NOT printed for checkout
+        // pending: Not paid AND printed for checkout
+        // paid: Paid
+        const toPrint = orders.filter(o => !o.paid && !o.checkoutPrinted);
+        const pending = orders.filter(o => !o.paid && o.checkoutPrinted);
         const paid = orders.filter(o => o.paid);
 
+        if (elements.toPrintCount) elements.toPrintCount.textContent = toPrint.length;
         if (elements.pendingPaymentCount) elements.pendingPaymentCount.textContent = pending.length;
         if (elements.paidOrdersCount) elements.paidOrdersCount.textContent = paid.length;
 
+        if (elements.toPrintList) elements.toPrintList.innerHTML = toPrint.reverse().map(o => createCheckoutCard(o)).join('');
         if (elements.pendingPaymentList) elements.pendingPaymentList.innerHTML = pending.reverse().map(o => createCheckoutCard(o)).join('');
         if (elements.paidOrdersList) elements.paidOrdersList.innerHTML = paid.reverse().map(o => createCheckoutCard(o)).join('');
 
-        if (checkoutMode === 'pending') {
-            elements.pendingPaymentList?.classList.remove('hidden');
-            elements.paidOrdersList?.classList.add('hidden');
-        } else {
-            elements.pendingPaymentList?.classList.add('hidden');
-            elements.paidOrdersList?.classList.remove('hidden');
-        }
+        // Visibility toggle
+        const lists = {
+            'to-print': elements.toPrintList,
+            'pending': elements.pendingPaymentList,
+            'paid': elements.paidOrdersList
+        };
+
+        Object.keys(lists).forEach(mode => {
+            if (lists[mode]) {
+                if (mode === checkoutMode) {
+                    lists[mode].classList.remove('hidden');
+                } else {
+                    lists[mode].classList.add('hidden');
+                }
+            }
+        });
 
         document.querySelectorAll('.order-list-card[data-order-id]').forEach(card => {
             card.addEventListener('click', () => {
@@ -735,12 +755,20 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.paymentTicketContent.textContent = generateTicketText(order);
 
         const modalTitle = elements.paymentModal.querySelector('h3');
+
+        // Button visibility logic
         if (order.paid) {
             modalTitle.textContent = 'Pedido Pagado - Detalle';
             elements.confirmPayment.style.display = 'none';
+            elements.printPaymentTicket.style.display = 'flex'; // Allow re-print
+        } else if (!order.checkoutPrinted) {
+            modalTitle.textContent = 'Imprimir Ticket de Cobro';
+            elements.confirmPayment.style.display = 'none';
+            elements.printPaymentTicket.style.display = 'flex';
         } else {
             modalTitle.textContent = 'Cobrar Pedido';
             elements.confirmPayment.style.display = 'flex';
+            elements.printPaymentTicket.style.display = 'flex'; // Allow re-print even if in pending
         }
 
         elements.paymentModal.classList.remove('hidden');
@@ -777,7 +805,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.printPaymentTicket) {
         elements.printPaymentTicket.addEventListener('click', () => {
             if (selectedPaymentOrder) {
+                // Set as printed for checkout
+                StorageManager.updateOrder(selectedPaymentOrder.id, { checkoutPrinted: true });
+
+                // Show Printing Dialog
                 window.print();
+
+                // Refresh and close if needed (or just refresh)
+                showNotification(`Pedido ${selectedPaymentOrder.orderNumber} enviado a cobrar`);
+                elements.paymentModal.classList.add('hidden');
+                renderCheckoutPage();
             }
         });
     }

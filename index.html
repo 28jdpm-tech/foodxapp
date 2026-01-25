@@ -212,7 +212,12 @@
 
                 <!-- Checkout Tabs -->
                 <div class="checkout-tabs">
-                    <button class="checkout-tab active" data-tab="pending">
+                    <button class="checkout-tab active" data-tab="to-print">
+                        <i data-lucide="printer"></i>
+                        Imprimir
+                        <span class="tab-count" id="toPrintCount">0</span>
+                    </button>
+                    <button class="checkout-tab" data-tab="pending">
                         <i data-lucide="credit-card"></i>
                         Por Cobrar
                         <span class="tab-count" id="pendingPaymentCount">0</span>
@@ -224,8 +229,13 @@
                     </button>
                 </div>
 
+                <!-- To Print Orders -->
+                <div class="checkout-orders-list" id="toPrintList">
+                    <!-- Orders waiting to be printed will be rendered here -->
+                </div>
+
                 <!-- Pending Payment Orders -->
-                <div class="checkout-orders-list" id="pendingPaymentList">
+                <div class="checkout-orders-list hidden" id="pendingPaymentList">
                     <!-- Orders pending payment will be rendered here -->
                 </div>
 
