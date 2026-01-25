@@ -2251,7 +2251,8 @@ body {
     .btn-pay,
     .payment-actions,
     .payment-header,
-    .payment-total-row {
+    .payment-total-row,
+    .payment-modal-content>*:not(.payment-ticket) {
         display: none !important;
         visibility: hidden !important;
     }
@@ -2261,14 +2262,46 @@ body {
         position: absolute !important;
         left: 0 !important;
         top: 0 !important;
-        width: 80mm !important;
+        width: 100% !important;
+        height: auto !important;
         background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
     }
 
-    .payment-ticket {
+    .payment-modal-content {
         position: absolute !important;
         left: 0 !important;
         top: 0 !important;
+        width: 80mm !important;
+        max-width: 80mm !important;
+        height: auto !important;
+        background: white !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+    }
+
+    .payment-ticket {
+        position: relative !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 80mm !important;
+        max-width: 80mm !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: white !important;
+    }
+
+    #paymentTicketContent {
+        width: 80mm !important;
+        max-width: 80mm !important;
+        overflow: visible !important;
+        white-space: pre-wrap !important;
+        word-wrap: break-word !important;
     }
 }
 
