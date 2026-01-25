@@ -1029,22 +1029,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
             ticket += `\n   >>> ${cat.name.toUpperCase()} (${catTotalQty}) <<<\n`;
-            ticket += ' # | PRODUCTO / SABORES | ADIC | OBSERV \n';
-            ticket += '---|--------------------|------|--------\n';
+            ticket += ' # | PRODUCTO / SABORES      | ADIC\n';
+            ticket += '---|-------------------------|------\n';
 
             cat.items.forEach((item, idx) => {
                 const isBebida = item.category === 'bebidas';
 
                 if (isBebida) {
                     const fullName = item.flavors.join(' - ').length > 0 ? item.flavors.join(' - ').toUpperCase() : 'BEBIDA';
-                    const obsStr = item.observations ? `(${item.observations.toUpperCase()})` : '';
-                    ticket += `${pad(item.qty, 2)} | ${pad(fullName + ' ' + obsStr, 34, true)}\n`;
+                    ticket += `${pad(item.qty, 2)} | ${pad(fullName, 30, true)}\n`;
                 } else {
                     const flavorStr = item.flavors.map(f => abbr(f)).join('-');
-                    const extraStr = item.extras.length > 0 ? abbr(item.extras[0]) : '----';
-                    const obsStr = item.observations ? abbr(item.observations) : '----';
+                    const extraStr = item.extras.length > 0 ? item.extras[0].substring(0, 6).toUpperCase() : '----';
 
-                    ticket += `${pad(item.qty, 2)} | ${pad(flavorStr, 18, true)} | ${pad(extraStr, 4)} | ${pad(obsStr, 6)}\n`;
+                    ticket += `${pad(item.qty, 2)} | ${pad(flavorStr, 23, true)} | ${extraStr}\n`;
+                }
+
+                // Show observation below product only if exists
+                if (item.observations && item.observations.trim() !== '') {
+                    ticket += `     >> OBS: ${item.observations.toUpperCase()}\n`;
                 }
             });
         });
