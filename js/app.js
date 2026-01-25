@@ -1378,24 +1378,17 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             // Print callback (Remote print from other devices)
             (order) => {
-                // Show print notification
-                showNotification(`📢 Nuevo pedido ${order.orderNumber} - Imprimiendo...`);
-
-                // Show ticket modal with this order
+                // Show ticket modal immediately overlaying the screen
                 if (elements.ticketContent && elements.ticketModal) {
+                    // Set the order as pending so print button works
+                    pendingOrder = order;
+
+                    // Display ticket
                     elements.ticketContent.textContent = generateTicketText(order);
                     elements.ticketModal.classList.add('open');
 
-                    // Auto-print after a short delay
-                    setTimeout(() => {
-                        window.print();
-
-                        // Mark as printed in cloud
-                        StorageManager.updateOrder(order.id, { printed: true });
-
-                        // Close modal
-                        elements.ticketModal.classList.remove('open');
-                    }, 500);
+                    // Mark as printed in cloud immediately to prevent duplicates on other PCs
+                    StorageManager.updateOrder(order.id, { printed: true });
                 }
             }
         );
