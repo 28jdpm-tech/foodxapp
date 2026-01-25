@@ -1029,20 +1029,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
             ticket += `\n   >>> ${cat.name.toUpperCase()} (${catTotalQty}) <<<\n`;
-            ticket += ' # | PRODUCTO / SABORES      | ADIC\n';
-            ticket += '---|-------------------------|------\n';
+            ticket += ' # | PRODUCTO    | ADIC\n';
+            ticket += '---|-------------|------\n';
 
             cat.items.forEach((item, idx) => {
                 const isBebida = item.category === 'bebidas';
 
                 if (isBebida) {
                     const fullName = item.flavors.join(' - ').length > 0 ? item.flavors.join(' - ').toUpperCase() : 'BEBIDA';
-                    ticket += `${pad(item.qty, 2)} | ${pad(fullName, 30, true)}\n`;
+                    ticket += `${pad(item.qty, 2)} | ${pad(fullName, 15, true)}\n`;
                 } else {
                     const flavorStr = item.flavors.map(f => abbr(f)).join('-');
                     const extraStr = item.extras.length > 0 ? item.extras[0].substring(0, 6).toUpperCase() : '----';
 
-                    ticket += `${pad(item.qty, 2)} | ${pad(flavorStr, 23, true)} | ${extraStr}\n`;
+                    ticket += `${pad(item.qty, 2)} | ${pad(flavorStr, 11, true)} | ${extraStr}\n`;
                 }
 
                 // Show observation below product only if exists
