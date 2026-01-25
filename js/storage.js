@@ -205,8 +205,35 @@ const StorageManager = {
     }
 };
 
-// Initialize FOODX_DATA from storage if exists
-(function initConfig() {
-    const config = StorageManager.getConfig();
-    Object.assign(FOODX_DATA, config);
+// Initialize FOODX_DATA from storage if exists, or from Firebase
+(async function initConfig() {
+    // Check if we have local config
+    const hasLocalConfig = localStorage.getItem(STORAGE_KEYS.CATEGORIES) !== null;
+
+    if (hasLocalConfig) {
+        // Use local config
+        const config = StorageManager.getConfig();
+        Object.assign(FOODX_DATA, config);
+    } else {
+        // Try to load from Firebase first
+        try {
+            const doc = await db.collection('config').doc('main').get();
+            if (doc.exists) {
+                const cloudConfig = doc.data();
+
+                // Save to localStorage
+                if (cloudConfig.categories) localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(cloudConfig.categories));
+                if (cloudConfig.flavors) localStorage.setItem(STORAGE_KEYS.FLAVORS, JSON.stringify(cloudConfig.flavors));
+                if (cloudConfig.extras) localStorage.setItem(STORAGE_KEYS.EXTRAS, JSON.stringify(cloudConfig.extras));
+                if (cloudConfig.observations) localStorage.setItem('foodx_observations', JSON.stringify(cloudConfig.observations));
+                if (cloudConfig.prices) localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(cloudConfig.prices));
+
+                // Update global
+                Object.assign(FOODX_DATA, cloudConfig);
+                console.log('Config loaded from Firebase');
+            }
+        } catch (e) {
+            console.log('Could not load config from Firebase, using defaults');
+        }
+    }
 })();
