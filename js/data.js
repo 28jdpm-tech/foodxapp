@@ -54,31 +54,59 @@ const FOODX_DATA = {
         ]
     },
 
-    // Extras/Additions
-    extras: [
-        { id: 'e1', name: 'Queso Extra', price: 2000, active: true },
-        { id: 'e2', name: 'Tocineta', price: 3000, active: true },
-        { id: 'e3', name: 'Huevo', price: 1500, active: true },
-        { id: 'e4', name: 'Pepinillos', price: 1000, active: true },
-        { id: 'e5', name: 'Jalapeños', price: 1000, active: true },
-        { id: 'e6', name: 'Salsa BBQ', price: 500, active: true },
-        { id: 'e7', name: 'Guacamole', price: 2500, active: true },
-        { id: 'e8', name: 'Carne Extra', price: 5000, active: true }
-    ],
+    // Extras/Additions by category
+    extras: {
+        hamburguesas: [
+            { id: 'e1', name: 'Queso Extra', price: 2000, active: true },
+            { id: 'e2', name: 'Tocineta', price: 3000, active: true },
+            { id: 'e3', name: 'Huevo', price: 1500, active: true },
+            { id: 'e8', name: 'Carne Extra', price: 5000, active: true }
+        ],
+        perros: [
+            { id: 'e1', name: 'Queso Extra', price: 2000, active: true },
+            { id: 'e2', name: 'Tocineta', price: 3000, active: true },
+            { id: 'e3', name: 'Huevo', price: 1500, active: true }
+        ],
+        salchipapas: [
+            { id: 'e1', name: 'Queso Extra', price: 2000, active: true },
+            { id: 'e2', name: 'Tocineta', price: 3000, active: true },
+            { id: 'e4', name: 'Salchicha Extra', price: 2500, active: true }
+        ],
+        combos: [
+            { id: 'e1', name: 'Queso Extra', price: 2000, active: true },
+            { id: 'e2', name: 'Tocineta', price: 3000, active: true }
+        ],
+        bebidas: []
+    },
 
-    // Observations/Special requests
-    observations: [
-        { id: 'o1', name: 'Sin cebolla', active: true },
-        { id: 'o2', name: 'Sin tomate', active: true },
-        { id: 'o3', name: 'Sin lechuga', active: true },
-        { id: 'o4', name: 'Sin salsa', active: true },
-        { id: 'o5', name: 'Extra salsa', active: true },
-        { id: 'o6', name: 'Bien cocido', active: true },
-        { id: 'o7', name: 'Término medio', active: true },
-        { id: 'o8', name: 'Sin picante', active: true },
-        { id: 'o9', name: 'Extra picante', active: true },
-        { id: 'o10', name: 'Para niño', active: true }
-    ],
+    // Observations/Special requests by category
+    observations: {
+        hamburguesas: [
+            { id: 'o1', name: 'Sin cebolla', active: true },
+            { id: 'o2', name: 'Sin tomate', active: true },
+            { id: 'o3', name: 'Sin lechuga', active: true },
+            { id: 'o4', name: 'Sin salsa', active: true },
+            { id: 'o6', name: 'Bien cocido', active: true }
+        ],
+        perros: [
+            { id: 'o1', name: 'Sin cebolla', active: true },
+            { id: 'o4', name: 'Sin salsa', active: true },
+            { id: 'o5', name: 'Extra salsa', active: true }
+        ],
+        salchipapas: [
+            { id: 'o4', name: 'Sin salsa', active: true },
+            { id: 'o5', name: 'Extra salsa', active: true },
+            { id: 'o8', name: 'Sin picante', active: true }
+        ],
+        combos: [
+            { id: 'o1', name: 'Sin cebolla', active: true },
+            { id: 'o4', name: 'Sin salsa', active: true }
+        ],
+        bebidas: [
+            { id: 'o11', name: 'Sin hielo', active: true },
+            { id: 'o12', name: 'Extra hielo', active: true }
+        ]
+    },
 
     // Prices by category and size
     prices: {

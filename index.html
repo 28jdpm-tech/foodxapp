@@ -419,7 +419,7 @@
                     <div class="admin-panel" id="panel-flavors">
                         <div class="panel-header">
                             <h3>Gestionar Sabores</h3>
-                            <select id="adminCategorySelect" class="admin-select">
+                            <select id="adminCategorySelectFlavors" class="admin-category-selector">
                                 <!-- Categories populated via JS -->
                             </select>
                         </div>
@@ -433,22 +433,28 @@
                     <div class="admin-panel" id="panel-extras">
                         <div class="panel-header">
                             <h3>Gestionar Adicionales</h3>
-                            <button class="btn-add" id="addExtraBtn">
-                                <i data-lucide="plus"></i> Nuevo Adicional
-                            </button>
+                            <select id="adminCategorySelectExtras" class="admin-category-selector">
+                                <!-- Categories populated via JS -->
+                            </select>
                         </div>
                         <div class="admin-list" id="adminExtrasList"></div>
+                        <button class="btn-add-inline" id="addExtraBtn">
+                            <i data-lucide="plus"></i> Agregar Adicional
+                        </button>
                     </div>
 
                     <!-- Observations Panel -->
                     <div class="admin-panel" id="panel-observations">
                         <div class="panel-header">
                             <h3>Gestionar Observaciones</h3>
-                            <button class="btn-add" id="addObsBtn">
-                                <i data-lucide="plus"></i> Nueva Observación
-                            </button>
+                            <select id="adminCategorySelectObs" class="admin-category-selector">
+                                <!-- Categories populated via JS -->
+                            </select>
                         </div>
                         <div class="admin-list" id="adminObsList"></div>
+                        <button class="btn-add-inline" id="addObsBtn">
+                            <i data-lucide="plus"></i> Agregar Observación
+                        </button>
                     </div>
                 </div>
             </div>

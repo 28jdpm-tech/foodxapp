@@ -86,7 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
         adminTabs: document.querySelectorAll('.admin-tab'),
         adminPanels: document.querySelectorAll('.admin-panel'),
         adminCategoriesList: document.getElementById('adminCategoriesList'),
-        adminCategorySelect: document.getElementById('adminCategorySelect'),
+        adminCategorySelectFlavors: document.getElementById('adminCategorySelectFlavors'),
+        adminCategorySelectExtras: document.getElementById('adminCategorySelectExtras'),
+        adminCategorySelectObs: document.getElementById('adminCategorySelectObs'),
         adminFlavorsList: document.getElementById('adminFlavorsList'),
         adminExtrasList: document.getElementById('adminExtrasList'),
         adminObsList: document.getElementById('adminObsList'),
@@ -249,10 +251,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const flavors = config.flavors[category] || [];
         const flavorOptions = flavors.map(f => `<option value="${f.id}">${f.name.substring(0, 8)}</option>`).join('');
-        const extraOptions = config.extras.filter(e => e.active).map(e =>
+
+        // Use category-specific extras and observations
+        const categoryExtras = (config.extras && config.extras[category]) || [];
+        const extraOptions = categoryExtras.filter(e => e.active !== false).map(e =>
             `<option value="${e.id}">${e.name}</option>`
         ).join('');
-        const obsOptions = config.observations.filter(o => o.active).map(o =>
+
+        const categoryObs = (config.observations && config.observations[category]) || [];
+        const obsOptions = categoryObs.filter(o => o.active !== false).map(o =>
             `<option value="${o.id}">${o.name.substring(0, 12)}</option>`
         ).join('');
 
@@ -416,7 +423,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const size = calculateSize(filledBlocks, category);
                     sizeLabel = size;
                     const basePrice = config.prices[category][size];
-                    const extraData = data.extra ? config.extras.find(e => e.id === data.extra) : null;
+                    const categoryExtras = config.extras[category] || [];
+                    const extraData = data.extra ? categoryExtras.find(e => e.id === data.extra) : null;
                     const extraPrice = extraData ? extraData.price : 0;
                     rowPrice = (basePrice + extraPrice) * data.qty;
                 }
@@ -487,11 +495,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         return flavor ? flavor.name : '';
                     });
 
-                    const extraData = rowData.extra ? config.extras.find(e => e.id === rowData.extra) : null;
+                    const categoryExtras = config.extras[category] || [];
+                    const extraData = rowData.extra ? categoryExtras.find(e => e.id === rowData.extra) : null;
                     const extraName = extraData ? extraData.name : '';
                     const extraPrice = extraData ? extraData.price : 0;
 
-                    const obsData = rowData.observation ? config.observations.find(o => o.id === rowData.observation) : null;
+                    const categoryObs = config.observations[category] || [];
+                    const obsData = rowData.observation ? categoryObs.find(o => o.id === rowData.observation) : null;
                     const obsName = obsData ? obsData.name : '';
 
                     let basePrice = 0;
@@ -1128,12 +1138,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderAdminPanel(tab) {
         const config = StorageManager.getConfig();
-        if (tab === 'categories') renderCategoriesList(config.categories);
+        const categories = config.categories;
+
+        if (tab === 'categories') renderCategoriesList(categories);
         else if (tab === 'flavors') {
-            populateAdminCategorySelect(config.categories);
-            renderFlavorsList(config.flavors, elements.adminCategorySelect.value);
-        } else if (tab === 'extras') renderExtrasList(config.extras);
-        else if (tab === 'observations') renderObsList(config.observations);
+            populateAdminCategorySelect(elements.adminCategorySelectFlavors, categories);
+            renderFlavorsList(config.flavors, elements.adminCategorySelectFlavors.value);
+        } else if (tab === 'extras') {
+            populateAdminCategorySelect(elements.adminCategorySelectExtras, categories);
+            renderExtrasList(config.extras, elements.adminCategorySelectExtras.value);
+        } else if (tab === 'observations') {
+            populateAdminCategorySelect(elements.adminCategorySelectObs, categories);
+            renderObsList(config.observations, elements.adminCategorySelectObs.value);
+        }
     }
 
     elements.adminTabs.forEach(tab => {
@@ -1166,15 +1183,27 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     }
 
-    function populateAdminCategorySelect(categories) {
-        if (!elements.adminCategorySelect) return;
-        const current = elements.adminCategorySelect.value;
-        elements.adminCategorySelect.innerHTML = categories.map(cat => `<option value="${cat.id}" ${cat.id === current ? 'selected' : ''}>${cat.name}</option>`).join('');
+    function populateAdminCategorySelect(selectEl, categories) {
+        if (!selectEl) return;
+        const current = selectEl.value;
+        selectEl.innerHTML = categories.map(cat => `<option value="${cat.id}" ${cat.id === current ? 'selected' : ''}>${cat.name}</option>`).join('');
     }
 
-    if (elements.adminCategorySelect) {
-        elements.adminCategorySelect.addEventListener('change', () => {
-            renderFlavorsList(StorageManager.getConfig().flavors, elements.adminCategorySelect.value);
+    if (elements.adminCategorySelectFlavors) {
+        elements.adminCategorySelectFlavors.addEventListener('change', () => {
+            renderFlavorsList(StorageManager.getConfig().flavors, elements.adminCategorySelectFlavors.value);
+        });
+    }
+
+    if (elements.adminCategorySelectExtras) {
+        elements.adminCategorySelectExtras.addEventListener('change', () => {
+            renderExtrasList(StorageManager.getConfig().extras, elements.adminCategorySelectExtras.value);
+        });
+    }
+
+    if (elements.adminCategorySelectObs) {
+        elements.adminCategorySelectObs.addEventListener('change', () => {
+            renderObsList(StorageManager.getConfig().observations, elements.adminCategorySelectObs.value);
         });
     }
 
@@ -1201,16 +1230,17 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     }
 
-    function renderExtrasList(extras) {
+    function renderExtrasList(all, catId) {
         if (!elements.adminExtrasList) return;
-        elements.adminExtrasList.innerHTML = extras.map(e => `
+        const list = all[catId] || [];
+        elements.adminExtrasList.innerHTML = list.map(e => `
             <div class="admin-item">
                 <div class="admin-item-info"><span>${e.name}</span><span>${formatPrice(e.price)}</span></div>
                 <div class="admin-item-actions">
-                    <button class="btn-icon" onclick="window.editAdminItem('extra', '${e.id}')">
+                    <button class="btn-icon" onclick="window.editAdminItem('extra', '${e.id}', '${catId}')">
                         <i data-lucide="edit-2"></i>
                     </button>
-                    <button class="btn-icon delete-btn" onclick="window.deleteAdminItem('extra', '${e.id}')">
+                    <button class="btn-icon delete-btn" onclick="window.deleteAdminItem('extra', '${e.id}', '${catId}')">
                         <i data-lucide="trash-2"></i>
                     </button>
                 </div>
@@ -1219,16 +1249,17 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     }
 
-    function renderObsList(obs) {
+    function renderObsList(all, catId) {
         if (!elements.adminObsList) return;
-        elements.adminObsList.innerHTML = obs.map(o => `
+        const list = all[catId] || [];
+        elements.adminObsList.innerHTML = list.map(o => `
             <div class="admin-item">
                 <div class="admin-item-info"><span>${o.name}</span></div>
                 <div class="admin-item-actions">
-                    <button class="btn-icon" onclick="window.editAdminItem('observation', '${o.id}')">
+                    <button class="btn-icon" onclick="window.editAdminItem('observation', '${o.id}', '${catId}')">
                         <i data-lucide="edit-2"></i>
                     </button>
-                    <button class="btn-icon delete-btn" onclick="window.deleteAdminItem('observation', '${o.id}')">
+                    <button class="btn-icon delete-btn" onclick="window.deleteAdminItem('observation', '${o.id}', '${catId}')">
                         <i data-lucide="trash-2"></i>
                     </button>
                 </div>
@@ -1263,11 +1294,11 @@ document.addEventListener('DOMContentLoaded', () => {
             html = `<div class="form-group"><label>Nombre</label><input type="text" id="editName" value="${item.name}"></div>
                     ${isBebida ? `<div class="form-group"><label>Precio</label><input type="number" id="editPrice" value="${item.price || 0}"></div>` : ''}`;
         } else if (type === 'extra') {
-            const item = config.extras.find(e => e.id === id);
+            const item = config.extras[parentId].find(e => e.id === id);
             html = `<div class="form-group"><label>Nombre</label><input type="text" id="editName" value="${item.name}"></div>
                     <div class="form-group"><label>Precio</label><input type="number" id="editPrice" value="${item.price}"></div>`;
         } else if (type === 'observation') {
-            const item = config.observations.find(o => o.id === id);
+            const item = config.observations[parentId].find(o => o.id === id);
             html = `<div class="form-group"><label>Descripción</label><input type="text" id="editName" value="${item.name}"></div>`;
         }
         elements.adminModalBody.innerHTML = html;
@@ -1282,10 +1313,12 @@ document.addEventListener('DOMContentLoaded', () => {
             config.categories = config.categories.filter(c => c.id !== id);
             delete config.prices[id];
             delete config.flavors[id];
+            if (config.extras) delete config.extras[id];
+            if (config.observations) delete config.observations[id];
         }
         else if (type === 'flavor') config.flavors[pId] = config.flavors[pId].filter(f => f.id !== id);
-        else if (type === 'extra') config.extras = config.extras.filter(e => e.id !== id);
-        else if (type === 'observation') config.observations = config.observations.filter(o => o.id !== id);
+        else if (type === 'extra') config.extras[pId] = config.extras[pId].filter(e => e.id !== id);
+        else if (type === 'observation') config.observations[pId] = config.observations[pId].filter(o => o.id !== id);
 
         StorageManager.saveConfig(config);
         renderAdminPage();
@@ -1314,7 +1347,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (type === 'category') {
                 const cat = id ? config.categories.find(c => c.id === id) : { id: 'cat_' + Date.now() };
                 cat.name = name; cat.icon = document.getElementById('editIcon').value;
-                if (!id) { config.categories.push(cat); config.flavors[cat.id] = []; }
+                if (!id) {
+                    config.categories.push(cat);
+                    config.flavors[cat.id] = [];
+                    if (!config.extras) config.extras = {};
+                    if (!config.observations) config.observations = {};
+                    config.extras[cat.id] = [];
+                    config.observations[cat.id] = [];
+                }
 
                 const isCombos = cat.id === 'combos';
                 const p1 = +document.getElementById('priceXS').value;
@@ -1332,12 +1372,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (parentId === 'bebidas') f.price = +document.getElementById('editPrice').value;
                 if (!id) config.flavors[parentId].push(f);
             } else if (type === 'extra') {
-                const e = id ? config.extras.find(x => x.id === id) : { id: 'e_' + Date.now() };
+                if (!config.extras[parentId]) config.extras[parentId] = [];
+                const e = id ? config.extras[parentId].find(x => x.id === id) : { id: 'e_' + Date.now() };
                 e.name = name; e.price = +document.getElementById('editPrice').value;
-                if (!id) config.extras.push(e);
+                if (!id) config.extras[parentId].push(e);
             } else if (type === 'observation') {
-                const o = id ? config.observations.find(x => x.id === id) : { id: 'o_' + Date.now() };
-                o.name = name; if (!id) config.observations.push(o);
+                if (!config.observations[parentId]) config.observations[parentId] = [];
+                const o = id ? config.observations[parentId].find(x => x.id === id) : { id: 'o_' + Date.now() };
+                o.name = name; if (!id) config.observations[parentId].push(o);
             }
             StorageManager.saveConfig(config);
             elements.adminModal.classList.remove('open');
@@ -1361,7 +1403,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.addFlavorBtn) {
         elements.addFlavorBtn.onclick = () => {
-            const catId = elements.adminCategorySelect.value;
+            const catId = elements.adminCategorySelectFlavors.value;
             const isBebida = catId === 'bebidas';
             adminEditContext = { type: 'flavor', id: null, parentId: catId };
             elements.adminModalTitle.textContent = 'Nuevo Sabor / Bebida';
@@ -1375,17 +1417,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.addExtraBtn) {
         elements.addExtraBtn.onclick = () => {
-            adminEditContext = { type: 'extra', id: null };
-            elements.adminModalTitle.textContent = 'Nuevo Extra';
+            const catId = elements.adminCategorySelectExtras.value;
+            adminEditContext = { type: 'extra', id: null, parentId: catId };
+            elements.adminModalTitle.textContent = 'Nuevo Adicional';
             elements.adminModalBody.innerHTML = `<div class="form-group"><label>Nombre</label><input type="text" id="editName"></div>
-                <div class="form-group"><label>Precio</label><input type="number" id="editPrice"></div>`;
+                <div class="form-group"><label>Precio</label><input type="number" id="editPrice" value="0"></div>`;
             elements.adminModal.classList.add('open');
         };
     }
 
     if (elements.addObsBtn) {
         elements.addObsBtn.onclick = () => {
-            adminEditContext = { type: 'observation', id: null };
+            const catId = elements.adminCategorySelectObs.value;
+            adminEditContext = { type: 'observation', id: null, parentId: catId };
             elements.adminModalTitle.textContent = 'Nueva Observación';
             elements.adminModalBody.innerHTML = `<div class="form-group"><label>Nombre</label><input type="text" id="editName"></div>`;
             elements.adminModal.classList.add('open');
