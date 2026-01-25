@@ -8,6 +8,7 @@ const FOODX_DATA = {
         { id: 'hamburguesas', name: 'Hamburguesas', icon: '🍔', active: true },
         { id: 'perros', name: 'Perros', icon: '🌭', active: true },
         { id: 'salchipapas', name: 'Salchipapas', icon: '🍟', active: true },
+        { id: 'combos', name: 'COMBINADOS', icon: '🍱', active: true },
         { id: 'bebidas', name: 'Bebidas', icon: '🥤', active: true }
     ],
 
@@ -45,6 +46,11 @@ const FOODX_DATA = {
             { id: 'b4', name: 'Jugo Natural', price: 6000, active: true },
             { id: 'b5', name: 'Té Hielo', price: 5500, active: true },
             { id: 'b6', name: 'Cerveza', price: 7000, active: true }
+        ],
+        combos: [
+            { id: 'c1', name: 'Combo 1', active: true },
+            { id: 'c2', name: 'Combo 2', active: true },
+            { id: 'c3', name: 'Combo 3', active: true }
         ]
     },
 
@@ -79,6 +85,7 @@ const FOODX_DATA = {
         hamburguesas: { XS: 12000, XM: 18000, XL: 24000 },
         perros: { XS: 8000, XM: 12000, XL: 16000 },
         salchipapas: { XS: 10000, XM: 15000, XL: 20000 },
+        combos: { HB: 15000, PE: 15000, SA: 15000 },
         bebidas: { XS: 0, XM: 0, XL: 0 }
     },
 

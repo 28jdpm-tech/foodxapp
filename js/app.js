@@ -15,33 +15,16 @@ document.addEventListener('DOMContentLoaded', () => {
         rowCounter: 0
     };
 
-    // Sync Core Data (Bebidas Migration)
-    (function syncBebidas() {
-        const config = StorageManager.getConfig();
-        const hasBebidas = config.categories.some(c => c.id === 'bebidas');
-        if (!hasBebidas) {
-            config.categories.push({ id: 'bebidas', name: 'Bebidas', icon: '🥤', active: true });
-            config.prices['bebidas'] = { XS: 0, XM: 0, XL: 0 };
-            if (!config.flavors['bebidas']) {
-                config.flavors['bebidas'] = [
-                    { id: 'b1', name: 'Coca-Cola', price: 5000, active: true },
-                    { id: 'b2', name: 'Pepsi', price: 4500, active: true },
-                    { id: 'b3', name: 'Agua', price: 3000, active: true }
-                ];
-            }
-            StorageManager.saveConfig(config);
-        }
+    // Note: Default category creation is now handled in data.js
+    // Firebase sync will restore admin config when localStorage is empty
 
-        // New Combos Category Sync
-        const hasCombos = config.categories.some(c => c.id === 'combos');
-        if (!hasCombos) {
-            config.categories.push({ id: 'combos', name: 'COMBINADOS', icon: '🍱', active: true });
-            config.prices['combos'] = { HB: 15000, PE: 15000, SA: 15000 };
-            const existingFlavors = [...config.flavors['hamburguesas'] || [], ...config.flavors['perros'] || []];
-            config.flavors['combos'] = existingFlavors.slice(0, 8).map((f, i) => ({ ...f, id: 'c' + (i + 1) }));
-            StorageManager.saveConfig(config);
-        }
-    })();
+    // Listen for config loaded from cloud (after cache clear)
+    window.addEventListener('configLoadedFromCloud', () => {
+        console.log('🔄 Config loaded from cloud, refreshing UI...');
+        initializeCategories();
+        refreshOrderPageUI();
+        lucide.createIcons();
+    });
 
     // Initialize all categories (including those added dynamically or via sync)
     function initializeCategories() {

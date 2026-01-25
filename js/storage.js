@@ -205,6 +205,9 @@ const StorageManager = {
     }
 };
 
+// Flag to track if config has been loaded from cloud
+StorageManager.configLoaded = false;
+
 // Initialize FOODX_DATA from storage if exists, or from Firebase
 (async function initConfig() {
     // Check if we have local config
@@ -214,6 +217,7 @@ const StorageManager = {
         // Use local config
         const config = StorageManager.getConfig();
         Object.assign(FOODX_DATA, config);
+        StorageManager.configLoaded = true;
     } else {
         // Try to load from Firebase first
         try {
@@ -230,10 +234,14 @@ const StorageManager = {
 
                 // Update global
                 Object.assign(FOODX_DATA, cloudConfig);
-                console.log('Config loaded from Firebase');
+                console.log('✅ Config loaded from Firebase');
+
+                // Dispatch event to notify app that config was loaded from cloud
+                window.dispatchEvent(new CustomEvent('configLoadedFromCloud'));
             }
         } catch (e) {
-            console.log('Could not load config from Firebase, using defaults');
+            console.log('Could not load config from Firebase, using defaults:', e);
         }
+        StorageManager.configLoaded = true;
     }
 })();
