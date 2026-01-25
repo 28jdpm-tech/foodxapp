@@ -114,8 +114,8 @@ const StorageManager = {
         }
     },
 
-    // Listen for Cloud changes (orders + config)
-    initCloudSync(callback, configCallback) {
+    // Listen for Cloud changes (orders + config + print queue)
+    initCloudSync(callback, configCallback, printCallback) {
         // Orders sync
         db.collection('orders').onSnapshot((snapshot) => {
             let orders = this.getOrders();
@@ -129,6 +129,11 @@ const StorageManager = {
                     if (localIndex === -1) {
                         orders.push(cloudOrder);
                         hasChanges = true;
+
+                        // Check if this order needs printing on this device
+                        if (cloudOrder.needsPrint && !cloudOrder.printed) {
+                            if (printCallback) printCallback(cloudOrder);
+                        }
                     } else if (JSON.stringify(orders[localIndex]) !== JSON.stringify(cloudOrder)) {
                         orders[localIndex] = cloudOrder;
                         hasChanges = true;

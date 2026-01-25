@@ -533,7 +533,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 items: items,
                 status: 'pending',
                 totalPrice: items.reduce((sum, item) => sum + item.price, 0),
-                createdBy: 'Cajero 1'
+                createdBy: 'Cajero 1',
+                needsPrint: true,
+                printed: false
             };
 
             showTicketModal(pendingOrder);
@@ -558,6 +560,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.printTicket) {
         elements.printTicket.addEventListener('click', () => {
             if (pendingOrder) {
+                // Mark as printed before saving
+                pendingOrder.printed = true;
+
                 // Save Order
                 StorageManager.addOrder(pendingOrder);
 
@@ -1370,6 +1375,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     refreshOrderPageUI();
                 }
                 console.log('Config synced from cloud');
+            },
+            // Print callback (Remote print from other devices)
+            (order) => {
+                // Show print notification
+                showNotification(`📢 Nuevo pedido ${order.orderNumber} - Imprimiendo...`);
+
+                // Show ticket modal with this order
+                if (elements.ticketContent && elements.ticketModal) {
+                    elements.ticketContent.textContent = generateTicketText(order);
+                    elements.ticketModal.classList.add('open');
+
+                    // Auto-print after a short delay
+                    setTimeout(() => {
+                        window.print();
+
+                        // Mark as printed in cloud
+                        StorageManager.updateOrder(order.id, { printed: true });
+
+                        // Close modal
+                        elements.ticketModal.classList.remove('open');
+                    }, 500);
+                }
             }
         );
     }
