@@ -193,6 +193,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (page === 'kitchen') {
                 renderKitchenPage();
+            } else if (page === 'tables') {
+                renderTablesPage();
             } else if (page === 'checkout') {
                 renderCheckoutPage();
             } else if (page === 'orders') {
@@ -258,6 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.serviceTabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
             state.serviceType = tab.dataset.service;
+            state.selectedTable = null; // Clear table if switched manually
         });
     });
 
@@ -567,7 +570,10 @@ document.addEventListener('DOMContentLoaded', () => {
             pendingOrder = {
                 orderNumber: generateOrderNumber(),
                 serviceType: state.serviceType,
-                customerInfo: state.serviceType === 'salon' ? 'Mesa' : state.serviceType === 'llevar' ? 'Para llevar' : 'Domicilio',
+                tableId: state.serviceType === 'salon' && state.selectedTable ? state.selectedTable.id : null,
+                customerInfo: state.serviceType === 'salon' && state.selectedTable
+                    ? `Mesa ${state.selectedTable.number}`
+                    : state.serviceType === 'llevar' ? 'Para llevar' : 'Domicilio',
                 items: items,
                 status: 'pending',
                 totalPrice: items.reduce((sum, item) => sum + item.price, 0),
@@ -620,6 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function resetAllCategories() {
+        state.selectedTable = null;
         Object.keys(state.categoryData).forEach(category => {
             state.categoryData[category].rows = [];
             const section = document.querySelector(`.category-section[data-category="${category}"]`);
@@ -862,6 +869,93 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderCheckoutPage();
             }
         });
+    }
+
+    // ============================================
+    // Tables Map Logic
+    // ============================================
+
+    function renderTablesPage() {
+        const container = document.getElementById('tablesGrid');
+        if (!container) return;
+
+        const activeOrders = StorageManager.getActiveOrders();
+        const tables = FOODX_DATA.tables;
+
+        container.innerHTML = tables.map(table => {
+            const tableOrder = activeOrders.find(o => o.tableId === table.id);
+            const isOccupied = !!tableOrder;
+
+            return `
+                <div class="table-card ${isOccupied ? 'occupied' : 'available'}" data-table-id="${table.id}">
+                    <span class="status-dot"></span>
+                    <span class="table-label">MESA</span>
+                    <span class="table-number">${table.number}</span>
+                    ${isOccupied ? `<span class="table-total">${formatPrice(tableOrder.totalPrice)}</span>` : ''}
+                </div>
+            `;
+        }).join('');
+
+        // Add click listeners
+        container.querySelectorAll('.table-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const tableId = card.dataset.tableId;
+                const table = tables.find(t => t.id === tableId);
+                selectTable(table);
+            });
+        });
+    }
+
+    function selectTable(table) {
+        // Find if table has an active order
+        const activeOrder = StorageManager.getActiveOrders().find(o => o.tableId === table.id);
+
+        if (activeOrder) {
+            // If already has order, maybe show details or allow adding more?
+            // For now, let's just go to orders or show notification
+            showNotification(`Mesa ${table.number} ya tiene un pedido activo`);
+            // Optionally: switch to orders page and highlight this order
+            return;
+        }
+
+        // Star new order for this table
+        state.serviceType = 'salon';
+        state.selectedTable = table;
+
+        // Go to new order page
+        navigateToPage('new-order');
+
+        // Update service tabs UI
+        elements.serviceTabs.forEach(t => {
+            t.classList.remove('active');
+            if (t.dataset.service === 'salon') t.classList.add('active');
+        });
+
+        // Show notification
+        showNotification(`Iniciando pedido para Mesa ${table.number}`);
+    }
+
+    function navigateToPage(pageId) {
+        elements.drawerItems.forEach(i => {
+            i.classList.remove('active');
+            if (i.dataset.page === pageId) i.classList.add('active');
+        });
+
+        elements.pages.forEach(p => p.classList.remove('active'));
+        const targetPage = document.getElementById(`page-${pageId}`);
+        if (targetPage) targetPage.classList.add('active');
+
+        state.currentPage = pageId;
+
+        const appFooter = document.getElementById('appFooter');
+        if (appFooter) {
+            appFooter.style.display = (pageId === 'new-order') ? 'flex' : 'none';
+        }
+
+        if (pageId === 'new-order') {
+            initializeCategories();
+            refreshOrderPageUI();
+        }
     }
 
     // ============================================
@@ -1525,6 +1619,7 @@ document.addEventListener('DOMContentLoaded', () => {
             () => {
                 if (state.currentPage === 'checkout') renderCheckoutPage();
                 if (state.currentPage === 'history') renderHistoryPage();
+                if (state.currentPage === 'tables') renderTablesPage();
                 if (state.currentPage === 'new-order') updateOrderTotal();
             },
             // Config callback (Admin changes from other devices)
