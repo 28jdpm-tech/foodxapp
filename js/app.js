@@ -1103,19 +1103,24 @@ document.addEventListener('DOMContentLoaded', () => {
             return left.padEnd(COL1_WIDTH) + ' ' + right.padEnd(COL2_WIDTH) + '  ';
         };
 
-        const tableLine = () => "+----+----+----+-------+";
+        const L_TOP = "┌───────────────────────┐";
+        const L_MID_TITLE = "├────┬────┬────┬───────┤";
+        const L_MID_DATA = "├────┼────┼────┼───────┤";
+        const L_MID_OBS_TOP = "├────┴────┴────┴───────┤";
+        const L_MID_OBS_BOT = "├────┬────┬────┬───────┤";
+        const L_BOT = "└────┴────┴────┴───────┘";
 
         const tableHeader = (catName, qty) => {
             const title = `${catName} (${qty})`.toUpperCase();
             const innerWidth = TICKET_WIDTH - 2;
             const padding = Math.max(0, Math.floor((innerWidth - title.length) / 2));
-            const headerRow = "|" + " ".repeat(padding) + title + " ".repeat(innerWidth - title.length - padding) + "|";
+            const headerRow = "│" + " ".repeat(padding) + title + " ".repeat(innerWidth - title.length - padding) + "│";
 
-            let h = tableLine() + "\n";
+            let h = L_TOP + "\n";
             h += headerRow + "\n";
-            h += tableLine() + "\n";
-            h += "| S1 | S2 | S3 |ADICION|" + "\n";
-            h += tableLine();
+            h += L_MID_TITLE + "\n";
+            h += "│ S1 │ S2 │ S3 │ADICION│\n";
+            h += L_MID_DATA;
             return h;
         };
 
@@ -1125,7 +1130,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const f3 = (s3 || '').substring(0, 4).toUpperCase().padEnd(4);
             const ad = (adi || '').substring(0, 7).toUpperCase().padEnd(7);
 
-            return `|${f1}|${f2}|${f3}|${ad}|`;
+            return `│${f1}│${f2}│${f3}│${ad}│`;
         };
 
         const topDivider = '='.repeat(TICKET_WIDTH);
@@ -1170,17 +1175,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Table row layout
                 ticket += tableRow(s1, s2, s3, adi) + '\n';
 
-                // Observations line beneath
+                // Observations line integrated
                 if (item.observations && item.observations.trim() !== '') {
-                    ticket += tableLine() + '\n';
+                    ticket += L_MID_OBS_TOP + '\n';
                     const obsText = ` Obs: ${item.observations}`.toUpperCase();
                     const innerWidth = TICKET_WIDTH - 2;
-                    const obsRow = "|" + obsText.substring(0, innerWidth).padEnd(innerWidth) + "|";
+                    const obsRow = "│" + obsText.substring(0, innerWidth).padEnd(innerWidth) + "│";
                     ticket += obsRow + '\n';
-                    ticket += tableLine() + '\n';
+                    ticket += L_MID_OBS_BOT + '\n';
                 }
             });
-            ticket += tableLine() + '\n';
+            ticket += L_BOT + '\n';
         });
 
         ticket += '\n' + justify('TOTAL:', formatPrice(order.totalPrice)) + '\n';
