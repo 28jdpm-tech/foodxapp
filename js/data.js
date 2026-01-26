@@ -122,14 +122,7 @@ const FOODX_DATA = {
         { id: 'salon', name: 'Salón', icon: 'armchair', label: 'Mesa' },
         { id: 'llevar', name: 'Para Llevar', icon: 'shopping-bag', label: 'Nombre' },
         { id: 'domicilio', name: 'Domicilio', icon: 'bike', label: 'Dirección/Nombre' }
-    ],
-
-    // Tables configuration
-    tables: Array.from({ length: 10 }, (_, i) => ({
-        id: `mesa_${i + 1}`,
-        number: i + 1,
-        status: 'available'
-    }))
+    ]
 };
 
 // Size calculation based on number of blocks
