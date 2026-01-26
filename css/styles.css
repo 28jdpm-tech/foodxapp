@@ -1658,7 +1658,7 @@ body {
 .payment-ticket .ticket-content {
     font-family: 'Courier New', monospace;
     font-size: 10px;
-    line-height: 0.6;
+    line-height: 0.9;
     color: #000;
     margin: 0;
 }
@@ -1870,7 +1870,7 @@ body {
 .detail-ticket .ticket-content {
     font-family: 'Courier New', Courier, monospace;
     font-size: 11px;
-    line-height: 0.6;
+    line-height: 0.9;
     white-space: pre;
     margin: 0;
     color: #000;
@@ -2094,7 +2094,7 @@ body {
 .ticket-content {
     font-family: 'Courier New', Courier, monospace;
     font-size: 11px;
-    line-height: 0.6;
+    line-height: 0.9;
     white-space: pre;
     overflow-x: auto;
     margin: 0;
@@ -2316,11 +2316,11 @@ body {
         overflow: visible !important;
         white-space: pre !important;
         word-wrap: normal !important;
-        line-height: 0.6 !important;
+        line-height: 0.9 !important;
     }
 
     .ticket-content {
-        line-height: 0.6 !important;
+        line-height: 0.9 !important;
     }
 }
 
