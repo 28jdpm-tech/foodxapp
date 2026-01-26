@@ -1104,8 +1104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const tableHeader = () => {
-            // 24 chars: " S1  S2  S3  ADI"
-            return " S1  S2  S3  ADI";
+            return center("| S1 | S2 | S3 | ADI|");
         };
 
         const tableRow = (s1, s2, s3, adi) => {
@@ -1114,7 +1113,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const f3 = (s3 || '---').substring(0, 3).toUpperCase().padEnd(3);
             const ad = (adi || '---').substring(0, 3).toUpperCase().padEnd(3);
 
-            return ` ${f1} ${f2} ${f3} ${ad}`;
+            return center(`|${f1}|${f2}|${f3}|${ad}|`);
         };
 
         const topDivider = '='.repeat(TICKET_WIDTH);
