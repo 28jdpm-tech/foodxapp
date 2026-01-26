@@ -1109,6 +1109,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return left + ' '.repeat(spaceNeeded) + right;
         };
 
+        const twoColumns = (leftStr, rightStr) => {
+            const COL1_WIDTH = 15;
+            const COL2_WIDTH = 8;
+            let left = String(leftStr).toUpperCase();
+            let right = String(rightStr).toUpperCase();
+
+            if (left.length > COL1_WIDTH) left = left.substring(0, COL1_WIDTH);
+            if (right.length > COL2_WIDTH) right = right.substring(0, COL2_WIDTH);
+
+            return left.padEnd(COL1_WIDTH) + ' ' + right.padStart(COL2_WIDTH);
+        };
+
         const topDivider = '='.repeat(TICKET_WIDTH);
         const subDivider = '-'.repeat(TICKET_WIDTH);
 
@@ -1140,19 +1152,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
 
             ticket += '\n' + center(`///////// ${cat.name}(${catTotalQty}) //////////`) + '\n';
-            ticket += justify('PROD', 'ADI') + '\n';
+            ticket += twoColumns('PRODUCTO', 'ADI') + '\n';
             ticket += subDivider + '\n';
 
             cat.items.forEach((item) => {
-                const productName = item.flavors.join('-').toUpperCase() || 'PROD';
+                const flavorsStr = item.flavors.join('-').toUpperCase() || 'PROD';
                 const extrasStr = item.extras.length > 0 ? item.extras[0].toUpperCase() : '';
 
-                // Show product and extra justified
-                ticket += ' ' + justify(productName, extrasStr) + '\n';
+                // Two columns layout
+                ticket += twoColumns(flavorsStr, extrasStr) + '\n';
 
                 // Observations line beneath
                 if (item.observations && item.observations.trim() !== '') {
-                    ticket += '     * ' + item.observations.toUpperCase() + '\n';
+                    ticket += ' * ' + item.observations.toUpperCase() + '\n';
                 }
             });
             ticket += subDivider + '\n';
