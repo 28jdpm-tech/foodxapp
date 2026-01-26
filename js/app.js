@@ -1107,8 +1107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tableHeader = () => {
             let h = tableLine() + "\n";
-            h += "| S1 | S2 | S3 |  ADI  |" + "\n";
-            h += tableLine();
+            h += "| S1 | S2 | S3 |  ADI  |";
             return h;
         };
 
