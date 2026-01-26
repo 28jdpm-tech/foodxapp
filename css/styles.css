@@ -2169,6 +2169,10 @@ body {
    ============================================ */
 
 @media print {
+    @page {
+        margin: 0;
+    }
+
 
     /* Hide everything first */
     body * {
@@ -2218,7 +2222,10 @@ body {
         position: relative !important;
         width: 80mm !important;
         max-width: 80mm !important;
-        padding: 5mm !important;
+        padding-left: 5mm !important;
+        padding-right: 5mm !important;
+        padding-top: 5mm !important;
+        padding-bottom: 5mm !important;
         margin: 0 !important;
         background: white !important;
         color: black !important;
@@ -2284,7 +2291,10 @@ body {
         background: white !important;
         box-shadow: none !important;
         border-radius: 0 !important;
-        padding: 0 !important;
+        padding-left: 5mm !important;
+        padding-right: 5mm !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
         margin: 0 !important;
         overflow: visible !important;
     }
