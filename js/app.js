@@ -143,6 +143,17 @@ document.addEventListener('DOMContentLoaded', () => {
         historyTicketContent: document.getElementById('historyTicketContent'),
         backToHistoryBtn: document.getElementById('backToHistoryBtn'),
         reprintOrderBtn: document.getElementById('reprintOrderBtn'),
+        // Printing Config
+        printerConnectionType: document.getElementById('printerConnectionType'),
+        printerAddress: document.getElementById('printerAddress'),
+        openDrawerOnPay: document.getElementById('openDrawerOnPay'),
+        cashDrawerCommand: document.getElementById('cashDrawerCommand'),
+        ticketBusinessName: document.getElementById('ticketBusinessName'),
+        ticketBusinessDetails: document.getElementById('ticketBusinessDetails'),
+        ticketFooter: document.getElementById('ticketFooter'),
+        savePrintingSettings: document.getElementById('savePrintingSettings'),
+        textPrinterBtn: document.getElementById('textPrinterBtn'),
+        testDrawerBtn: document.getElementById('testDrawerBtn'),
         // Reports
         reportDatePicker: document.getElementById('reportDatePicker'),
         searchReportBtn: document.getElementById('searchReportBtn'),
@@ -207,6 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderReportsPage();
             } else if (page === 'admin') {
                 renderAdminPage();
+            } else if (page === 'printing') {
+                renderPrintingPage();
             } else if (page === 'new-order') {
                 initializeCategories();
                 refreshOrderPageUI();
@@ -837,8 +850,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.confirmPayment) {
         elements.confirmPayment.addEventListener('click', () => {
             if (selectedPaymentOrder) {
-                StorageManager.updateOrder(selectedPaymentOrder.id, { paid: true });
+                StorageManager.updateOrder(selectedPaymentOrder.id, { paid: true, status: 'delivered' });
                 showNotification(`Pedido ${selectedPaymentOrder.orderNumber} pagado`);
+
+                // Open cash drawer if configured
+                const printSettings = StorageManager.getPrintingSettings();
+                if (printSettings.openDrawerOnPay) {
+                    openCashDrawer();
+                }
+
                 elements.paymentModal.classList.add('hidden');
                 renderCheckoutPage();
             }
@@ -1087,6 +1107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function generateTicketText(order) {
+        const settings = StorageManager.getPrintingSettings();
         const labels = { salon: 'SALÓN', llevar: 'LLEVAR', domicilio: 'DOMICILIO' };
         const now = new Date(order.createdAt || Date.now());
         const dateStr = now.toLocaleDateString('es-CO');
@@ -1098,12 +1119,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return right ? str.padEnd(len) : str.padStart(len);
         };
 
-        const abbr = (str) => str ? str.substring(0, 4).toUpperCase() : '----';
+        const center = (str, len) => {
+            str = String(str);
+            if (str.length >= len) return str.substring(0, len);
+            const left = Math.floor((len - str.length) / 2);
+            return ' '.repeat(left) + str;
+        };
 
         let ticket = '';
         ticket += '==========================================\n';
-        ticket += '              FOODX POS PRO               \n';
-        ticket += `               ORDEN ${order.orderNumber || 'PREVIEW'}               \n`;
+        ticket += center(settings.businessName.toUpperCase(), 42) + '\n';
+        if (settings.businessDetails) ticket += center(settings.businessDetails, 42) + '\n';
+        ticket += '------------------------------------------\n';
+        ticket += center(`ORDEN ${order.orderNumber || 'PREVIEW'}`, 42) + '\n';
         ticket += '==========================================\n';
         ticket += ` FECHA: ${dateStr}   HORA: ${timeStr}\n`;
         ticket += ` TIPO: ${labels[order.serviceType]}\n`;
@@ -1149,12 +1177,95 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         ticket += '\n------------------------------------------\n';
-        ticket += ` TOTAL VENTA: ${formatPrice(order.totalPrice)}\n`;
+        ticket += pad('TOTAL:', 30, true) + pad(formatPrice(order.totalPrice), 12) + '\n';
         ticket += '==========================================\n';
-        ticket += '          GRACIAS POR SU COMPRA           \n';
-        ticket += '==========================================\n';
-
+        if (settings.footerMessage) {
+            ticket += '\n' + center(settings.footerMessage, 42) + '\n';
+        }
+        ticket += '\n\n\n\n.'; // Space for cutting
         return ticket;
+    }
+
+    // ============================================
+    // Printing & Hardware Logic
+    // ============================================
+
+    function renderPrintingPage() {
+        const settings = StorageManager.getPrintingSettings();
+
+        // Fill form fields
+        if (elements.printerConnectionType) elements.printerConnectionType.value = settings.printerType;
+        if (elements.printerAddress) elements.printerAddress.value = settings.printerAddress;
+        if (elements.openDrawerOnPay) elements.openDrawerOnPay.checked = settings.openDrawerOnPay;
+        if (elements.cashDrawerCommand) elements.cashDrawerCommand.value = settings.cashDrawerCommand;
+        if (elements.ticketBusinessName) elements.ticketBusinessName.value = settings.businessName;
+        if (elements.ticketBusinessDetails) elements.ticketBusinessDetails.value = settings.businessDetails;
+        if (elements.ticketFooter) elements.ticketFooter.value = settings.footerMessage;
+
+        // Toggle printer IP field visibility
+        const printerIpGroup = document.getElementById('printerIpGroup');
+        if (printerIpGroup) {
+            printerIpGroup.style.display = settings.printerType === 'direct' ? 'block' : 'none';
+        }
+    }
+
+    if (elements.printerConnectionType) {
+        elements.printerConnectionType.addEventListener('change', () => {
+            const printerIpGroup = document.getElementById('printerIpGroup');
+            if (printerIpGroup) {
+                printerIpGroup.style.display = elements.printerConnectionType.value === 'direct' ? 'block' : 'none';
+            }
+        });
+    }
+
+    if (elements.savePrintingSettings) {
+        elements.savePrintingSettings.addEventListener('click', () => {
+            const settings = {
+                printerType: elements.printerConnectionType.value,
+                printerAddress: elements.printerAddress.value,
+                openDrawerOnPay: elements.openDrawerOnPay.checked,
+                cashDrawerCommand: elements.cashDrawerCommand.value,
+                businessName: elements.ticketBusinessName.value,
+                businessDetails: elements.ticketBusinessDetails.value,
+                footerMessage: elements.ticketFooter.value
+            };
+
+            StorageManager.savePrintingSettings(settings);
+            showNotification('Configuración guardada correctamente');
+        });
+    }
+
+    if (elements.textPrinterBtn) {
+        elements.textPrinterBtn.addEventListener('click', () => {
+            const tempOrder = {
+                orderNumber: 'TEST',
+                serviceType: 'salon',
+                customerInfo: 'Prueba Impresión',
+                items: [
+                    { qty: 1, categoryName: 'PRUEBA', size: 'OK', flavors: ['SISTEMA'], extras: [], price: 0 }
+                ],
+                totalPrice: 0,
+                createdAt: new Date().toISOString()
+            };
+
+            elements.ticketContent.textContent = generateTicketText(tempOrder);
+            elements.ticketModal.classList.add('open');
+            window.print();
+        });
+    }
+
+    function openCashDrawer() {
+        const settings = StorageManager.getPrintingSettings();
+        console.log('💰 Opening cash drawer with command:', settings.cashDrawerCommand);
+
+        // Simulación de acción
+        showNotification('🪙 Cajón monedero abierto');
+    }
+
+    if (elements.testDrawerBtn) {
+        elements.testDrawerBtn.addEventListener('click', () => {
+            openCashDrawer();
+        });
     }
 
     // ============================================

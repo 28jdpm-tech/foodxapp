@@ -233,6 +233,34 @@ const StorageManager = {
         return null;
     },
 
+    // Printing and Drawer Settings
+    getPrintingSettings() {
+        const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+        return data ? JSON.parse(data) : {
+            printerType: 'browser',
+            printerAddress: '',
+            openDrawerOnPay: false,
+            cashDrawerCommand: '27,112,0,25,250',
+            businessName: 'FOODX POS',
+            businessDetails: 'Nit: 123456789-0',
+            footerMessage: 'Gracias por su compra'
+        };
+    },
+
+    savePrintingSettings(settings) {
+        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+        // Also sync to cloud if needed, but usually local for printer hardware
+        this.syncSettingsToCloud(settings);
+    },
+
+    async syncSettingsToCloud(settings) {
+        try {
+            await db.collection('config').doc('settings').set(settings);
+        } catch (e) {
+            console.error("Error syncing settings:", e);
+        }
+    },
+
     // Clear all data (for testing)
     clearAll() {
         Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
