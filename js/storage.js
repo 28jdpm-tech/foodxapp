@@ -23,11 +23,15 @@ const StorageManager = {
         localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
     },
 
-    // Delete order
-    deleteOrder(orderId) {
+    async deleteOrder(orderId) {
         let orders = this.getOrders();
         orders = orders.filter(o => o.id !== orderId);
         this.saveOrders(orders);
+        try {
+            await db.collection('orders').doc(orderId).delete();
+        } catch (e) {
+            console.error("Error deleting order from cloud:", e);
+        }
     },
 
     // Get orders by status

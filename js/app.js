@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         printPaymentTicket: document.getElementById('printPaymentTicket'),
         cancelPayment: document.getElementById('cancelPayment'),
         confirmPayment: document.getElementById('confirmPayment'),
+        deleteOrderBtn: document.getElementById('deleteOrderBtn'),
         // Ticket Modal
         ticketModal: document.getElementById('ticketModal'),
         ticketContent: document.getElementById('ticketContent'),
@@ -842,6 +843,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 showNotification(`Pedido ${selectedPaymentOrder.orderNumber} enviado a cobrar`);
                 elements.paymentModal.classList.add('hidden');
                 renderCheckoutPage();
+            }
+        });
+    }
+
+    if (elements.deleteOrderBtn) {
+        elements.deleteOrderBtn.addEventListener('click', async () => {
+            if (selectedPaymentOrder) {
+                if (confirm(`¿Estás seguro de que deseas eliminar permanentemente el pedido ${selectedPaymentOrder.orderNumber}?`)) {
+                    await StorageManager.deleteOrder(selectedPaymentOrder.id);
+                    showNotification(`Pedido ${selectedPaymentOrder.orderNumber} eliminado`);
+                    elements.paymentModal.classList.add('hidden');
+                    renderCheckoutPage();
+                }
             }
         });
     }

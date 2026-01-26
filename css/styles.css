@@ -1679,19 +1679,20 @@ body {
 
 .payment-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-sm);
     padding: var(--space-md);
 }
 
+.btn-cancel,
+.btn-delete-order,
+.btn-print-checkout,
 .btn-pay {
-    flex: 1.5;
-    height: 48px;
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    color: white;
+    height: 44px;
     border: none;
     border-radius: var(--radius-md);
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1700,12 +1701,44 @@ body {
     transition: all var(--transition-fast);
 }
 
+.btn-cancel {
+    flex: 1;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+}
+
+.btn-delete-order {
+    flex: 1;
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.btn-delete-order:hover {
+    background: #fecaca;
+}
+
+.btn-print-checkout {
+    width: 100%;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.btn-pay {
+    width: 100%;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.btn-print-checkout:hover,
 .btn-pay:hover {
     opacity: 0.9;
     transform: translateY(-1px);
 }
 
-.btn-pay svg {
+.btn-print-checkout svg,
+.btn-pay svg,
+.btn-delete-order svg {
     width: 18px;
     height: 18px;
 }
