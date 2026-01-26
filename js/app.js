@@ -1136,21 +1136,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
 
-            ticket += '\n' + center(`>>> ${cat.name} (${catTotalQty}) <<<`) + '\n\n';
+            ticket += '\n' + center(`///////// ${cat.name}(${catTotalQty}) //////////`) + '\n\n';
             ticket += justify('PRODUCTO', 'ADICIONAL') + '\n';
             ticket += mainDivider + '\n';
 
             cat.items.forEach((item) => {
-                const isBebida = item.category === 'bebidas';
-                let productName = '';
-
-                if (isBebida) {
-                    productName = item.flavors.join('-').toUpperCase() || 'BEBIDA';
-                } else {
-                    const flavorNames = item.flavors.join('-').toUpperCase();
-                    productName = `${item.qty} ${item.size} ${flavorNames}`;
-                }
-
+                // Simplified product name: ONLY flavors, no qty, no size
+                const productName = item.flavors.join('-').toUpperCase() || 'PRODUCTO';
                 const extrasStr = item.extras.length > 0 ? item.extras.join(', ').toUpperCase() : '';
 
                 // Show product and extras on same line (justified)
