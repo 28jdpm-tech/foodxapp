@@ -1166,7 +1166,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Table Header with category integrated
             ticket += '\n' + tableHeader(cat.name, catTotalQty) + '\n';
 
-            cat.items.forEach((item) => {
+            cat.items.forEach((item, index) => {
                 const s1 = item.flavors[0] || '';
                 const s2 = item.flavors[1] || '';
                 const s3 = item.flavors[2] || '';
@@ -1175,17 +1175,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Table row layout
                 ticket += tableRow(s1, s2, s3, adi) + '\n';
 
-                // Observations line integrated
-                if (item.observations && item.observations.trim() !== '') {
+                const isLastItem = (index === cat.items.length - 1);
+                const hasObs = (item.observations && item.observations.trim() !== '');
+
+                if (hasObs) {
                     ticket += L_MID_OBS_TOP + '\n';
                     const obsText = ` Obs: ${item.observations}`.toUpperCase();
                     const innerWidth = TICKET_WIDTH - 2;
                     const obsRow = "│" + obsText.substring(0, innerWidth).padEnd(innerWidth) + "│";
                     ticket += obsRow + '\n';
-                    ticket += L_MID_OBS_BOT + '\n';
+                    if (isLastItem) {
+                        ticket += L_BOT + '\n';
+                    } else {
+                        ticket += L_MID_OBS_BOT + '\n';
+                    }
+                } else {
+                    if (isLastItem) {
+                        ticket += L_BOT + '\n';
+                    } else {
+                        ticket += L_MID_DATA + '\n';
+                    }
                 }
             });
-            ticket += L_BOT + '\n';
         });
 
         ticket += '\n' + justify('TOTAL:', formatPrice(order.totalPrice)) + '\n';
