@@ -1110,17 +1110,16 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const twoColumns = (leftStr, rightStr) => {
-            const COL1_WIDTH = 10;
-            const COL2_WIDTH = 5;
+            const COL1_WIDTH = 12;
+            const COL2_WIDTH = 6;
             let left = String(leftStr).toUpperCase();
             let right = String(rightStr).toUpperCase();
 
             if (left.length > COL1_WIDTH) left = left.substring(0, COL1_WIDTH);
             if (right.length > COL2_WIDTH) right = right.substring(0, COL2_WIDTH);
 
-            // Result: Left text + gap + Right text + 10 spaces (approx 30mm total from right)
-            // This pulls the ADI column significantly towards the center
-            return left.padEnd(COL1_WIDTH) + ' ' + right.padEnd(COL2_WIDTH) + '        ';
+            // Result: Left text + gap + Right text + 4 spaces at the end (moved back from center)
+            return left.padEnd(COL1_WIDTH) + ' ' + right.padEnd(COL2_WIDTH) + '    ';
         };
 
         const topDivider = '='.repeat(TICKET_WIDTH);
@@ -1153,9 +1152,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
 
-            // Shorter category name for category header to fit with slashes
-            const shortCatName = cat.name.substring(0, 4).toUpperCase();
-            ticket += '\n' + center(`///////// ${shortCatName}(${catTotalQty}) //////////`) + '\n';
+            // Full category name
+            ticket += '\n' + center(`///////// ${cat.name}(${catTotalQty}) //////////`) + '\n';
             ticket += twoColumns('PRODUCTO', 'ADI') + '\n';
             ticket += subDivider + '\n';
 
