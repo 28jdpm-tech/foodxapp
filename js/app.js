@@ -143,19 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
         historyTicketContent: document.getElementById('historyTicketContent'),
         backToHistoryBtn: document.getElementById('backToHistoryBtn'),
         reprintOrderBtn: document.getElementById('reprintOrderBtn'),
-        // Printing Config
-        printerConnectionType: document.getElementById('printerConnectionType'),
-        printerAddress: document.getElementById('printerAddress'),
-        openDrawerOnPay: document.getElementById('openDrawerOnPay'),
-        cashDrawerCommand: document.getElementById('cashDrawerCommand'),
-        ticketBusinessName: document.getElementById('ticketBusinessName'),
-        ticketBusinessDetails: document.getElementById('ticketBusinessDetails'),
-        ticketFooter: document.getElementById('ticketFooter'),
-        savePrintingSettings: document.getElementById('savePrintingSettings'),
-        textPrinterBtn: document.getElementById('textPrinterBtn'),
-        testDrawerBtn: document.getElementById('testDrawerBtn'),
-        pairBluetoothBtn: document.getElementById('pairBluetoothBtn'),
-        printerStatusBar: document.getElementById('printerStatusBar'),
         // Reports
         reportDatePicker: document.getElementById('reportDatePicker'),
         searchReportBtn: document.getElementById('searchReportBtn'),
@@ -220,8 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderReportsPage();
             } else if (page === 'admin') {
                 renderAdminPage();
-            } else if (page === 'printing') {
-                renderPrintingPage();
             } else if (page === 'new-order') {
                 initializeCategories();
                 refreshOrderPageUI();
@@ -615,18 +600,17 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.printTicket.addEventListener('click', () => {
             if (pendingOrder) {
                 // Mark as printed before saving
+                // Mark as printed before saving
                 pendingOrder.printed = true;
 
                 // Save Order
-                // Success Notification
-                showNotification(`Pedido ${pendingOrder.orderNumber} guardado`);
+                StorageManager.addOrder(pendingOrder);
 
-                // Print
-                if (bluetoothCharacteristic) {
-                    sendToBluetoothPrinter(elements.ticketContent.textContent);
-                } else {
-                    window.print();
-                }
+                // Show Printing Dialog
+                window.print();
+
+                // Success Notification
+                showNotification(`Pedido ${pendingOrder.orderNumber} impreso y guardado`);
 
                 // Close Modal & Reset
                 closeTicketModal();
@@ -856,13 +840,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (selectedPaymentOrder) {
                 StorageManager.updateOrder(selectedPaymentOrder.id, { paid: true, status: 'delivered' });
                 showNotification(`Pedido ${selectedPaymentOrder.orderNumber} pagado`);
-
-                // Open cash drawer if configured
-                const printSettings = StorageManager.getPrintingSettings();
-                if (printSettings.openDrawerOnPay) {
-                    openCashDrawer();
-                }
-
                 elements.paymentModal.classList.add('hidden');
                 renderCheckoutPage();
             }
@@ -876,18 +853,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Set as printed for checkout
                 StorageManager.updateOrder(selectedPaymentOrder.id, { checkoutPrinted: true });
 
-                // Print
-                if (bluetoothCharacteristic) {
-                    sendToBluetoothPrinter(elements.paymentTicketContent.textContent);
-                    showNotification(`Pedido ${selectedPaymentOrder.orderNumber} enviado a imprimir (BT)`);
-                    elements.paymentModal.classList.add('hidden');
-                    renderCheckoutPage();
-                } else {
-                    window.print();
-                    showNotification(`Pedido ${selectedPaymentOrder.orderNumber} enviado a cobrar`);
-                    elements.paymentModal.classList.add('hidden');
-                    renderCheckoutPage();
-                }
+                // Show Printing Dialog
+                window.print();
+
+                // Refresh and close if needed (or just refresh)
+                showNotification(`Pedido ${selectedPaymentOrder.orderNumber} enviado a cobrar`);
+                elements.paymentModal.classList.add('hidden');
+                renderCheckoutPage();
             }
         });
     }
@@ -1066,13 +1038,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.reprintOrderBtn) {
         elements.reprintOrderBtn.addEventListener('click', () => {
             if (selectedHistoryOrder) {
-                if (bluetoothCharacteristic) {
-                    sendToBluetoothPrinter(elements.historyTicketContent.textContent);
-                    showNotification('Reimpresión enviada a impresora BT');
-                } else {
-                    showTicketModal(selectedHistoryOrder);
-                    window.print();
-                }
+                // In a real app, this would send to a printer
+                // For now we use browser print
+                showTicketModal(selectedHistoryOrder);
+                window.print();
             }
         });
     }
@@ -1119,7 +1088,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function generateTicketText(order) {
-        const settings = StorageManager.getPrintingSettings();
         const labels = { salon: 'SALÓN', llevar: 'LLEVAR', domicilio: 'DOMICILIO' };
         const now = new Date(order.createdAt || Date.now());
         const dateStr = now.toLocaleDateString('es-CO');
@@ -1131,19 +1099,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return right ? str.padEnd(len) : str.padStart(len);
         };
 
-        const center = (str, len) => {
-            str = String(str);
-            if (str.length >= len) return str.substring(0, len);
-            const left = Math.floor((len - str.length) / 2);
-            return ' '.repeat(left) + str;
-        };
+        const abbr = (str) => str ? str.substring(0, 4).toUpperCase() : '----';
 
         let ticket = '';
         ticket += '==========================================\n';
-        ticket += center(settings.businessName.toUpperCase(), 42) + '\n';
-        if (settings.businessDetails) ticket += center(settings.businessDetails, 42) + '\n';
-        ticket += '------------------------------------------\n';
-        ticket += center(`ORDEN ${order.orderNumber || 'PREVIEW'}`, 42) + '\n';
+        ticket += '              FOODX POS PRO               \n';
+        ticket += `               ORDEN ${order.orderNumber || 'PREVIEW'}               \n`;
         ticket += '==========================================\n';
         ticket += ` FECHA: ${dateStr}   HORA: ${timeStr}\n`;
         ticket += ` TIPO: ${labels[order.serviceType]}\n`;
@@ -1189,215 +1150,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         ticket += '\n------------------------------------------\n';
-        ticket += pad('TOTAL:', 30, true) + pad(formatPrice(order.totalPrice), 12) + '\n';
+        ticket += ` TOTAL VENTA: ${formatPrice(order.totalPrice)}\n`;
         ticket += '==========================================\n';
-        if (settings.footerMessage) {
-            ticket += '\n' + center(settings.footerMessage, 42) + '\n';
-        }
-        ticket += '\n\n\n\n.'; // Space for cutting
+        ticket += '          GRACIAS POR SU COMPRA           \n';
+        ticket += '==========================================\n';
+
         return ticket;
     }
-
-    // ============================================
-    // Printing & Hardware Logic
-    // ============================================
-
-    function renderPrintingPage() {
-        const settings = StorageManager.getPrintingSettings();
-
-        // Fill form fields
-        if (elements.printerConnectionType) elements.printerConnectionType.value = settings.printerType;
-        if (elements.printerAddress) elements.printerAddress.value = settings.printerAddress;
-        if (elements.openDrawerOnPay) elements.openDrawerOnPay.checked = settings.openDrawerOnPay;
-        if (elements.cashDrawerCommand) elements.cashDrawerCommand.value = settings.cashDrawerCommand;
-        if (elements.ticketBusinessName) elements.ticketBusinessName.value = settings.businessName;
-        if (elements.ticketBusinessDetails) elements.ticketBusinessDetails.value = settings.businessDetails;
-        if (elements.ticketFooter) elements.ticketFooter.value = settings.footerMessage;
-
-        // Toggle printer IP field visibility
-        const printerIpGroup = document.getElementById('printerIpGroup');
-        if (printerIpGroup) {
-            printerIpGroup.style.display = settings.printerType === 'direct' ? 'block' : 'none';
-        }
-    }
-
-    if (elements.printerConnectionType) {
-        elements.printerConnectionType.addEventListener('change', () => {
-            const printerIpGroup = document.getElementById('printerIpGroup');
-            if (printerIpGroup) {
-                printerIpGroup.style.display = elements.printerConnectionType.value === 'direct' ? 'block' : 'none';
-            }
-        });
-    }
-
-    if (elements.savePrintingSettings) {
-        elements.savePrintingSettings.addEventListener('click', () => {
-            const settings = {
-                printerType: elements.printerConnectionType.value,
-                printerAddress: elements.printerAddress.value,
-                openDrawerOnPay: elements.openDrawerOnPay.checked,
-                cashDrawerCommand: elements.cashDrawerCommand.value,
-                businessName: elements.ticketBusinessName.value,
-                businessDetails: elements.ticketBusinessDetails.value,
-                footerMessage: elements.ticketFooter.value
-            };
-
-            StorageManager.savePrintingSettings(settings);
-            showNotification('Configuración guardada correctamente');
-        });
-    }
-
-    if (elements.textPrinterBtn) {
-        elements.textPrinterBtn.addEventListener('click', () => {
-            const tempOrder = {
-                orderNumber: 'TEST',
-                serviceType: 'salon',
-                customerInfo: 'Prueba Impresión',
-                items: [
-                    { qty: 1, categoryName: 'PRUEBA', size: 'OK', flavors: ['SISTEMA'], extras: [], price: 0 }
-                ],
-                totalPrice: 0,
-                createdAt: new Date().toISOString()
-            };
-
-            elements.ticketContent.textContent = generateTicketText(tempOrder);
-
-            if (bluetoothCharacteristic) {
-                sendToBluetoothPrinter(elements.ticketContent.textContent);
-                showNotification('Ticket de prueba enviado a impresora BT');
-            } else {
-                elements.ticketModal.classList.add('open');
-                window.print();
-            }
-        });
-    }
-
-    function openCashDrawer() {
-        const settings = StorageManager.getPrintingSettings();
-        console.log('💰 Opening cash drawer with command:', settings.cashDrawerCommand);
-
-        // Simulación de acción
-        showNotification('🪙 Cajón monedero abierto');
-    }
-
-    if (elements.testDrawerBtn) {
-        elements.testDrawerBtn.addEventListener('click', () => {
-            openCashDrawer();
-        });
-    }
-
-    // --- Bluetooth Printer Implementation ---
-    let bluetoothDevice = null;
-    let bluetoothCharacteristic = null;
-
-    if (elements.pairBluetoothBtn) {
-        elements.pairBluetoothBtn.addEventListener('click', async () => {
-            try {
-                showNotification('Buscando dispositivos Bluetooth...');
-
-                // Thermal printers usually use the 0xFFE0 or 0x18F0 service
-                bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    filters: [
-                        { services: [0xFFE0] },
-                        { services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] },
-                        { namePrefix: 'Printer' },
-                        { namePrefix: 'MPT' },
-                        { namePrefix: 'TP' }
-                    ],
-                    optionalServices: [0xFFE0, '0000ffe1-0000-1000-8000-00805f9b34fb']
-                });
-
-                bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
-
-                await connectToBluetoothDevice();
-
-            } catch (error) {
-                console.error('Bluetooth error:', error);
-                if (error.name !== 'NotFoundError') {
-                    showNotification('Error al vincular: ' + error.message);
-                }
-            }
-        });
-    }
-
-    async function connectToBluetoothDevice() {
-        if (!bluetoothDevice) return;
-
-        try {
-            const server = await bluetoothDevice.gatt.connect();
-            const service = await server.getPrimaryService(0xFFE0);
-
-            // Get all characteristics and find the one that supports writing
-            const characteristics = await service.getCharacteristics();
-            bluetoothCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
-
-            if (bluetoothCharacteristic) {
-                updatePrinterUI(true, bluetoothDevice.name);
-                showNotification('Impresora vinculada: ' + bluetoothDevice.name);
-            } else {
-                throw new Error('No se encontró canal de escritura');
-            }
-        } catch (error) {
-            console.error('Connection error:', error);
-            updatePrinterUI(false);
-            showNotification('Error de conexión: ' + error.message);
-        }
-    }
-
-    function onDisconnected() {
-        updatePrinterUI(false);
-        showNotification('Impresora desconectada');
-        bluetoothCharacteristic = null;
-    }
-
-    function updatePrinterUI(connected, name = 'Desconectado') {
-        if (!elements.printerStatusBar) return;
-
-        if (connected) {
-            elements.printerStatusBar.classList.add('connected');
-            if (elements.printerStatusBar.querySelector('.status-text')) {
-                elements.printerStatusBar.querySelector('.status-text').textContent = 'Conectado: ' + name;
-            }
-        } else {
-            elements.printerStatusBar.classList.remove('connected');
-            if (elements.printerStatusBar.querySelector('.status-text')) {
-                elements.printerStatusBar.querySelector('.status-text').textContent = 'Desconectado';
-            }
-        }
-    }
-
-    // Helper to send data to BT printer
-    async function sendToBluetoothPrinter(text) {
-        if (!bluetoothCharacteristic) {
-            console.warn('Bluetooth printer not connected');
-            return false;
-        }
-
-        try {
-            // Encode text to Uint8Array (Windows-1252 or CP850 is usually standard for thermal)
-            const encoder = new TextEncoder();
-            const data = encoder.encode(text + '\n\n\n');
-
-            // Send in chunks if necessary (BT has MTU limits, usually around 20-512 bytes)
-            const chunkSize = 20;
-            for (let i = 0; i < data.length; i += chunkSize) {
-                const chunk = data.slice(i, i + chunkSize);
-                await bluetoothCharacteristic.writeValue(chunk);
-            }
-            return true;
-        } catch (error) {
-            console.error('Print error:', error);
-            return false;
-        }
-    }
-
-    // Hook window.print if BT is connected? 
-    // For now, let's just make the test button use it
-    const originalPrint = window.print;
-    // We don't overwrite window.print because it's used for native printing
-    // but we can add a check in our print button logic
-
-    // Administration Logic ...
 
     // ============================================
     // Administration Logic

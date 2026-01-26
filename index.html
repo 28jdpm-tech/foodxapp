@@ -66,10 +66,7 @@
                         <i data-lucide="bar-chart-3"></i>
                         <span>Reportes</span>
                     </a>
-                    <a href="#" class="drawer-item" data-page="printing">
-                        <i data-lucide="printer"></i>
-                        <span>Impresión</span>
-                    </a>
+
                     <a href="#" class="drawer-item" data-page="admin">
                         <i data-lucide="settings"></i>
                         <span>Admin</span>
@@ -391,99 +388,7 @@
                     </div>
                 </div>
             </div>
-            <!-- Printing Config Page -->
-            <div class="page" id="page-printing">
-                <div class="page-title-bar">
-                    <h2>Configuración de Impresión</h2>
-                </div>
 
-                <div class="printing-config-grid">
-                    <!-- Printer Connection Card -->
-                    <div class="config-card">
-                        <div class="card-header">
-                            <i data-lucide="bluetooth"></i>
-                            <h3>Conexión de Impresora</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-group">
-                                <label>Tipo de Conexión</label>
-                                <select id="printerConnectionType" class="admin-select">
-                                    <option value="browser">Nativo del Navegador (Recomendado)</option>
-                                    <option value="direct">Conexión Directa (BT/USB)</option>
-                                </select>
-                            </div>
-                            <div class="form-group" id="printerIpGroup" style="display: none;">
-                                <label>Dirección IP o Nombre</label>
-                                <input type="text" id="printerAddress" placeholder="192.168.1.100">
-                            </div>
-                            <div class="printer-status-bar" id="printerStatusBar">
-                                <span class="status-dot"></span>
-                                <span class="status-text">Desconectado</span>
-                            </div>
-                            <div class="button-group-vertical"
-                                style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
-                                <button class="btn-secondary full-width" id="pairBluetoothBtn">
-                                    <i data-lucide="search"></i> Buscar Bluetooth ESC/POS
-                                </button>
-                                <button class="btn-primary full-width" id="textPrinterBtn">
-                                    <i data-lucide="printer"></i> Probar Impresión
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Cash Drawer Card -->
-                    <div class="config-card">
-                        <div class="card-header">
-                            <i data-lucide="calculator"></i>
-                            <h3>Cajón Monedero</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-group">
-                                <label class="checkbox-container">
-                                    <input type="checkbox" id="openDrawerOnPay">
-                                    <span class="checkbox-label">Abrir caja automáticamente al cobrar</span>
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label>Comando de Apertura (ESC/POS)</label>
-                                <input type="text" id="cashDrawerCommand" value="27,112,0,25,250"
-                                    placeholder="Ej: 27,112,0,25,250">
-                            </div>
-                            <button class="btn-secondary full-width" id="testDrawerBtn">
-                                Probar Apertura
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Ticket Customization Card -->
-                    <div class="config-card full-span">
-                        <div class="card-header">
-                            <i data-lucide="file-text"></i>
-                            <h3>Personalización de Ticket</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Nombre del Negocio</label>
-                                    <input type="text" id="ticketBusinessName" placeholder="Tu Negocio">
-                                </div>
-                                <div class="form-group">
-                                    <label>NIT / Dirección</label>
-                                    <input type="text" id="ticketBusinessDetails" placeholder="Calle 123 #45-67">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Mensaje al pie del ticket</label>
-                                <textarea id="ticketFooter" placeholder="¡Gracias por su compra!"></textarea>
-                            </div>
-                            <button class="btn-primary" id="savePrintingSettings">
-                                Guardar Configuración
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </main>
 
         <!-- Footer Actions -->
