@@ -1163,13 +1163,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Table row layout
                 ticket += tableRow(s1, s2, s3, adi) + '\n';
-                ticket += tableLine() + '\n';
 
                 // Observations line beneath
                 if (item.observations && item.observations.trim() !== '') {
                     ticket += ' * ' + item.observations.toUpperCase() + '\n';
                 }
             });
+            ticket += tableLine() + '\n';
         });
 
         ticket += '\n' + justify('TOTAL:', formatPrice(order.totalPrice)) + '\n';
