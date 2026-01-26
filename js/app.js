@@ -1088,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function generateTicketText(order) {
-        const TICKET_WIDTH = 24; // Half of previous (48) for double font size
+        const TICKET_WIDTH = 24;
         const labels = { salon: 'SALÓN', llevar: 'LLEVAR', domicilio: 'DOMICILIO' };
         const now = new Date(order.createdAt || Date.now());
         const dateStr = now.toLocaleDateString('es-CO');
@@ -1102,9 +1102,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const justify = (leftStr, rightStr) => {
-            const spaceNeeded = TICKET_WIDTH - (String(leftStr).length + String(rightStr).length);
-            if (spaceNeeded < 1) return leftStr + ' ' + rightStr; // Small space if too long
-            return leftStr + ' '.repeat(spaceNeeded) + rightStr;
+            const left = String(leftStr).toUpperCase();
+            const right = String(rightStr).toUpperCase();
+            const spaceNeeded = TICKET_WIDTH - (left.length + right.length);
+            if (spaceNeeded < 1) return left + ' ' + right;
+            return left + ' '.repeat(spaceNeeded) + right;
         };
 
         const topDivider = '='.repeat(TICKET_WIDTH);
@@ -1116,8 +1118,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ticket += center(`ORDEN: ${order.orderNumber || 'PREV'}`) + '\n';
         ticket += topDivider + '\n';
 
-        ticket += center(dateStr) + '\n';
-        ticket += center(timeStr) + '\n\n';
+        ticket += justify(`FECHA:`, dateStr) + '\n';
+        ticket += justify(`HORA:`, timeStr) + '\n\n';
         ticket += center(`TIPO: ${labels[order.serviceType]}`) + '\n';
         ticket += subDivider + '\n';
 
@@ -1137,24 +1139,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
 
-            ticket += '\n' + center(`// ${cat.name}(${catTotalQty}) //`) + '\n';
+            ticket += '\n' + center(`///////// ${cat.name}(${catTotalQty}) //////////`) + '\n';
+            ticket += justify('PROD', 'ADI') + '\n';
             ticket += subDivider + '\n';
 
             cat.items.forEach((item) => {
-                const productName = item.flavors.join('-').toUpperCase() || 'PRODUCTO';
-                const extrasStr = item.extras.length > 0 ? item.extras.join(',').toUpperCase() : '';
+                const productName = item.flavors.join('-').toUpperCase() || 'PROD';
+                const extrasStr = item.extras.length > 0 ? item.extras[0].toUpperCase() : '';
 
-                // Show product
-                ticket += ' ' + productName + '\n';
+                // Show product and extra justified
+                ticket += ' ' + justify(productName, extrasStr) + '\n';
 
-                // Show extras if any (right aligned or next line)
-                if (extrasStr) {
-                    ticket += ' + ' + extrasStr + '\n';
-                }
-
-                // Observations line
+                // Observations line beneath
                 if (item.observations && item.observations.trim() !== '') {
-                    ticket += ' * ' + item.observations.toUpperCase() + '\n';
+                    ticket += '     * ' + item.observations.toUpperCase() + '\n';
                 }
             });
             ticket += subDivider + '\n';
@@ -1162,7 +1160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ticket += '\n' + justify('TOTAL:', formatPrice(order.totalPrice)) + '\n';
         ticket += topDivider + '\n';
-        ticket += center('GRACIAS') + '\n';
+        ticket += center('GRACIAS POR SU COMPRA') + '\n';
         ticket += topDivider + '\n\n\n.';
 
         return ticket;
