@@ -1088,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function generateTicketText(order) {
-        const TICKET_WIDTH = 48;
+        const TICKET_WIDTH = 24; // Half of previous (48) for double font size
         const labels = { salon: 'SALÓN', llevar: 'LLEVAR', domicilio: 'DOMICILIO' };
         const now = new Date(order.createdAt || Date.now());
         const dateStr = now.toLocaleDateString('es-CO');
@@ -1103,22 +1103,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const justify = (leftStr, rightStr) => {
             const spaceNeeded = TICKET_WIDTH - (String(leftStr).length + String(rightStr).length);
-            return leftStr + ' '.repeat(Math.max(1, spaceNeeded)) + rightStr;
+            if (spaceNeeded < 1) return leftStr + ' ' + rightStr; // Small space if too long
+            return leftStr + ' '.repeat(spaceNeeded) + rightStr;
         };
 
-        const topDivider = '='.repeat(31);
-        const lineDivider = '-'.repeat(35);
-        const mainDivider = '-'.repeat(TICKET_WIDTH);
+        const topDivider = '='.repeat(TICKET_WIDTH);
+        const subDivider = '-'.repeat(TICKET_WIDTH);
 
         let ticket = '';
-        ticket += center(topDivider) + '\n';
+        ticket += topDivider + '\n';
         ticket += center('FOODX POS PRO') + '\n';
-        ticket += center(`ORDEN: ${order.orderNumber || 'PREVIEW'}`) + '\n';
-        ticket += center(topDivider) + '\n';
+        ticket += center(`ORDEN: ${order.orderNumber || 'PREV'}`) + '\n';
+        ticket += topDivider + '\n';
 
-        ticket += justify(`FECHA: ${dateStr}`, `HORA: ${timeStr}`) + '\n\n';
+        ticket += center(dateStr) + '\n';
+        ticket += center(timeStr) + '\n\n';
         ticket += center(`TIPO: ${labels[order.serviceType]}`) + '\n';
-        ticket += center(lineDivider) + '\n';
+        ticket += subDivider + '\n';
 
         // Group items by category
         const itemsByCategory = {};
@@ -1136,30 +1137,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
 
-            ticket += '\n' + center(`///////// ${cat.name}(${catTotalQty}) //////////`) + '\n\n';
-            ticket += justify('PRODUCTO', 'ADICIONAL') + '\n';
-            ticket += mainDivider + '\n';
+            ticket += '\n' + center(`// ${cat.name}(${catTotalQty}) //`) + '\n';
+            ticket += subDivider + '\n';
 
             cat.items.forEach((item) => {
-                // Simplified product name: ONLY flavors, no qty, no size
                 const productName = item.flavors.join('-').toUpperCase() || 'PRODUCTO';
-                const extrasStr = item.extras.length > 0 ? item.extras.join(', ').toUpperCase() : '';
+                const extrasStr = item.extras.length > 0 ? item.extras.join(',').toUpperCase() : '';
 
-                // Show product and extras on same line (justified)
-                ticket += ' ' + justify(productName, extrasStr) + '\n';
+                // Show product
+                ticket += ' ' + productName + '\n';
+
+                // Show extras if any (right aligned or next line)
+                if (extrasStr) {
+                    ticket += ' + ' + extrasStr + '\n';
+                }
 
                 // Observations line
                 if (item.observations && item.observations.trim() !== '') {
-                    ticket += '       OBSER: ' + item.observations.toUpperCase() + '\n';
+                    ticket += ' * ' + item.observations.toUpperCase() + '\n';
                 }
             });
-            ticket += mainDivider + '\n';
+            ticket += subDivider + '\n';
         });
 
-        ticket += '\n' + justify('TOTAL VENTA:', formatPrice(order.totalPrice)) + '\n';
-        ticket += center('='.repeat(TICKET_WIDTH)) + '\n';
-        ticket += center('GRACIAS POR SU COMPRA') + '\n';
-        ticket += center('='.repeat(TICKET_WIDTH)) + '\n\n\n\n.';
+        ticket += '\n' + justify('TOTAL:', formatPrice(order.totalPrice)) + '\n';
+        ticket += topDivider + '\n';
+        ticket += center('GRACIAS') + '\n';
+        ticket += topDivider + '\n\n\n.';
 
         return ticket;
     }
@@ -1354,8 +1358,7 @@ document.addEventListener('DOMContentLoaded', () => {
             delete config.flavors[id];
             if (config.extras) delete config.extras[id];
             if (config.observations) delete config.observations[id];
-        }
-        else if (type === 'flavor') config.flavors[pId] = config.flavors[pId].filter(f => f.id !== id);
+        } else if (type === 'flavor') config.flavors[pId] = config.flavors[pId].filter(f => f.id !== id);
         else if (type === 'extra') config.extras[pId] = config.extras[pId].filter(e => e.id !== id);
         else if (type === 'observation') config.observations[pId] = config.observations[pId].filter(o => o.id !== id);
 
@@ -1363,19 +1366,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAdminPage();
         showNotification('Eliminado correctamente');
     };
-
-    // Initialize admin tabs
-    elements.adminTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            elements.adminTabs.forEach(t => t.classList.remove('active'));
-            elements.adminPanels.forEach(p => p.classList.remove('active'));
-            tab.classList.add('active');
-            currentAdminTab = tab.dataset.tab;
-            const target = document.getElementById(`panel-${currentAdminTab}`);
-            if (target) target.classList.add('active');
-            renderAdminPage();
-        });
-    });
 
     if (elements.cancelAdminModal) elements.cancelAdminModal.onclick = () => elements.adminModal.classList.remove('open');
     if (elements.confirmAdminModal) {
@@ -1385,7 +1375,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const name = document.getElementById('editName').value;
             if (type === 'category') {
                 const cat = id ? config.categories.find(c => c.id === id) : { id: 'cat_' + Date.now() };
-                cat.name = name; cat.icon = document.getElementById('editIcon').value;
+                cat.name = name;
+                cat.icon = document.getElementById('editIcon').value;
                 if (!id) {
                     config.categories.push(cat);
                     config.flavors[cat.id] = [];
@@ -1414,12 +1405,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!config.extras) config.extras = {};
                 if (!config.extras[parentId]) config.extras[parentId] = [];
                 const e = id ? config.extras[parentId].find(x => x.id === id) : { id: 'e_' + Date.now() };
-                e.name = name; e.price = +document.getElementById('editPrice').value;
+                e.name = name;
+                e.price = +document.getElementById('editPrice').value;
                 if (!id) config.extras[parentId].push(e);
             } else if (type === 'observation') {
                 if (!config.observations[parentId]) config.observations[parentId] = [];
                 const o = id ? config.observations[parentId].find(x => x.id === id) : { id: 'o_' + Date.now() };
-                o.name = name; if (!id) config.observations[parentId].push(o);
+                o.name = name;
+                if (!id) config.observations[parentId].push(o);
             }
             StorageManager.saveConfig(config);
             elements.adminModal.classList.remove('open');
