@@ -1110,7 +1110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const twoColumns = (leftStr, rightStr) => {
-            const COL1_WIDTH = 12;
+            const COL1_WIDTH = 17;
             const COL2_WIDTH = 6;
             let left = String(leftStr).toUpperCase();
             let right = String(rightStr).toUpperCase();
@@ -1118,8 +1118,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (left.length > COL1_WIDTH) left = left.substring(0, COL1_WIDTH);
             if (right.length > COL2_WIDTH) right = right.substring(0, COL2_WIDTH);
 
-            // Result: Left text + gap + Right text + 4 spaces at the end (moved back from center)
-            return left.padEnd(COL1_WIDTH) + ' ' + right.padEnd(COL2_WIDTH) + '    ';
+            // Result: Left text + gap + Right text (aligned almost to the right edge)
+            return left.padEnd(COL1_WIDTH) + ' ' + right.padStart(COL2_WIDTH);
         };
 
         const topDivider = '='.repeat(TICKET_WIDTH);
