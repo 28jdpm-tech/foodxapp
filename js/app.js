@@ -1110,15 +1110,16 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const twoColumns = (leftStr, rightStr) => {
-            const COL1_WIDTH = 14;
-            const COL2_WIDTH = 8;
+            const COL1_WIDTH = 12; // Adjusted for more center space
+            const COL2_WIDTH = 6;
             let left = String(leftStr).toUpperCase();
             let right = String(rightStr).toUpperCase();
 
             if (left.length > COL1_WIDTH) left = left.substring(0, COL1_WIDTH);
             if (right.length > COL2_WIDTH) right = right.substring(0, COL2_WIDTH);
 
-            return left.padEnd(COL1_WIDTH) + ' ' + right.padStart(COL2_WIDTH);
+            // Result: Left text + gap + Right text + 5 spaces (approx 10mm) to move it away from the right edge
+            return left.padEnd(COL1_WIDTH) + ' ' + right.padEnd(COL2_WIDTH) + '     ';
         };
 
         const topDivider = '='.repeat(TICKET_WIDTH);
