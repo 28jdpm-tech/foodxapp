@@ -298,12 +298,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const isBebida = category === 'bebidas';
         rowEl.innerHTML = `
             <div class="row-fields ${isBebida ? 'bebidas-row' : ''}">
-                <div class="field-col qty-col">
-                    <label>#</label>
-                    <div class="field-content">
-                        <input type="number" value="1" min="1" max="99" class="qty-input">
-                    </div>
-                </div>
                 <div class="field-col flavor-col">
                     <label>${isBebida ? 'BEBIDA' : (category === 'combos' ? 'HB' : 'S1')}</label>
                     <div class="field-content">
@@ -379,18 +373,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updateCategoryTotal(category);
             updateOrderTotal();
         });
-
-        const qtyInput = rowEl.querySelector('.qty-input');
-        if (qtyInput) {
-            qtyInput.addEventListener('change', () => {
-                const data = getRowData();
-                if (data) {
-                    data.qty = parseInt(qtyInput.value) || 1;
-                    updateCategoryTotal(category);
-                    updateOrderTotal();
-                }
-            });
-        }
 
         rowEl.querySelectorAll('.flavor-select').forEach(select => {
             select.addEventListener('change', () => {
@@ -1122,18 +1104,17 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const tableHeader = () => {
-            // 24 chars: "#  S1  S2  S3  ADI"
-            return "#  S1  S2  S3  ADI";
+            // 24 chars: " S1  S2  S3  ADI"
+            return " S1  S2  S3  ADI";
         };
 
-        const tableRow = (qty, s1, s2, s3, adi) => {
-            const q = String(qty).padStart(1);
+        const tableRow = (s1, s2, s3, adi) => {
             const f1 = (s1 || '---').substring(0, 3).toUpperCase().padEnd(3);
             const f2 = (s2 || '---').substring(0, 3).toUpperCase().padEnd(3);
             const f3 = (s3 || '---').substring(0, 3).toUpperCase().padEnd(3);
             const ad = (adi || '---').substring(0, 3).toUpperCase().padEnd(3);
 
-            return `${q}  ${f1} ${f2} ${f3} ${ad}`;
+            return ` ${f1} ${f2} ${f3} ${ad}`;
         };
 
         const topDivider = '='.repeat(TICKET_WIDTH);
@@ -1178,7 +1159,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const adi = item.extras[0] || '';
 
                 // Table row layout
-                ticket += tableRow(item.qty, s1, s2, s3, adi) + '\n';
+                ticket += tableRow(s1, s2, s3, adi) + '\n';
 
                 // Observations line beneath
                 if (item.observations && item.observations.trim() !== '') {
