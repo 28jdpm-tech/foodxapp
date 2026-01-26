@@ -1152,8 +1152,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
 
-            // Full category name
-            ticket += '\n' + center(`///////// ${cat.name}(${catTotalQty}) //////////`) + '\n';
+            // Full category name with a few slashes, slightly left-biased
+            const catHeader = `/// ${cat.name}(${catTotalQty}) ///`.toUpperCase();
+            // Start with a small 2-space indentation to move it left
+            ticket += '\n  ' + catHeader + '\n';
             ticket += twoColumns('PRODUCTO', 'ADI') + '\n';
             ticket += subDivider + '\n';
 
