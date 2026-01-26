@@ -1103,15 +1103,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return left.padEnd(COL1_WIDTH) + ' ' + right.padEnd(COL2_WIDTH) + '  ';
         };
 
+        const tableLine = () => center("+----+----+----+----+");
+
         const tableHeader = () => {
-            return center("| S1 | S2 | S3 | ADI|");
+            let h = tableLine() + "\n";
+            h += center("| S1 | S2 | S3 |ADI |") + "\n";
+            h += tableLine();
+            return h;
         };
 
         const tableRow = (s1, s2, s3, adi) => {
-            const f1 = (s1 || '---').substring(0, 3).toUpperCase().padEnd(3);
-            const f2 = (s2 || '---').substring(0, 3).toUpperCase().padEnd(3);
-            const f3 = (s3 || '---').substring(0, 3).toUpperCase().padEnd(3);
-            const ad = (adi || '---').substring(0, 3).toUpperCase().padEnd(3);
+            const f1 = (s1 || '---').substring(0, 3).toUpperCase().padEnd(4);
+            const f2 = (s2 || '---').substring(0, 3).toUpperCase().padEnd(4);
+            const f3 = (s3 || '---').substring(0, 3).toUpperCase().padEnd(4);
+            const ad = (adi || '---').substring(0, 3).toUpperCase().padEnd(4);
 
             return center(`|${f1}|${f2}|${f3}|${ad}|`);
         };
@@ -1149,7 +1154,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Full category name
             ticket += '\n  ' + `/// ${cat.name}(${catTotalQty}) ///`.toUpperCase() + '\n';
             ticket += tableHeader() + '\n';
-            ticket += subDivider + '\n';
 
             cat.items.forEach((item) => {
                 const s1 = item.flavors[0] || '';
@@ -1159,13 +1163,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Table row layout
                 ticket += tableRow(s1, s2, s3, adi) + '\n';
+                ticket += tableLine() + '\n';
 
                 // Observations line beneath
                 if (item.observations && item.observations.trim() !== '') {
                     ticket += ' * ' + item.observations.toUpperCase() + '\n';
                 }
             });
-            ticket += subDivider + '\n';
         });
 
         ticket += '\n' + justify('TOTAL:', formatPrice(order.totalPrice)) + '\n';
