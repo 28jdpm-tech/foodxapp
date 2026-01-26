@@ -1104,33 +1104,33 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const L_TOP = "┌───────────────────────┐";
-        const L_MID_TITLE = "├────┬────┬────┬───────┤";
-        const L_MID_DATA = "├────┼────┼────┼───────┤";
-        const L_MID_OBS_TOP = "├────┴────┴────┴───────┤";
-        const L_MID_OBS_BOT = "├────┬────┬────┬───────┤";
-        const L_BOT = "└────┴────┴────┴───────┘";
+        const L_MID_TITLE = "├───────────────┬───────┤";
+        const L_MID_DATA = "├───────────────┼───────┤";
+        const L_MID_OBS_TOP = "├───────────────┴───────┤";
+        const L_MID_OBS_BOT = "├───────────────┬───────┤";
+        const L_BOT = "└───────────────┴───────┘";
 
         const tableHeader = (catName, qty) => {
             const title = `${catName} (${qty})`.toUpperCase();
-            const innerWidth = TICKET_WIDTH - 2;
+            const innerWidth = 23;
             const padding = Math.max(0, Math.floor((innerWidth - title.length) / 2));
             const headerRow = "│" + " ".repeat(padding) + title + " ".repeat(innerWidth - title.length - padding) + "│";
 
             let h = L_TOP + "\n";
             h += headerRow + "\n";
             h += L_MID_TITLE + "\n";
-            h += "│ S1 │ S2 │ S3 │ADICION│\n";
+            h += "│   PRODUCTO    │ADICION│\n";
             h += L_MID_DATA;
             return h;
         };
 
         const tableRow = (s1, s2, s3, adi) => {
-            const f1 = (s1 || '').substring(0, 4).toUpperCase().padEnd(4);
-            const f2 = (s2 || '').substring(0, 4).toUpperCase().padEnd(4);
-            const f3 = (s3 || '').substring(0, 4).toUpperCase().padEnd(4);
-            const ad = (adi || '').substring(0, 7).toUpperCase().padEnd(7);
+            const flavorsList = [s1, s2, s3].filter(f => f && f.trim() !== '');
+            const flavors = flavorsList.join('-');
+            const fCol = flavors.substring(0, 15).toUpperCase().padEnd(15);
+            const adCol = (adi || '').substring(0, 7).toUpperCase().padEnd(7);
 
-            return `│${f1}│${f2}│${f3}│${ad}│`;
+            return `│${fCol}│${adCol}│`;
         };
 
         const topDivider = '='.repeat(TICKET_WIDTH);
