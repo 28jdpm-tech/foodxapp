@@ -67,7 +67,8 @@ const StorageManager = {
             flavors: flavors ? JSON.parse(flavors) : FOODX_DATA.flavors,
             extras: extras ? JSON.parse(extras) : FOODX_DATA.extras,
             observations: observations ? JSON.parse(observations) : FOODX_DATA.observations,
-            prices: prices ? JSON.parse(prices) : FOODX_DATA.prices
+            prices: prices ? JSON.parse(prices) : FOODX_DATA.prices,
+            adminPassword: localStorage.getItem('foodx_admin_password') || '1234'
         };
 
         // Migration: If extras or observations are arrays, convert to objects keyed by category
@@ -111,6 +112,7 @@ const StorageManager = {
         if (config.extras) localStorage.setItem(STORAGE_KEYS.EXTRAS, JSON.stringify(config.extras));
         if (config.observations) localStorage.setItem('foodx_observations', JSON.stringify(config.observations));
         if (config.prices) localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(config.prices));
+        if (config.adminPassword) localStorage.setItem('foodx_admin_password', config.adminPassword);
 
         // Update the global object too so the app uses latest
         Object.assign(FOODX_DATA, config);
@@ -203,6 +205,7 @@ const StorageManager = {
                     if (cloudConfig.extras) localStorage.setItem(STORAGE_KEYS.EXTRAS, JSON.stringify(cloudConfig.extras));
                     if (cloudConfig.observations) localStorage.setItem('foodx_observations', JSON.stringify(cloudConfig.observations));
                     if (cloudConfig.prices) localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(cloudConfig.prices));
+                    if (cloudConfig.adminPassword) localStorage.setItem('foodx_admin_password', cloudConfig.adminPassword);
 
                     // Update global
                     Object.assign(FOODX_DATA, cloudConfig);
@@ -269,6 +272,7 @@ StorageManager.configLoaded = false;
                 if (cloudConfig.extras) localStorage.setItem(STORAGE_KEYS.EXTRAS, JSON.stringify(cloudConfig.extras));
                 if (cloudConfig.observations) localStorage.setItem('foodx_observations', JSON.stringify(cloudConfig.observations));
                 if (cloudConfig.prices) localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(cloudConfig.prices));
+                if (cloudConfig.adminPassword) localStorage.setItem('foodx_admin_password', cloudConfig.adminPassword);
 
                 // Update global
                 Object.assign(FOODX_DATA, cloudConfig);

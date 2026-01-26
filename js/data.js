@@ -117,6 +117,8 @@ const FOODX_DATA = {
         bebidas: { XS: 0, XM: 0, XL: 0 }
     },
 
+    adminPassword: '1234',
+
     // Service types
     serviceTypes: [
         { id: 'salon', name: 'Salón', icon: 'armchair', label: 'Mesa' },

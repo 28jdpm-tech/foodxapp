@@ -12,7 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
         serviceType: 'salon',
         orderTotal: 0,
         categoryData: {},
-        rowCounter: 0
+        rowCounter: 0,
+        isAdminAuthenticated: false,
+        pendingAdminAction: null
     };
 
     // Note: Default category creation is now handled in data.js
@@ -144,9 +146,18 @@ document.addEventListener('DOMContentLoaded', () => {
         historyTicketContent: document.getElementById('historyTicketContent'),
         backToHistoryBtn: document.getElementById('backToHistoryBtn'),
         reprintOrderBtn: document.getElementById('reprintOrderBtn'),
+        deleteOrderBtnHistory: document.getElementById('deleteOrderBtnHistory'),
         // Reports
         reportDatePicker: document.getElementById('reportDatePicker'),
         searchReportBtn: document.getElementById('searchReportBtn'),
+        // Admin Security
+        adminLoginModal: document.getElementById('adminLoginModal'),
+        adminPasswordInput: document.getElementById('adminPasswordInput'),
+        confirmAdminLogin: document.getElementById('confirmAdminLogin'),
+        closeAdminLoginModal: document.getElementById('closeAdminLoginModal'),
+        newAdminPassword: document.getElementById('newAdminPassword'),
+        confirmAdminPassword: document.getElementById('confirmAdminPassword'),
+        saveAdminPasswordBtn: document.getElementById('saveAdminPasswordBtn'),
     };
 
     // ============================================
@@ -175,6 +186,19 @@ document.addEventListener('DOMContentLoaded', () => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const page = item.dataset.page;
+
+            // Protection for Admin page
+            if (page === 'admin' && !state.isAdminAuthenticated) {
+                if (elements.adminLoginModal) {
+                    elements.adminLoginModal.classList.add('open');
+                    elements.adminPasswordInput.value = '';
+                    elements.adminPasswordInput.focus();
+                    elements.navDrawer.classList.remove('open');
+                    // Store the intended page for after login
+                    state.pendingAdminRedirect = true;
+                }
+                return;
+            }
 
             elements.drawerItems.forEach(i => i.classList.remove('active'));
             item.classList.add('active');
@@ -212,6 +236,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 initializeCategories();
                 refreshOrderPageUI();
             }
+
+            // Remove flag if already redirected
+            if (page === 'admin') state.pendingAdminRedirect = false;
 
             lucide.createIcons();
         });
@@ -789,16 +816,20 @@ document.addEventListener('DOMContentLoaded', () => {
             modalTitle.textContent = 'Pedido Pagado - Detalle';
             elements.confirmPayment.style.display = 'none';
             elements.printPaymentTicket.style.display = 'flex'; // Allow re-print
+            if (elements.deleteOrderBtn) elements.deleteOrderBtn.style.display = 'flex';
         } else if (!order.checkoutPrinted) {
             modalTitle.textContent = 'Imprimir Ticket de Cobro';
             elements.confirmPayment.style.display = 'none';
             elements.printPaymentTicket.style.display = 'flex';
+            if (elements.deleteOrderBtn) elements.deleteOrderBtn.style.display = 'flex';
         } else {
             modalTitle.textContent = 'Cobrar Pedido';
             elements.confirmPayment.style.display = 'flex';
             elements.printPaymentTicket.style.display = 'flex'; // Allow re-print even if in pending
+            if (elements.deleteOrderBtn) elements.deleteOrderBtn.style.display = 'flex';
         }
 
+        lucide.createIcons();
         elements.paymentModal.classList.remove('hidden');
     }
 
@@ -848,14 +879,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (elements.deleteOrderBtn) {
-        elements.deleteOrderBtn.addEventListener('click', async () => {
-            if (selectedPaymentOrder) {
+        elements.deleteOrderBtn.addEventListener('click', () => {
+            if (!selectedPaymentOrder) return;
+
+            const performDelete = async () => {
                 if (confirm(`¿Estás seguro de que deseas eliminar permanentemente el pedido ${selectedPaymentOrder.orderNumber}?`)) {
                     await StorageManager.deleteOrder(selectedPaymentOrder.id);
                     showNotification(`Pedido ${selectedPaymentOrder.orderNumber} eliminado`);
                     elements.paymentModal.classList.add('hidden');
                     renderCheckoutPage();
                 }
+            };
+
+            if (state.isAdminAuthenticated) {
+                performDelete();
+            } else {
+                state.pendingAdminAction = performDelete;
+                elements.adminLoginModal.classList.add('open');
+                elements.adminPasswordInput.value = '';
+                elements.adminPasswordInput.focus();
             }
         });
     }
@@ -1042,6 +1084,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (elements.deleteOrderBtnHistory) {
+        elements.deleteOrderBtnHistory.addEventListener('click', () => {
+            if (!selectedHistoryOrder) return;
+
+            const performDelete = async () => {
+                if (confirm(`¿Estás seguro de que deseas eliminar permanentemente el pedido ${selectedHistoryOrder.orderNumber}?`)) {
+                    await StorageManager.deleteOrder(selectedHistoryOrder.id);
+                    showNotification(`Pedido ${selectedHistoryOrder.orderNumber} eliminado`);
+                    elements.historyOrderDetail.classList.add('hidden');
+                    renderHistoryPage();
+                }
+            };
+
+            if (state.isAdminAuthenticated) {
+                performDelete();
+            } else {
+                state.pendingAdminAction = performDelete;
+                elements.adminLoginModal.classList.add('open');
+                elements.adminPasswordInput.value = '';
+                elements.adminPasswordInput.focus();
+            }
+        });
+    }
+
     function renderHistoryOrdersList(orders) {
         const container = document.getElementById('historyOrdersList');
         if (!container) return;
@@ -1084,7 +1150,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function generateTicketText(order) {
-        const TICKET_WIDTH = 24;
+        const TICKET_WIDTH = 25;
         const labels = { salon: 'SALÓN', llevar: 'LLEVAR', domicilio: 'DOMICILIO' };
         const now = new Date(order.createdAt || Date.now());
         const dateStr = now.toLocaleDateString('es-CO');
@@ -1138,14 +1204,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const tableRow = (s1, s2, s3, adi) => {
             const flavorsList = [s1, s2, s3].filter(f => f && f.trim() !== '');
             const flavors = flavorsList.join('-');
-            const fCol = flavors.substring(0, 15).toUpperCase().padEnd(16);
+            // PRODUCTO column: 15 chars, ADICION column: 7 chars
+            // Aligned with header: "│" (1) + 15 + "│" (1) + 7 + "│" (1) = 25
+            const fCol = flavors.substring(0, 15).toUpperCase().padEnd(15);
             const adCol = (adi || '').substring(0, 7).toUpperCase().padEnd(7);
 
-            return `${fCol}${adCol}`;
+            return ` ${fCol} ${adCol} `;
         };
 
-        const topDivider = '='.repeat(TICKET_WIDTH);
-        const subDivider = '-'.repeat(TICKET_WIDTH);
+        const topDivider = '━'.repeat(TICKET_WIDTH);
+        const subDivider = '─'.repeat(TICKET_WIDTH);
 
         let ticket = '';
         ticket += topDivider + '\n';
@@ -1502,6 +1570,77 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.adminModalBody.innerHTML = `<div class="form-group"><label>Nombre</label><input type="text" id="editName"></div>`;
             elements.adminModal.classList.add('open');
         };
+    }
+
+    // ============================================
+    // Security / Password Logic
+    // ============================================
+
+    if (elements.confirmAdminLogin) {
+        const handleLogin = () => {
+            const config = StorageManager.getConfig();
+            const input = elements.adminPasswordInput.value;
+
+            if (input === config.adminPassword) {
+                state.isAdminAuthenticated = true;
+                elements.adminLoginModal.classList.remove('open');
+                showNotification('Acceso concedido');
+
+                // Trigger the pending action (like deletion)
+                if (state.pendingAdminAction) {
+                    state.pendingAdminAction();
+                    state.pendingAdminAction = null;
+                }
+
+                // Trigger the pending navigation
+                if (state.pendingAdminRedirect) {
+                    const adminBtn = Array.from(elements.drawerItems).find(i => i.dataset.page === 'admin');
+                    if (adminBtn) adminBtn.click();
+                }
+            } else {
+                showNotification('Contraseña incorrecta', 'error');
+                elements.adminPasswordInput.value = '';
+                elements.adminPasswordInput.focus();
+            }
+        };
+
+        elements.confirmAdminLogin.addEventListener('click', handleLogin);
+        elements.adminPasswordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleLogin();
+        });
+    }
+
+    if (elements.closeAdminLoginModal) {
+        elements.closeAdminLoginModal.addEventListener('click', () => {
+            elements.adminLoginModal.classList.remove('open');
+            state.pendingAdminRedirect = false;
+            state.pendingAdminAction = null;
+        });
+    }
+
+    if (elements.saveAdminPasswordBtn) {
+        elements.saveAdminPasswordBtn.addEventListener('click', () => {
+            const newPass = elements.newAdminPassword.value;
+            const confirmPass = elements.confirmAdminPassword.value;
+
+            if (newPass.length < 4) {
+                showNotification('La contraseña debe tener al menos 4 caracteres', 'error');
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                showNotification('Las contraseñas no coinciden', 'error');
+                return;
+            }
+
+            const config = StorageManager.getConfig();
+            config.adminPassword = newPass;
+            StorageManager.saveConfig(config);
+
+            showNotification('Contraseña actualizada correctamente');
+            elements.newAdminPassword.value = '';
+            elements.confirmAdminPassword.value = '';
+        });
     }
 
     function showNotification(message) {

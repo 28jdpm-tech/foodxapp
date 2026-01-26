@@ -189,7 +189,7 @@
                         </div>
                         <div class="payment-actions">
                             <button class="btn-cancel" id="cancelPayment">Volver</button>
-                            <button class="btn-delete-order" id="deleteOrderBtn">
+                            <button class="btn-delete-order" id="deleteOrderBtn" style="display: flex !important;">
                                 <i data-lucide="trash-2"></i>
                                 Eliminar Pedido
                             </button>
@@ -250,6 +250,10 @@
                         <button class="reprint-btn" id="reprintOrderBtn">
                             <i data-lucide="printer"></i>
                             Reimprimir
+                        </button>
+                        <button class="btn-delete-order" id="deleteOrderBtnHistory">
+                            <i data-lucide="trash-2"></i>
+                            Eliminar
                         </button>
                     </div>
                     <div class="detail-ticket">
@@ -315,6 +319,7 @@
                     <button class="admin-tab" data-tab="flavors">Sabores</button>
                     <button class="admin-tab" data-tab="extras">Adicionales</button>
                     <button class="admin-tab" data-tab="observations">Observaciones</button>
+                    <button class="admin-tab" data-tab="security">Seguridad</button>
                 </div>
 
                 <div class="admin-content">
@@ -369,6 +374,33 @@
                         <button class="btn-add-inline" id="addObsBtn">
                             <i data-lucide="plus"></i> Agregar Observación
                         </button>
+                    </div>
+
+                    <!-- Security Panel -->
+                    <div class="admin-panel" id="panel-security">
+                        <div class="panel-header">
+                            <h3>Seguridad y Acceso</h3>
+                        </div>
+                        <div class="security-card">
+                            <h4><i data-lucide="shield-check"></i> Cambiar Contraseña de Administrador</h4>
+                            <div class="form-group">
+                                <label>Nueva Contraseña</label>
+                                <input type="password" id="newAdminPassword" placeholder="Mínimo 4 caracteres">
+                            </div>
+                            <div class="form-group">
+                                <label>Confirmar Contraseña</label>
+                                <input type="password" id="confirmAdminPassword" placeholder="Repite la contraseña">
+                            </div>
+                            <button class="btn-pay" id="saveAdminPasswordBtn"
+                                style="width: 100%; margin-top: var(--space-md);">
+                                <i data-lucide="save"></i> Actualizar Contraseña
+                            </button>
+                            <p
+                                style="font-size: 0.75rem; color: var(--text-muted); margin-top: var(--space-md); text-align: center;">
+                                <i data-lucide="info" style="width: 12px; height: 12px; vertical-align: middle;"></i>
+                                La nueva contraseña se sincronizará con todos los dispositivos.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -426,23 +458,37 @@
             </div>
         </div>
 
-        <!-- Ticket Modal -->
-        <div class="modal" id="ticketModal">
-            <div class="modal-overlay"></div>
-            <div class="ticket-modal-content">
-                <div class="ticket-container" id="ticketContainer">
-                    <div class="ticket-title">VISTA PREVIA DE TIQUETE</div>
-                    <pre class="ticket-content" id="ticketContent"></pre>
+    </div>
+    </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div class="modal" id="adminLoginModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-width: 320px;">
+            <div class="modal-header">
+                <h3>Acceso Restringido</h3>
+                <button class="close-modal" id="closeAdminLoginModal">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: var(--space-xl) var(--space-lg);">
+                <div style="text-align: center; margin-bottom: var(--space-lg);">
+                    <div
+                        style="width: 60px; height: 60px; background: rgba(245, 158, 11, 0.1); color: var(--status-pending); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-sm);">
+                        <i data-lucide="lock" style="width: 30px; height: 30px;"></i>
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Ingresa la contraseña de administrador
+                    </p>
                 </div>
-                <div class="ticket-actions">
-                    <button class="btn-cancel" id="cancelTicket">Cancelar</button>
-                    <button class="btn-print" id="printTicket">
-                        <i data-lucide="printer"></i>
-                        Confirmar e Imprimir
-                    </button>
+                <div class="form-group">
+                    <input type="password" id="adminPasswordInput" placeholder="Contraseña"
+                        style="text-align: center; font-size: 1.2rem; letter-spacing: 4px;" autofocus>
                 </div>
+                <button class="btn-confirm" id="confirmAdminLogin" style="width: 100%; height: 48px; font-size: 1rem;">
+                    Entrar
+                </button>
             </div>
         </div>
+    </div>
     </div>
 
     <!-- Firebase SDK -->
