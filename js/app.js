@@ -1110,7 +1110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const twoColumns = (leftStr, rightStr) => {
-            const COL1_WIDTH = 15;
+            const COL1_WIDTH = 14;
             const COL2_WIDTH = 8;
             let left = String(leftStr).toUpperCase();
             let right = String(rightStr).toUpperCase();
@@ -1127,13 +1127,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let ticket = '';
         ticket += topDivider + '\n';
         ticket += center('FOODX POS PRO') + '\n';
-        ticket += center(`ORDEN: ${order.orderNumber || 'PREV'}`) + '\n';
+        ticket += center(`ORDEN: ${order.orderNumber || '1024'}`) + '\n';
         ticket += topDivider + '\n';
 
-        ticket += justify(`FECHA:`, dateStr) + '\n';
-        ticket += justify(`HORA:`, timeStr) + '\n\n';
+        // Date and Time on same line, no labels
+        ticket += justify(dateStr, timeStr) + '\n\n';
         ticket += center(`TIPO: ${labels[order.serviceType]}`) + '\n';
-        ticket += subDivider + '\n';
+        ticket += center(subDivider) + '\n';
 
         // Group items by category
         const itemsByCategory = {};
@@ -1151,16 +1151,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
 
-            ticket += '\n' + center(`///////// ${cat.name}(${catTotalQty}) //////////`) + '\n';
+            // Shorter category name for category header to fit with slashes
+            const shortCatName = cat.name.substring(0, 4).toUpperCase();
+            ticket += '\n' + center(`///////// ${shortCatName}(${catTotalQty}) //////////`) + '\n';
             ticket += twoColumns('PRODUCTO', 'ADI') + '\n';
             ticket += subDivider + '\n';
 
             cat.items.forEach((item) => {
-                const flavorsStr = item.flavors.join('-').toUpperCase() || 'PROD';
-                const extrasStr = item.extras.length > 0 ? item.extras[0].toUpperCase() : '';
+                // 3-letter abbreviation for flavors
+                const flavorAbbr = item.flavors.map(f => f.substring(0, 3).toUpperCase()).join('-');
+                // 3-letter abbreviation for extras
+                const extraAbbr = item.extras.length > 0 ? item.extras[0].substring(0, 3).toUpperCase() : '';
 
                 // Two columns layout
-                ticket += twoColumns(flavorsStr, extrasStr) + '\n';
+                ticket += twoColumns(flavorAbbr, extraAbbr) + '\n';
 
                 // Observations line beneath
                 if (item.observations && item.observations.trim() !== '') {
