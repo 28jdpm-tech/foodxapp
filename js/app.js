@@ -22,30 +22,62 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('configLoadedFromCloud', () => {
         console.log('🔄 Config loaded from cloud, refreshing UI...');
         initializeCategories();
-        refreshOrderPageUI();
+        updateOrderTotal();
         lucide.createIcons();
     });
 
     // Initialize all categories (including those added dynamically or via sync)
     function initializeCategories() {
-        const sections = document.querySelectorAll('.category-section');
-        sections.forEach(section => {
-            const category = section.dataset.category;
+        const config = StorageManager.getConfig();
+        const container = document.getElementById('orderCategories');
+        if (!container) return;
 
-            // Init state for category if not exists
-            if (!state.categoryData[category]) {
-                state.categoryData[category] = { rows: [] };
+        // Save existing category rows to prevent data loss on refresh
+        const existingData = state.categoryData || {};
+
+        container.innerHTML = config.categories.map(category => `
+            <div class="category-section" data-category="${category.id}">
+                <div class="category-header">
+                    <div class="category-title">
+                        <span class="category-name">${category.name.toUpperCase()}</span>
+                        <span class="category-total-price" data-value="0">$0</span>
+                    </div>
+                    <button class="add-row-btn">
+                        <span>CLIENTE</span>
+                        <i data-lucide="plus"></i>
+                    </button>
+                </div>
+                <div class="category-rows-container"></div>
+            </div>
+        `).join('');
+
+        const sections = container.querySelectorAll('.category-section');
+        sections.forEach(section => {
+            const catId = section.dataset.category;
+
+            // Re-bind state or init new
+            if (!state.categoryData[catId]) {
+                state.categoryData[catId] = { rows: [] };
             }
 
-            // Attach listener to Add Row button only if not already attached
-            const addRowBtn = section.querySelector('.add-row-btn');
-            if (addRowBtn && !addRowBtn.dataset.listenerAttached) {
-                addRowBtn.addEventListener('click', () => {
-                    addNewRow(category);
+            // Bind click event
+            const addBtn = section.querySelector('.add-row-btn');
+            addBtn.addEventListener('click', () => {
+                addNewRow(catId);
+            });
+
+            // Restore previous rows if they exist (for live updates)
+            if (existingData[catId] && existingData[catId].rows.length > 0) {
+                const rowsContainer = section.querySelector('.category-rows-container');
+                existingData[catId].rows.forEach(rowData => {
+                    const rowEl = createRowElement(catId, rowData.id);
+                    rowsContainer.appendChild(rowEl);
                 });
-                addRowBtn.dataset.listenerAttached = 'true';
+                updateCategoryTotal(catId);
             }
         });
+
+        lucide.createIcons();
     }
 
     initializeCategories();
@@ -1372,6 +1404,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (parentId === 'bebidas') f.price = +document.getElementById('editPrice').value;
                 if (!id) config.flavors[parentId].push(f);
             } else if (type === 'extra') {
+                if (!config.extras) config.extras = {};
                 if (!config.extras[parentId]) config.extras[parentId] = [];
                 const e = id ? config.extras[parentId].find(x => x.id === id) : { id: 'e_' + Date.now() };
                 e.name = name; e.price = +document.getElementById('editPrice').value;
@@ -1392,11 +1425,14 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.addCategoryBtn.onclick = () => {
             adminEditContext = { type: 'category', id: null };
             elements.adminModalTitle.textContent = 'Nueva Categoría';
-            elements.adminModalBody.innerHTML = `<div class="form-group"><label>Nombre</label><input type="text" id="editName"></div>
+            elements.adminModalBody.innerHTML = `
+                <div class="form-group"><label>Nombre</label><input type="text" id="editName"></div>
                 <div class="form-group"><label>Icono</label><input type="text" id="editIcon"></div>
-                <div class="form-row"><div class="form-group"><label>XS</label><input type="number" id="priceXS"></div>
-                <div class="form-group"><label>XM</label><input type="number" id="priceXM"></div></div>
-                <div class="form-group"><label>XL</label><input type="number" id="priceXL"></div>`;
+                <div class="form-row">
+                    <div class="form-group"><label>XS / HB</label><input type="number" id="priceXS" value="0"></div>
+                    <div class="form-group"><label>XM / PE</label><input type="number" id="priceXM" value="0"></div>
+                </div>
+                <div class="form-group"><label>XL / SA</label><input type="number" id="priceXL" value="0"></div>`;
             elements.adminModal.classList.add('open');
         };
     }
@@ -1480,7 +1516,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (state.currentPage === 'admin') renderAdminPage();
                 if (state.currentPage === 'new-order') {
                     initializeCategories();
-                    refreshOrderPageUI();
+                    updateOrderTotal();
                 }
                 console.log('Config synced from cloud');
             },

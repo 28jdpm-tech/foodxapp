@@ -52,22 +52,56 @@ const StorageManager = {
 
     // Configuration Management
     getConfig() {
-        const categories = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
-        const flavors = localStorage.getItem(STORAGE_KEYS.FLAVORS);
-        const extras = localStorage.getItem(STORAGE_KEYS.EXTRAS);
-        const observations = localStorage.getItem('foodx_observations');
-        const prices = localStorage.getItem(STORAGE_KEYS.PRICES);
+        let categories = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
+        let flavors = localStorage.getItem(STORAGE_KEYS.FLAVORS);
+        let extras = localStorage.getItem(STORAGE_KEYS.EXTRAS);
+        let observations = localStorage.getItem('foodx_observations');
+        let prices = localStorage.getItem(STORAGE_KEYS.PRICES);
 
-        return {
+        const config = {
             categories: categories ? JSON.parse(categories) : FOODX_DATA.categories,
             flavors: flavors ? JSON.parse(flavors) : FOODX_DATA.flavors,
             extras: extras ? JSON.parse(extras) : FOODX_DATA.extras,
             observations: observations ? JSON.parse(observations) : FOODX_DATA.observations,
             prices: prices ? JSON.parse(prices) : FOODX_DATA.prices
         };
+
+        // Migration: If extras or observations are arrays, convert to objects keyed by category
+        if (Array.isArray(config.extras)) {
+            console.log("Migrating extras from array to category-object");
+            const migrated = {};
+            config.categories.forEach(c => {
+                migrated[c.id] = JSON.parse(JSON.stringify(config.extras)); // Deep copy the common extras to each cat
+            });
+            config.extras = migrated;
+            // Save migrated back immediately? Let's wait for next save
+        }
+
+        if (Array.isArray(config.observations)) {
+            console.log("Migrating observations from array to category-object");
+            const migrated = {};
+            config.categories.forEach(c => {
+                migrated[c.id] = JSON.parse(JSON.stringify(config.observations));
+            });
+            config.observations = migrated;
+        }
+
+        return config;
     },
 
     saveConfig(config) {
+        // Validation: Ensure extras and observations are objects, not arrays
+        if (Array.isArray(config.extras)) {
+            const migrated = {};
+            config.categories.forEach(c => migrated[c.id] = [...config.extras]);
+            config.extras = migrated;
+        }
+        if (Array.isArray(config.observations)) {
+            const migrated = {};
+            config.categories.forEach(c => migrated[c.id] = [...config.observations]);
+            config.observations = migrated;
+        }
+
         if (config.categories) localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(config.categories));
         if (config.flavors) localStorage.setItem(STORAGE_KEYS.FLAVORS, JSON.stringify(config.flavors));
         if (config.extras) localStorage.setItem(STORAGE_KEYS.EXTRAS, JSON.stringify(config.extras));
