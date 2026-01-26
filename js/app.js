@@ -1103,22 +1103,22 @@ document.addEventListener('DOMContentLoaded', () => {
             return left.padEnd(COL1_WIDTH) + ' ' + right.padEnd(COL2_WIDTH) + '  ';
         };
 
-        const tableLine = () => center("+---+---+---+---+");
+        const tableLine = () => "+----+----+----+-------+";
 
         const tableHeader = () => {
             let h = tableLine() + "\n";
-            h += center("|S1 |S2 |S3 |ADI|") + "\n";
+            h += "| S1 | S2 | S3 |  ADI  |" + "\n";
             h += tableLine();
             return h;
         };
 
         const tableRow = (s1, s2, s3, adi) => {
-            const f1 = (s1 || '---').substring(0, 3).toUpperCase().padEnd(3);
-            const f2 = (s2 || '---').substring(0, 3).toUpperCase().padEnd(3);
-            const f3 = (s3 || '---').substring(0, 3).toUpperCase().padEnd(3);
-            const ad = (adi || '---').substring(0, 3).toUpperCase().padEnd(3);
+            const f1 = (s1 || '----').substring(0, 4).toUpperCase().padEnd(4);
+            const f2 = (s2 || '----').substring(0, 4).toUpperCase().padEnd(4);
+            const f3 = (s3 || '----').substring(0, 4).toUpperCase().padEnd(4);
+            const ad = (adi || '-------').substring(0, 7).toUpperCase().padEnd(7);
 
-            return center(`|${f1}|${f2}|${f3}|${ad}|`);
+            return `|${f1}|${f2}|${f3}|${ad}|`;
         };
 
         const topDivider = '='.repeat(TICKET_WIDTH);
