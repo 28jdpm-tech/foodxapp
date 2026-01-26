@@ -154,6 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
         savePrintingSettings: document.getElementById('savePrintingSettings'),
         textPrinterBtn: document.getElementById('textPrinterBtn'),
         testDrawerBtn: document.getElementById('testDrawerBtn'),
+        pairBluetoothBtn: document.getElementById('pairBluetoothBtn'),
+        printerStatusBar: document.getElementById('printerStatusBar'),
         // Reports
         reportDatePicker: document.getElementById('reportDatePicker'),
         searchReportBtn: document.getElementById('searchReportBtn'),
@@ -616,13 +618,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 pendingOrder.printed = true;
 
                 // Save Order
-                StorageManager.addOrder(pendingOrder);
-
-                // Show Printing Dialog
-                window.print();
-
                 // Success Notification
-                showNotification(`Pedido ${pendingOrder.orderNumber} impreso y guardado`);
+                showNotification(`Pedido ${pendingOrder.orderNumber} guardado`);
+
+                // Print
+                if (bluetoothCharacteristic) {
+                    sendToBluetoothPrinter(elements.ticketContent.textContent);
+                } else {
+                    window.print();
+                }
 
                 // Close Modal & Reset
                 closeTicketModal();
@@ -872,13 +876,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Set as printed for checkout
                 StorageManager.updateOrder(selectedPaymentOrder.id, { checkoutPrinted: true });
 
-                // Show Printing Dialog
-                window.print();
-
-                // Refresh and close if needed (or just refresh)
-                showNotification(`Pedido ${selectedPaymentOrder.orderNumber} enviado a cobrar`);
-                elements.paymentModal.classList.add('hidden');
-                renderCheckoutPage();
+                // Print
+                if (bluetoothCharacteristic) {
+                    sendToBluetoothPrinter(elements.paymentTicketContent.textContent);
+                    showNotification(`Pedido ${selectedPaymentOrder.orderNumber} enviado a imprimir (BT)`);
+                    elements.paymentModal.classList.add('hidden');
+                    renderCheckoutPage();
+                } else {
+                    window.print();
+                    showNotification(`Pedido ${selectedPaymentOrder.orderNumber} enviado a cobrar`);
+                    elements.paymentModal.classList.add('hidden');
+                    renderCheckoutPage();
+                }
             }
         });
     }
@@ -1057,10 +1066,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.reprintOrderBtn) {
         elements.reprintOrderBtn.addEventListener('click', () => {
             if (selectedHistoryOrder) {
-                // In a real app, this would send to a printer
-                // For now we use browser print
-                showTicketModal(selectedHistoryOrder);
-                window.print();
+                if (bluetoothCharacteristic) {
+                    sendToBluetoothPrinter(elements.historyTicketContent.textContent);
+                    showNotification('Reimpresión enviada a impresora BT');
+                } else {
+                    showTicketModal(selectedHistoryOrder);
+                    window.print();
+                }
             }
         });
     }
@@ -1249,8 +1261,14 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             elements.ticketContent.textContent = generateTicketText(tempOrder);
-            elements.ticketModal.classList.add('open');
-            window.print();
+
+            if (bluetoothCharacteristic) {
+                sendToBluetoothPrinter(elements.ticketContent.textContent);
+                showNotification('Ticket de prueba enviado a impresora BT');
+            } else {
+                elements.ticketModal.classList.add('open');
+                window.print();
+            }
         });
     }
 
@@ -1267,6 +1285,119 @@ document.addEventListener('DOMContentLoaded', () => {
             openCashDrawer();
         });
     }
+
+    // --- Bluetooth Printer Implementation ---
+    let bluetoothDevice = null;
+    let bluetoothCharacteristic = null;
+
+    if (elements.pairBluetoothBtn) {
+        elements.pairBluetoothBtn.addEventListener('click', async () => {
+            try {
+                showNotification('Buscando dispositivos Bluetooth...');
+
+                // Thermal printers usually use the 0xFFE0 or 0x18F0 service
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { services: [0xFFE0] },
+                        { services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] },
+                        { namePrefix: 'Printer' },
+                        { namePrefix: 'MPT' },
+                        { namePrefix: 'TP' }
+                    ],
+                    optionalServices: [0xFFE0, '0000ffe1-0000-1000-8000-00805f9b34fb']
+                });
+
+                bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+                await connectToBluetoothDevice();
+
+            } catch (error) {
+                console.error('Bluetooth error:', error);
+                if (error.name !== 'NotFoundError') {
+                    showNotification('Error al vincular: ' + error.message);
+                }
+            }
+        });
+    }
+
+    async function connectToBluetoothDevice() {
+        if (!bluetoothDevice) return;
+
+        try {
+            const server = await bluetoothDevice.gatt.connect();
+            const service = await server.getPrimaryService(0xFFE0);
+
+            // Get all characteristics and find the one that supports writing
+            const characteristics = await service.getCharacteristics();
+            bluetoothCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
+
+            if (bluetoothCharacteristic) {
+                updatePrinterUI(true, bluetoothDevice.name);
+                showNotification('Impresora vinculada: ' + bluetoothDevice.name);
+            } else {
+                throw new Error('No se encontró canal de escritura');
+            }
+        } catch (error) {
+            console.error('Connection error:', error);
+            updatePrinterUI(false);
+            showNotification('Error de conexión: ' + error.message);
+        }
+    }
+
+    function onDisconnected() {
+        updatePrinterUI(false);
+        showNotification('Impresora desconectada');
+        bluetoothCharacteristic = null;
+    }
+
+    function updatePrinterUI(connected, name = 'Desconectado') {
+        if (!elements.printerStatusBar) return;
+
+        if (connected) {
+            elements.printerStatusBar.classList.add('connected');
+            if (elements.printerStatusBar.querySelector('.status-text')) {
+                elements.printerStatusBar.querySelector('.status-text').textContent = 'Conectado: ' + name;
+            }
+        } else {
+            elements.printerStatusBar.classList.remove('connected');
+            if (elements.printerStatusBar.querySelector('.status-text')) {
+                elements.printerStatusBar.querySelector('.status-text').textContent = 'Desconectado';
+            }
+        }
+    }
+
+    // Helper to send data to BT printer
+    async function sendToBluetoothPrinter(text) {
+        if (!bluetoothCharacteristic) {
+            console.warn('Bluetooth printer not connected');
+            return false;
+        }
+
+        try {
+            // Encode text to Uint8Array (Windows-1252 or CP850 is usually standard for thermal)
+            const encoder = new TextEncoder();
+            const data = encoder.encode(text + '\n\n\n');
+
+            // Send in chunks if necessary (BT has MTU limits, usually around 20-512 bytes)
+            const chunkSize = 20;
+            for (let i = 0; i < data.length; i += chunkSize) {
+                const chunk = data.slice(i, i + chunkSize);
+                await bluetoothCharacteristic.writeValue(chunk);
+            }
+            return true;
+        } catch (error) {
+            console.error('Print error:', error);
+            return false;
+        }
+    }
+
+    // Hook window.print if BT is connected? 
+    // For now, let's just make the test button use it
+    const originalPrint = window.print;
+    // We don't overwrite window.print because it's used for native printing
+    // but we can add a check in our print button logic
+
+    // Administration Logic ...
 
     // ============================================
     // Administration Logic

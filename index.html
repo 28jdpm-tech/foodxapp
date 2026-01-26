@@ -416,9 +416,19 @@
                                 <label>Dirección IP o Nombre</label>
                                 <input type="text" id="printerAddress" placeholder="192.168.1.100">
                             </div>
-                            <button class="btn-primary full-width" id="textPrinterBtn">
-                                Probar Impresión
-                            </button>
+                            <div class="printer-status-bar" id="printerStatusBar">
+                                <span class="status-dot"></span>
+                                <span class="status-text">Desconectado</span>
+                            </div>
+                            <div class="button-group-vertical"
+                                style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                                <button class="btn-secondary full-width" id="pairBluetoothBtn">
+                                    <i data-lucide="search"></i> Buscar Bluetooth ESC/POS
+                                </button>
+                                <button class="btn-primary full-width" id="textPrinterBtn">
+                                    <i data-lucide="printer"></i> Probar Impresión
+                                </button>
+                            </div>
                         </div>
                     </div>
 

@@ -2591,3 +2591,39 @@ body {
     border-radius: var(--radius-md);
     font-weight: 600;
 }
+
+.printer-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: var(--bg-main);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ef4444;
+    /* Rojo por defecto */
+    box-shadow: 0 0 5px #ef4444;
+}
+
+.printer-status-bar.connected .status-dot {
+    background: #10b981;
+    /* Verde */
+    box-shadow: 0 0 5px #10b981;
+}
+
+.status-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.connected .status-text {
+    color: #10b981;
+}
