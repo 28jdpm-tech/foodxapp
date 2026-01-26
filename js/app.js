@@ -1118,8 +1118,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (left.length > COL1_WIDTH) left = left.substring(0, COL1_WIDTH);
             if (right.length > COL2_WIDTH) right = right.substring(0, COL2_WIDTH);
 
-            // Result: Left text + gap + Right text + 2 spaces (Slightly away from right edge)
             return left.padEnd(COL1_WIDTH) + ' ' + right.padEnd(COL2_WIDTH) + '  ';
+        };
+
+        const tableHeader = () => {
+            // 24 chars: "#  S1  S2  S3  ADI"
+            return "#  S1  S2  S3  ADI";
+        };
+
+        const tableRow = (qty, s1, s2, s3, adi) => {
+            const q = String(qty).padStart(1);
+            const f1 = (s1 || '---').substring(0, 3).toUpperCase().padEnd(3);
+            const f2 = (s2 || '---').substring(0, 3).toUpperCase().padEnd(3);
+            const f3 = (s3 || '---').substring(0, 3).toUpperCase().padEnd(3);
+            const ad = (adi || '---').substring(0, 3).toUpperCase().padEnd(3);
+
+            return `${q}  ${f1} ${f2} ${f3} ${ad}`;
         };
 
         const topDivider = '='.repeat(TICKET_WIDTH);
@@ -1152,21 +1166,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
 
-            // Full category name with a few slashes, slightly left-biased
-            const catHeader = `/// ${cat.name}(${catTotalQty}) ///`.toUpperCase();
-            // Start with a small 2-space indentation to move it left
-            ticket += '\n  ' + catHeader + '\n';
-            ticket += twoColumns('PRODUCTO', 'ADI') + '\n';
+            // Full category name
+            ticket += '\n  ' + `/// ${cat.name}(${catTotalQty}) ///`.toUpperCase() + '\n';
+            ticket += tableHeader() + '\n';
             ticket += subDivider + '\n';
 
             cat.items.forEach((item) => {
-                // 3-letter abbreviation for flavors
-                const flavorAbbr = item.flavors.map(f => f.substring(0, 3).toUpperCase()).join('-');
-                // 3-letter abbreviation for extras
-                const extraAbbr = item.extras.length > 0 ? item.extras[0].substring(0, 3).toUpperCase() : '';
+                const s1 = item.flavors[0] || '';
+                const s2 = item.flavors[1] || '';
+                const s3 = item.flavors[2] || '';
+                const adi = item.extras[0] || '';
 
-                // Two columns layout
-                ticket += twoColumns(flavorAbbr, extraAbbr) + '\n';
+                // Table row layout
+                ticket += tableRow(item.qty, s1, s2, s3, adi) + '\n';
 
                 // Observations line beneath
                 if (item.observations && item.observations.trim() !== '') {
