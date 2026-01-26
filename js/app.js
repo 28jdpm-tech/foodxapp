@@ -1088,17 +1088,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function generateTicketText(order) {
-        const TICKET_WIDTH = 42;
+        const TICKET_WIDTH = 48;
         const labels = { salon: 'SALÓN', llevar: 'LLEVAR', domicilio: 'DOMICILIO' };
         const now = new Date(order.createdAt || Date.now());
         const dateStr = now.toLocaleDateString('es-CO');
         const timeStr = now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-
-        const pad = (str, len, right = false) => {
-            str = String(str);
-            if (str.length > len) return str.substring(0, len);
-            return right ? str.padEnd(len) : str.padStart(len);
-        };
 
         const center = (str) => {
             str = String(str).toUpperCase();
@@ -1112,18 +1106,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return leftStr + ' '.repeat(Math.max(1, spaceNeeded)) + rightStr;
         };
 
-        const divider = '='.repeat(TICKET_WIDTH);
-        const subDivider = '-'.repeat(TICKET_WIDTH);
+        const topDivider = '='.repeat(31);
+        const lineDivider = '-'.repeat(35);
+        const mainDivider = '-'.repeat(TICKET_WIDTH);
 
         let ticket = '';
-        ticket += divider + '\n';
+        ticket += center(topDivider) + '\n';
         ticket += center('FOODX POS PRO') + '\n';
         ticket += center(`ORDEN: ${order.orderNumber || 'PREVIEW'}`) + '\n';
-        ticket += divider + '\n';
+        ticket += center(topDivider) + '\n';
 
-        ticket += justify(`FECHA: ${dateStr}`, `HORA: ${timeStr}`) + '\n';
-        ticket += `TIPO: ${labels[order.serviceType]}\n`;
-        ticket += subDivider + '\n';
+        ticket += justify(`FECHA: ${dateStr}`, `HORA: ${timeStr}`) + '\n\n';
+        ticket += center(`TIPO: ${labels[order.serviceType]}`) + '\n';
+        ticket += center(lineDivider) + '\n';
 
         // Group items by category
         const itemsByCategory = {};
@@ -1141,41 +1136,38 @@ document.addEventListener('DOMContentLoaded', () => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
 
-            ticket += '\n' + center(`>>> ${cat.name} (${catTotalQty}) <<<`) + '\n';
-            ticket += pad('CANT', 5, true) + pad('PRODUCTO', 25, true) + pad('PRECIO', 12) + '\n';
-            ticket += subDivider + '\n';
+            ticket += '\n' + center(`>>> ${cat.name} (${catTotalQty}) <<<`) + '\n\n';
+            ticket += justify('PRODUCTO', 'ADICIONAL') + '\n';
+            ticket += mainDivider + '\n';
 
             cat.items.forEach((item) => {
                 const isBebida = item.category === 'bebidas';
                 let productName = '';
 
                 if (isBebida) {
-                    productName = item.flavors.join(' - ').toUpperCase() || 'BEBIDA';
+                    productName = item.flavors.join('-').toUpperCase() || 'BEBIDA';
                 } else {
-                    const flavorStr = item.flavors.join('-').toUpperCase();
-                    productName = `${item.size} ${flavorStr}`;
+                    const flavorNames = item.flavors.join('-').toUpperCase();
+                    productName = `${item.qty} ${item.size} ${flavorNames}`;
                 }
 
-                // Main item line
-                ticket += pad(item.qty, 4, true) + ' ' + pad(productName, 24, true) + ' ' + pad(formatPrice(item.price), 11) + '\n';
+                const extrasStr = item.extras.length > 0 ? item.extras.join(', ').toUpperCase() : '';
 
-                // Extras line
-                if (item.extras && item.extras.length > 0) {
-                    ticket += pad('', 5) + pad('+ ' + item.extras.join(', ').toUpperCase(), 37, true) + '\n';
-                }
+                // Show product and extras on same line (justified)
+                ticket += ' ' + justify(productName, extrasStr) + '\n';
 
                 // Observations line
                 if (item.observations && item.observations.trim() !== '') {
-                    ticket += pad('', 5) + pad('! ' + item.observations.toUpperCase(), 37, true) + '\n';
+                    ticket += '       OBSER: ' + item.observations.toUpperCase() + '\n';
                 }
             });
+            ticket += mainDivider + '\n';
         });
 
-        ticket += '\n' + subDivider + '\n';
-        ticket += justify('TOTAL VENTA:', formatPrice(order.totalPrice)) + '\n';
-        ticket += divider + '\n';
+        ticket += '\n' + justify('TOTAL VENTA:', formatPrice(order.totalPrice)) + '\n';
+        ticket += center('='.repeat(TICKET_WIDTH)) + '\n';
         ticket += center('GRACIAS POR SU COMPRA') + '\n';
-        ticket += divider + '\n\n\n\n.';
+        ticket += center('='.repeat(TICKET_WIDTH)) + '\n\n\n\n.';
 
         return ticket;
     }
