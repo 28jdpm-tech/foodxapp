@@ -1104,10 +1104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const L_TOP = "┌───────────────────────┐";
-        const L_MID_TITLE = "├───────────────┬───────┤";
-        const L_MID_DATA = "├───────────────┼───────┤";
-        const L_MID_OBS_TOP = "├───────────────┴───────┤";
-        const L_MID_OBS_BOT = "├───────────────┬───────┤";
+        const L_MID = "├───────────────┬───────┤";
         const L_BOT = "└───────────────┴───────┘";
 
         const tableHeader = (catName, qty) => {
@@ -1118,19 +1115,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let h = L_TOP + "\n";
             h += headerRow + "\n";
-            h += L_MID_TITLE + "\n";
+            h += L_MID + "\n";
             h += "│   PRODUCTO    │ADICION│\n";
-            h += L_MID_DATA;
+            h += L_BOT;
             return h;
         };
 
         const tableRow = (s1, s2, s3, adi) => {
             const flavorsList = [s1, s2, s3].filter(f => f && f.trim() !== '');
             const flavors = flavorsList.join('-');
-            const fCol = flavors.substring(0, 15).toUpperCase().padEnd(15);
+            const fCol = flavors.substring(0, 15).toUpperCase().padEnd(16);
             const adCol = (adi || '').substring(0, 7).toUpperCase().padEnd(7);
 
-            return `│${fCol}│${adCol}│`;
+            return `${fCol}${adCol}`;
         };
 
         const topDivider = '='.repeat(TICKET_WIDTH);
@@ -1166,35 +1163,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // Table Header with category integrated
             ticket += '\n' + tableHeader(cat.name, catTotalQty) + '\n';
 
-            cat.items.forEach((item, index) => {
+            cat.items.forEach((item) => {
                 const s1 = item.flavors[0] || '';
                 const s2 = item.flavors[1] || '';
                 const s3 = item.flavors[2] || '';
                 const adi = item.extras[0] || '';
 
-                // Table row layout
+                // Table row without grid lines
                 ticket += tableRow(s1, s2, s3, adi) + '\n';
 
-                const isLastItem = (index === cat.items.length - 1);
-                const hasObs = (item.observations && item.observations.trim() !== '');
-
-                if (hasObs) {
-                    ticket += L_MID_OBS_TOP + '\n';
-                    const obsText = ` Obs: ${item.observations}`.toUpperCase();
-                    const innerWidth = TICKET_WIDTH - 2;
-                    const obsRow = "│" + obsText.substring(0, innerWidth).padEnd(innerWidth) + "│";
-                    ticket += obsRow + '\n';
-                    if (isLastItem) {
-                        ticket += L_BOT + '\n';
-                    } else {
-                        ticket += L_MID_OBS_BOT + '\n';
-                    }
-                } else {
-                    if (isLastItem) {
-                        ticket += L_BOT + '\n';
-                    } else {
-                        ticket += L_MID_DATA + '\n';
-                    }
+                if (item.observations && item.observations.trim() !== '') {
+                    ticket += ' * OBS: ' + item.observations.toUpperCase() + '\n';
                 }
             });
         });
