@@ -1105,17 +1105,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tableLine = () => "+----+----+----+-------+";
 
-        const tableHeader = () => {
+        const tableHeader = (catName, qty) => {
+            const title = `${catName} (${qty})`.toUpperCase();
+            const innerWidth = TICKET_WIDTH - 2;
+            const padding = Math.max(0, Math.floor((innerWidth - title.length) / 2));
+            const headerRow = "|" + " ".repeat(padding) + title + " ".repeat(innerWidth - title.length - padding) + "|";
+
             let h = tableLine() + "\n";
-            h += "| S1 | S2 | S3 |  ADI  |";
+            h += headerRow + "\n";
+            h += tableLine() + "\n";
+            h += "| S1 | S2 | S3 |ADICION|" + "\n";
+            h += tableLine();
             return h;
         };
 
         const tableRow = (s1, s2, s3, adi) => {
-            const f1 = (s1 || '----').substring(0, 4).toUpperCase().padEnd(4);
-            const f2 = (s2 || '----').substring(0, 4).toUpperCase().padEnd(4);
-            const f3 = (s3 || '----').substring(0, 4).toUpperCase().padEnd(4);
-            const ad = (adi || '-------').substring(0, 7).toUpperCase().padEnd(7);
+            const f1 = (s1 || '').substring(0, 4).toUpperCase().padEnd(4);
+            const f2 = (s2 || '').substring(0, 4).toUpperCase().padEnd(4);
+            const f3 = (s3 || '').substring(0, 4).toUpperCase().padEnd(4);
+            const ad = (adi || '').substring(0, 7).toUpperCase().padEnd(7);
 
             return `|${f1}|${f2}|${f3}|${ad}|`;
         };
@@ -1150,9 +1158,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
 
-            // Full category name
-            ticket += '\n  ' + `/// ${cat.name}(${catTotalQty}) ///`.toUpperCase() + '\n';
-            ticket += tableHeader() + '\n';
+            // Table Header with category integrated
+            ticket += '\n' + tableHeader(cat.name, catTotalQty) + '\n';
 
             cat.items.forEach((item) => {
                 const s1 = item.flavors[0] || '';
@@ -1165,7 +1172,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Observations line beneath
                 if (item.observations && item.observations.trim() !== '') {
-                    ticket += ' * ' + item.observations.toUpperCase() + '\n';
+                    ticket += tableLine() + '\n';
+                    const obsText = ` Obs: ${item.observations}`.toUpperCase();
+                    const innerWidth = TICKET_WIDTH - 2;
+                    const obsRow = "|" + obsText.substring(0, innerWidth).padEnd(innerWidth) + "|";
+                    ticket += obsRow + '\n';
+                    ticket += tableLine() + '\n';
                 }
             });
             ticket += tableLine() + '\n';
