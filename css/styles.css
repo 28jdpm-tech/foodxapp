@@ -2258,7 +2258,7 @@ body {
         position: relative !important;
         width: 80mm !important;
         max-width: 80mm !important;
-        padding-left: 5mm !important;
+        padding-left: 2mm !important;
         padding-right: 5mm !important;
         padding-top: 5mm !important;
         padding-bottom: 5mm !important;
@@ -2267,7 +2267,7 @@ body {
         color: black !important;
         display: flex !important;
         flex-direction: column !important;
-        align-items: center !important;
+        align-items: flex-start !important;
     }
 
     .ticket-title {
@@ -2327,7 +2327,7 @@ body {
         background: white !important;
         box-shadow: none !important;
         border-radius: 0 !important;
-        padding-left: 5mm !important;
+        padding-left: 2mm !important;
         padding-right: 5mm !important;
         padding-top: 0 !important;
         padding-bottom: 0 !important;
