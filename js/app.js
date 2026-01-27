@@ -746,9 +746,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // to-print: Not paid AND NOT printed for checkout
         // pending: Not paid AND printed for checkout
         // paid: Paid
+        const today = new Date().toDateString();
         const toPrint = orders.filter(o => !o.paid && !o.checkoutPrinted);
         const pending = orders.filter(o => !o.paid && o.checkoutPrinted);
-        const paid = orders.filter(o => o.paid);
+        const paid = orders.filter(o => o.paid && new Date(o.createdAt).toDateString() === today);
 
         if (elements.toPrintCount) elements.toPrintCount.textContent = toPrint.length;
         if (elements.pendingPaymentCount) elements.pendingPaymentCount.textContent = pending.length;
