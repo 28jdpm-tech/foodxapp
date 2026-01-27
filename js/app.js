@@ -480,7 +480,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const obsData = data.observation ? categoryObs.find(o => o.id === data.observation) : null;
                     const obsPrice = obsData ? (obsData.price || 0) : 0;
 
-                    rowPrice = (basePrice + extraPrice + obsPrice) * data.qty;
+                    if (category === 'salchipapas' && data.observation) {
+                        rowPrice = obsPrice * data.qty;
+                    } else {
+                        rowPrice = (basePrice + extraPrice + obsPrice) * data.qty;
+                    }
                 }
                 total += rowPrice;
             }
@@ -567,6 +571,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         basePrice = config.prices[category][size];
                     }
 
+                    let rowPrice = 0;
+                    if (category === 'salchipapas' && rowData.observation) {
+                        rowPrice = obsPrice * rowData.qty;
+                    } else {
+                        rowPrice = (basePrice + extraPrice + obsPrice) * rowData.qty;
+                    }
+
                     items.push({
                         id: generateId(),
                         category: category,
@@ -577,7 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         flavors: flavorNames,
                         extras: extraName ? [extraName] : [],
                         observations: obsName,
-                        price: (basePrice + extraPrice + obsPrice) * rowData.qty
+                        price: rowPrice
                     });
                 });
             });
