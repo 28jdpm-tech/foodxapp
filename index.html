@@ -91,6 +91,17 @@
                     <button class="service-tab" data-service="domicilio">DOMICILIO</button>
                 </div>
 
+                <!-- Customer Name / Table Input -->
+                <div class="customer-input-container"
+                    style="margin: 0 var(--space-md) var(--space-md) var(--space-md);">
+                    <div class="input-group"
+                        style="display: flex; gap: var(--space-sm); align-items: center; background: var(--bg-secondary); padding: 12px 18px; border-radius: var(--radius-lg); border: 2px solid var(--border-subtle); transition: border-color 0.2s;">
+                        <i data-lucide="user" style="width: 20px; height: 20px; color: var(--accent-secondary);"></i>
+                        <input type="text" id="orderCustomerName" placeholder="NOMBRE CLIENTE O NÚMERO DE MESA"
+                            style="background: transparent; border: none; color: white; width: 100%; outline: none; font-weight: 700; font-size: 1rem; text-transform: uppercase;">
+                    </div>
+                </div>
+
                 <!-- Order Categories -->
                 <div class="order-categories" id="orderCategories">
                     <!-- Categories will be rendered dynamically by JavaScript -->

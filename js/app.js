@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         categorySections: document.querySelectorAll('.category-section'),
         totalAmount: document.getElementById('totalAmount'),
         sendToKitchenBtn: document.getElementById('sendToKitchenBtn'),
+        orderCustomerName: document.getElementById('orderCustomerName'),
         // Checkout / Payment
         toPrintCount: document.getElementById('toPrintCount'),
         pendingPaymentCount: document.getElementById('pendingPaymentCount'),
@@ -599,14 +600,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         isAppending: true
                     };
                     if (elements.ticketModal) {
-                        elements.ticketModal.querySelector('h3').textContent = `Adición a Orden #${originalOrder.orderNumber}`;
+                        elements.ticketModal.querySelector('h3').textContent = `Adición a Orden ${originalOrder.orderNumber}`;
                     }
                 }
             } else {
+                const customerCode = elements.orderCustomerName.value.trim().toUpperCase();
+                const orderNum = customerCode || generateOrderNumber();
+
                 pendingOrder = {
-                    orderNumber: generateOrderNumber(),
+                    orderNumber: orderNum,
                     serviceType: state.serviceType,
-                    customerInfo: state.serviceType === 'salon' ? 'Mesa' : state.serviceType === 'llevar' ? 'Para llevar' : 'Domicilio',
+                    customerInfo: customerCode || (state.serviceType === 'salon' ? 'Mesa' : state.serviceType === 'llevar' ? 'Para llevar' : 'Domicilio'),
                     items: items,
                     status: 'pending',
                     totalPrice: items.reduce((sum, item) => sum + item.price, 0),
@@ -721,6 +725,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset order total
         state.orderTotal = 0;
         updateOrderTotal();
+
+        // Clear customer name
+        if (elements.orderCustomerName) elements.orderCustomerName.value = '';
     }
 
     // ============================================
@@ -906,7 +913,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const appFooter = document.getElementById('appFooter');
         if (appFooter) appFooter.style.display = 'flex';
 
-        showNotification(`Añadiendo productos a la Orden #${order.orderNumber}`);
+        if (elements.orderCustomerName) {
+            elements.orderCustomerName.value = order.orderNumber.replace('#', '');
+        }
+
+        showNotification(`Añadiendo productos a la Orden ${order.orderNumber}`);
         lucide.createIcons();
     };
 
