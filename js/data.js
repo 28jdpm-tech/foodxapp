@@ -156,9 +156,17 @@ function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
-// Generate order number
+// Generate order number with daily reset
 let orderCounter = parseInt(localStorage.getItem('foodx_order_counter') || '0');
 function generateOrderNumber() {
+    const today = new Date().toDateString();
+    const lastDate = localStorage.getItem('foodx_last_order_date');
+
+    if (lastDate !== today) {
+        orderCounter = 0;
+        localStorage.setItem('foodx_last_order_date', today);
+    }
+
     orderCounter++;
     localStorage.setItem('foodx_order_counter', orderCounter.toString());
     return '#' + String(orderCounter).padStart(3, '0');
