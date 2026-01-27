@@ -1177,6 +1177,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (elements.historyDatePicker) {
+        // Set default to today
+        const today = new Date().toISOString().split('T')[0];
+        elements.historyDatePicker.value = today;
+
+        // Auto-search on change
+        elements.historyDatePicker.addEventListener('change', () => {
+            if (historyMode === 'date') {
+                renderHistoryPage();
+            }
+        });
+    }
+
     if (elements.backToHistoryBtn) {
         elements.backToHistoryBtn.addEventListener('click', () => {
             elements.historyOrderDetail.classList.add('hidden');

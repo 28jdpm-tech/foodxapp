@@ -2600,3 +2600,64 @@ body {
     align-items: center;
     gap: var(--space-sm);
 }
+
+/* History Date Picker Styling */
+.date-picker-container {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-default);
+    margin: var(--space-md) var(--space-lg);
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+}
+
+.date-picker-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    padding: 10px 15px;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    outline: none;
+    transition: all var(--transition-fast);
+}
+
+.date-picker-input:focus {
+    border-color: var(--accent-primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.search-date-btn {
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all var(--transition-fast);
+}
+
+.search-date-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.search-date-btn:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 600px) {
+    .date-picker-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
