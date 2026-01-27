@@ -457,10 +457,34 @@
                 </div>
             </div>
         </div>
-
-    </div>
-    </div>
-    </div>
+        <!-- Ticket Modal -->
+        <div class="modal" id="ticketModal">
+            <div class="modal-overlay" id="closeTicketModal"></div>
+            <div class="modal-content" style="max-width: 320px;">
+                <div class="modal-header">
+                    <h3>Confirmar Pedido</h3>
+                    <button class="close-modal" id="cancelTicket">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 0;">
+                    <div class="ticket-container" style="background: white; padding: var(--space-md);">
+                        <pre class="ticket-content" id="ticketContent"
+                            style="font-family: 'Courier New', Courier, monospace; font-size: 11px; white-space: pre; color: black;"></pre>
+                    </div>
+                </div>
+                <div class="modal-footer" style="flex-direction: column; gap: var(--space-sm);">
+                    <button class="btn-print" id="printTicket" style="width: 100%;">
+                        <i data-lucide="printer"></i> Imprimir y Enviar
+                    </button>
+                    <button class="btn-confirm" id="confirmTicket" style="width: 100%;">
+                        <i data-lucide="check"></i> Solo Enviar a Cocina
+                    </button>
+                    <button class="btn-cancel" id="cancelTicketFooter" style="width: 100%;">
+                        Volver a Corregir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div> <!-- Final de app-container -->
 
     <!-- Admin Login Modal -->
     <div class="modal" id="adminLoginModal">
@@ -488,7 +512,6 @@
                 </button>
             </div>
         </div>
-    </div>
     </div>
 
     <!-- Firebase SDK -->

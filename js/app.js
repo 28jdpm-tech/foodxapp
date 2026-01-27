@@ -115,6 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ticketModal: document.getElementById('ticketModal'),
         ticketContent: document.getElementById('ticketContent'),
         cancelTicket: document.getElementById('cancelTicket'),
+        cancelTicketFooter: document.getElementById('cancelTicketFooter'),
+        closeTicketModal: document.getElementById('closeTicketModal'),
         printTicket: document.getElementById('printTicket'),
         confirmTicket: document.getElementById('confirmTicket'),
         // Admin
@@ -605,24 +607,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (elements.cancelTicket) elements.cancelTicket.addEventListener('click', closeTicketModal);
+    if (elements.cancelTicketFooter) elements.cancelTicketFooter.addEventListener('click', closeTicketModal);
+    if (elements.closeTicketModal) elements.closeTicketModal.addEventListener('click', closeTicketModal);
 
     if (elements.printTicket) {
         elements.printTicket.addEventListener('click', () => {
             if (pendingOrder) {
-                // Mark as printed before saving
-                // Mark as printed before saving
                 pendingOrder.printed = true;
-
-                // Save Order
                 StorageManager.addOrder(pendingOrder);
-
-                // Show Printing Dialog
                 window.print();
+                showNotification(`Pedido ${pendingOrder.orderNumber} impreso y enviado`);
+                closeTicketModal();
+                resetAllCategories();
+            }
+        });
+    }
 
-                // Success Notification
-                showNotification(`Pedido ${pendingOrder.orderNumber} impreso y guardado`);
-
-                // Close Modal & Reset
+    if (elements.confirmTicket) {
+        elements.confirmTicket.addEventListener('click', () => {
+            if (pendingOrder) {
+                // Save Order without printing
+                StorageManager.addOrder(pendingOrder);
+                showNotification(`Pedido ${pendingOrder.orderNumber} enviado a cocina`);
                 closeTicketModal();
                 resetAllCategories();
             }
