@@ -127,6 +127,17 @@ const StorageManager = {
         return this.getOrders().filter(o => new Date(o.createdAt).toDateString() === today);
     },
 
+    // Current month orders
+    getCurrentMonthOrders() {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        return this.getOrders().filter(o => {
+            const date = new Date(o.createdAt);
+            return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+        });
+    },
+
     // Get orders by specific date (YYYY-MM-DD)
     getOrdersByDate(dateStr) {
         if (!dateStr) return [];
@@ -238,6 +249,16 @@ const StorageManager = {
             return orders[index];
         }
         return null;
+    },
+
+    async deleteOrder(orderId) {
+        const orders = this.getOrders().filter(o => o.id !== orderId);
+        this.saveOrders(orders);
+        try {
+            await db.collection('orders').doc(orderId).delete();
+        } catch (e) {
+            console.error("Error deleting from cloud:", e);
+        }
     },
 
     // Clear all data (for testing)

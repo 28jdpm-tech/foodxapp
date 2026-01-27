@@ -106,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pendingPaymentList: document.getElementById('pendingPaymentList'),
         paidOrdersList: document.getElementById('paidOrdersList'),
         paymentModal: document.getElementById('paymentModal'),
+        paymentModalOverlay: document.getElementById('paymentModalOverlay'),
         paymentOrderNum: document.getElementById('paymentOrderNum'),
         paymentTicketContent: document.getElementById('paymentTicketContent'),
         paymentTotal: document.getElementById('paymentTotal'),
@@ -146,6 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
         historyDatePicker: document.getElementById('historyDatePicker'),
         searchDateBtn: document.getElementById('searchDateBtn'),
         historyOrdersList: document.getElementById('historyOrdersList'),
+        historyOrderModal: document.getElementById('historyOrderModal'),
+        historyModalOverlay: document.getElementById('historyModalOverlay'),
         historyOrderDetail: document.getElementById('historyOrderDetail'),
         historyTicketContent: document.getElementById('historyTicketContent'),
         backToHistoryBtn: document.getElementById('backToHistoryBtn'),
@@ -153,7 +156,13 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteOrderBtnHistory: document.getElementById('deleteOrderBtnHistory'),
         // Reports
         reportDatePicker: document.getElementById('reportDatePicker'),
+        reportPeriodSelect: document.getElementById('reportPeriodSelect'),
+        reportDatePickerGroup: document.getElementById('reportDatePickerGroup'),
         searchReportBtn: document.getElementById('searchReportBtn'),
+        reportDailySales: document.getElementById('reportDailySales'),
+        reportFoodSales: document.getElementById('reportFoodSales'),
+        reportBebidasSales: document.getElementById('reportBebidasSales'),
+        reportDesechablesSales: document.getElementById('reportDesechablesSales'),
         // Admin Security
         adminLoginModal: document.getElementById('adminLoginModal'),
         adminPasswordInput: document.getElementById('adminPasswordInput'),
@@ -162,6 +171,17 @@ document.addEventListener('DOMContentLoaded', () => {
         newAdminPassword: document.getElementById('newAdminPassword'),
         confirmAdminPassword: document.getElementById('confirmAdminPassword'),
         saveAdminPasswordBtn: document.getElementById('saveAdminPasswordBtn'),
+        // History Summary
+        historyTotalSales: document.getElementById('historyTotalSales'),
+        historyTotalFood: document.getElementById('historyTotalFood'),
+        historyTotalBebidas: document.getElementById('historyTotalBebidas'),
+        historyTotalDesechables: document.getElementById('historyTotalDesechables'),
+        // Detailed Reports
+        categorySalesList: document.getElementById('categorySalesList'),
+        extrasSalesList: document.getElementById('extrasSalesList'),
+        flavorSalesList: document.getElementById('flavorSalesList'),
+        sizeSalesList: document.getElementById('sizeSalesList'),
+        categoryQtyList: document.getElementById('categoryQtyList'),
     };
 
     // ============================================
@@ -599,7 +619,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (state.appendingOrderId) {
-                const originalOrder = StorageManager.getOrders().find(o => o.id === state.appendingOrderId);
+                const originalOrder = StorageManager.getOrders().find(o => o.id == state.appendingOrderId);
                 if (originalOrder) {
                     pendingOrder = {
                         ...originalOrder,
@@ -663,7 +683,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.printTicket.addEventListener('click', () => {
             if (pendingOrder) {
                 if (pendingOrder.isAppending) {
-                    const originalOrder = StorageManager.getOrders().find(o => o.id === pendingOrder.id);
+                    const originalOrder = StorageManager.getOrders().find(o => o.id == pendingOrder.id);
                     if (originalOrder) {
                         const updatedItems = [...originalOrder.items, ...pendingOrder.newItems];
                         const updatedTotalPrice = updatedItems.reduce((sum, item) => sum + item.price, 0);
@@ -690,7 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.confirmTicket.addEventListener('click', () => {
             if (pendingOrder) {
                 if (pendingOrder.isAppending) {
-                    const originalOrder = StorageManager.getOrders().find(o => o.id === pendingOrder.id);
+                    const originalOrder = StorageManager.getOrders().find(o => o.id == pendingOrder.id);
                     if (originalOrder) {
                         const updatedItems = [...originalOrder.items, ...pendingOrder.newItems];
                         const updatedTotalPrice = updatedItems.reduce((sum, item) => sum + item.price, 0);
@@ -895,7 +915,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.appendToOrder = function (orderId) {
-        const order = StorageManager.getOrders().find(o => o.id === orderId);
+        const order = StorageManager.getOrders().find(o => o.id == orderId);
         if (!order) return;
 
         state.appendingOrderId = orderId;
@@ -936,7 +956,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function openPaymentModal(orderId) {
-        const order = StorageManager.getOrders().find(o => o.id === orderId);
+        const order = StorageManager.getOrders().find(o => o.id == orderId);
         if (!order || !elements.paymentModal) return;
 
         selectedPaymentOrder = order;
@@ -979,6 +999,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.cancelPayment) {
         elements.cancelPayment.addEventListener('click', () => {
+            elements.paymentModal.classList.add('hidden');
+            selectedPaymentOrder = null;
+        });
+    }
+
+    if (elements.paymentModalOverlay) {
+        elements.paymentModalOverlay.addEventListener('click', () => {
             elements.paymentModal.classList.add('hidden');
             selectedPaymentOrder = null;
         });
@@ -1091,48 +1118,187 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================
 
     function renderReportsPage() {
-        const filterDate = elements.reportDatePicker?.value;
-        const orders = filterDate
-            ? StorageManager.getOrdersByDate(filterDate)
-            : StorageManager.getTodayOrders();
+        const period = elements.reportPeriodSelect?.value || 'today';
+        let orders = [];
+
+        switch (period) {
+            case 'today':
+                orders = StorageManager.getTodayOrders();
+                break;
+            case 'date':
+                const filterDate = elements.reportDatePicker?.value;
+                orders = filterDate ? StorageManager.getOrdersByDate(filterDate) : StorageManager.getTodayOrders();
+                break;
+            case 'month':
+                orders = StorageManager.getCurrentMonthOrders();
+                break;
+            case 'total':
+                orders = StorageManager.getOrders();
+                break;
+            default:
+                orders = StorageManager.getTodayOrders();
+        }
 
         const paidOrders = orders.filter(o => o.paid);
 
         const totalSales = paidOrders.reduce((sum, o) => sum + o.totalPrice, 0);
-        const totalOrders = paidOrders.length;
-        const avgTicket = totalOrders > 0 ? totalSales / totalOrders : 0;
+        let totalFood = 0;
+        let totalBebidas = 0;
+        let totalDesechables = 0;
 
-        // Update stats
-        if (document.getElementById('reportDailySales')) document.getElementById('reportDailySales').textContent = formatPrice(totalSales);
-        if (document.getElementById('reportDailyOrders')) document.getElementById('reportDailyOrders').textContent = totalOrders;
-        if (document.getElementById('reportAvgTicket')) document.getElementById('reportAvgTicket').textContent = formatPrice(avgTicket);
+        const foodCategories = ['hamburguesas', 'perros', 'salchipapas', 'combos'];
 
-        // Category Sales
+        // Metrics Maps
         const categorySales = {};
+        const categoryQtyStats = {}; // { cat: { total: 0, sizes: {} } }
+        const flavorStats = { food: {}, drinks: {}, disposables: {} };
+        const sizeCounts = { 'XS': 0, 'XM': 0, 'XL': 0, 'HB': 0, 'PE': 0, 'SA': 0 };
+        const extrasSales = {};
+
         paidOrders.forEach(order => {
             order.items.forEach(item => {
-                const catName = item.categoryName;
-                categorySales[catName] = (categorySales[catName] || 0) + item.price;
+                const catId = (item.category || '').toLowerCase();
+                const catName = (item.categoryName || '').toLowerCase();
+
+                let targetType = 'food';
+                if (catId === 'bebidas' || catName.includes('bebida')) {
+                    totalBebidas += item.price;
+                    targetType = 'drinks';
+                } else if (catId === 'desechables' || catName.includes('desechable')) {
+                    totalDesechables += item.price;
+                    targetType = 'disposables';
+                } else if (foodCategories.includes(catId) || foodCategories.some(f => catName.includes(f.substring(0, 4)))) {
+                    totalFood += item.price;
+                    targetType = 'food';
+                }
+
+                // Category Sales breakdown
+                const displayCatName = item.categoryName || 'Otros';
+                categorySales[displayCatName] = (categorySales[displayCatName] || 0) + item.price;
+
+                // Category Quantity breakdown
+                if (!categoryQtyStats[displayCatName]) {
+                    categoryQtyStats[displayCatName] = { total: 0, sizes: {} };
+                }
+                categoryQtyStats[displayCatName].total += item.qty;
+                if (item.size) {
+                    categoryQtyStats[displayCatName].sizes[item.size] = (categoryQtyStats[displayCatName].sizes[item.size] || 0) + item.qty;
+                }
+
+                // Flavor Counts (Popularity)
+                (item.flavors || []).forEach(f => {
+                    if (f) {
+                        flavorStats[targetType][f] = (flavorStats[targetType][f] || 0) + item.qty;
+                    }
+                });
+
+                // Size Counts
+                if (item.size && sizeCounts.hasOwnProperty(item.size)) {
+                    sizeCounts[item.size] += item.qty;
+                }
+
+                // Extras Sales
+                (item.extras || []).forEach(extraName => {
+                    if (extraName) extrasSales[extraName] = (extrasSales[extraName] || 0) + item.qty;
+                });
             });
         });
 
-        const container = document.getElementById('categorySalesList');
-        if (container) {
+        // Update top cards
+        if (elements.reportDailySales) elements.reportDailySales.textContent = formatPrice(totalSales);
+        if (elements.reportFoodSales) elements.reportFoodSales.textContent = formatPrice(totalFood);
+        if (elements.reportBebidasSales) elements.reportBebidasSales.textContent = formatPrice(totalBebidas);
+        if (elements.reportDesechablesSales) elements.reportDesechablesSales.textContent = formatPrice(totalDesechables);
+
+        // 1. Render Categories (Sorted by Price)
+        if (elements.categorySalesList) {
             const sortedCats = Object.entries(categorySales).sort((a, b) => b[1] - a[1]);
             const maxSales = sortedCats.length > 0 ? sortedCats[0][1] : 1;
-
-            container.innerHTML = sortedCats.map(([name, amount]) => {
+            elements.categorySalesList.innerHTML = sortedCats.map(([name, amount]) => {
                 const percentage = (amount / maxSales) * 100;
                 return `
                     <div class="category-sales-item">
                         <span class="cat-sales-name">${name}</span>
-                        <div class="cat-sales-bar-bg">
-                            <div class="cat-sales-bar-fill" style="width: ${percentage}%"></div>
-                        </div>
+                        <div class="cat-sales-bar-bg"><div class="cat-sales-bar-fill" style="width: ${percentage}%"></div></div>
                         <span class="cat-sales-amount">${formatPrice(amount)}</span>
-                    </div>
-                `;
-            }).join('') || '<div class="empty-state">No hay ventas registradas hoy</div>';
+                    </div>`;
+            }).join('') || '<div class="empty-state">Sin ventas</div>';
+        }
+
+        // 1.5. Render Category Quantities
+        if (elements.categoryQtyList) {
+            const sortedCats = Object.entries(categoryQtyStats).sort((a, b) => b[1].total - a[1].total);
+            elements.categoryQtyList.innerHTML = sortedCats.map(([name, stat]) => {
+                const sizesHtml = Object.entries(stat.sizes)
+                    .map(([size, qty]) => `<span class="qty-pill">${size}: ${qty}</span>`)
+                    .join(' ');
+
+                return `
+                    <div class="category-qty-item">
+                        <div class="qty-item-header">
+                            <span class="cat-sales-name">${name}</span>
+                            <span class="cat-qty-total">${stat.total} ud.</span>
+                        </div>
+                        <div class="qty-item-details">
+                            ${sizesHtml}
+                        </div>
+                    </div>`;
+            }).join('') || '<div class="empty-state">Sin datos</div>';
+        }
+
+        // 2. Render Top Flavors (Grouped and Sorted)
+        if (elements.flavorSalesList) {
+            let flavorsHtml = '';
+
+            const groupConfig = [
+                { key: 'food', label: 'Comida', icon: 'utensils' },
+                { key: 'drinks', label: 'Bebidas', icon: 'cup-water' },
+                { key: 'disposables', label: 'Desechables', icon: 'package' }
+            ];
+
+            groupConfig.forEach(group => {
+                const entries = Object.entries(flavorStats[group.key]).sort((a, b) => b[1] - a[1]);
+                if (entries.length > 0) {
+                    flavorsHtml += `<div class="report-sub-section-title">${group.label}</div>`;
+                    flavorsHtml += entries.map(([name, count]) => `
+                        <div class="stats-row">
+                            <span class="stats-label">${name}</span>
+                            <span class="stats-value">${count} ud.</span>
+                        </div>
+                    `).join('');
+                }
+            });
+
+            elements.flavorSalesList.innerHTML = flavorsHtml || '<div class="empty-state">Sin datos</div>';
+        }
+
+        // 3. Render Sizes
+        if (elements.sizeSalesList) {
+            const sizesToShow = ['XS', 'XM', 'XL'];
+            if (sizeCounts['HB'] > 0 || sizeCounts['PE'] > 0 || sizeCounts['SA'] > 0) {
+                sizesToShow.push('HB', 'PE', 'SA');
+            }
+            elements.sizeSalesList.innerHTML = sizesToShow.map(size => `
+                <div class="size-stat-box">
+                    <span class="size-name">${size}</span>
+                    <span class="size-count">${sizeCounts[size] || 0}</span>
+                </div>
+            `).join('');
+        }
+
+        // 4. Render Extras (Sorted by Popularity/Count)
+        if (elements.extrasSalesList) {
+            const sortedExtras = Object.entries(extrasSales).sort((a, b) => b[1] - a[1]);
+            const maxExtras = sortedExtras.length > 0 ? sortedExtras[0][1] : 1;
+            elements.extrasSalesList.innerHTML = sortedExtras.map(([name, count]) => {
+                const percentage = (count / maxExtras) * 100;
+                return `
+                    <div class="category-sales-item">
+                        <span class="cat-sales-name">${name}</span>
+                        <div class="cat-sales-bar-bg"><div class="cat-sales-bar-fill" style="background: var(--accent-gold); width: ${percentage}%"></div></div>
+                        <span class="cat-sales-amount">${count} ud.</span>
+                    </div>`;
+            }).join('') || '<div class="empty-state">Sin adicionales</div>';
         }
 
         lucide.createIcons();
@@ -1141,6 +1307,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.searchReportBtn) {
         elements.searchReportBtn.addEventListener('click', () => {
             renderReportsPage();
+        });
+    }
+
+    if (elements.reportPeriodSelect) {
+        elements.reportPeriodSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'date') {
+                elements.reportDatePickerGroup.classList.remove('hidden');
+            } else {
+                elements.reportDatePickerGroup.classList.add('hidden');
+                renderReportsPage(); // Auto-refresh for month/total
+            }
         });
     }
 
@@ -1156,9 +1333,13 @@ document.addEventListener('DOMContentLoaded', () => {
             : StorageManager.getOrdersByDate(elements.historyDatePicker.value).reverse();
 
         renderHistoryOrdersList(orders);
+        calculateHistorySummary(orders);
 
-        // Ensure detail is hidden and list is shown
-        elements.historyOrderDetail.classList.add('hidden');
+        // Ensure modal is hidden
+        if (elements.historyOrderModal) {
+            elements.historyOrderModal.classList.add('hidden');
+            elements.historyOrderModal.style.display = 'none';
+        }
         elements.historyOrdersList.classList.remove('hidden');
 
         // Show/Hide date picker container
@@ -1203,22 +1384,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.backToHistoryBtn) {
         elements.backToHistoryBtn.addEventListener('click', () => {
-            elements.historyOrderDetail.classList.add('hidden');
-            elements.historyOrdersList.classList.remove('hidden');
+            elements.historyOrderModal.classList.add('hidden');
+            elements.historyOrderModal.style.display = 'none';
+        });
+    }
+
+    if (elements.historyModalOverlay) {
+        elements.historyModalOverlay.addEventListener('click', () => {
+            elements.historyOrderModal.classList.add('hidden');
+            elements.historyOrderModal.style.display = 'none';
         });
     }
 
     let selectedHistoryOrder = null;
 
     function showOrderDetail(orderId) {
-        const order = StorageManager.getOrders().find(o => o.id === orderId);
+        const order = StorageManager.getOrders().find(o => o.id == orderId);
         if (!order) return;
 
         selectedHistoryOrder = order;
         elements.historyTicketContent.textContent = generateTicketText(order);
 
-        elements.historyOrdersList.classList.add('hidden');
-        elements.historyOrderDetail.classList.remove('hidden');
+        elements.historyOrderModal.classList.remove('hidden');
+        elements.historyOrderModal.style.display = 'flex';
     }
 
     if (elements.reprintOrderBtn) {
@@ -1240,7 +1428,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (confirm(`¿Estás seguro de que deseas eliminar permanentemente el pedido ${selectedHistoryOrder.orderNumber}?`)) {
                     await StorageManager.deleteOrder(selectedHistoryOrder.id);
                     showNotification(`Pedido ${selectedHistoryOrder.orderNumber} eliminado`);
-                    elements.historyOrderDetail.classList.add('hidden');
+                    elements.historyOrderModal.classList.add('hidden');
                     renderHistoryPage();
                 }
             };
@@ -1297,7 +1485,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function calculateHistorySummary(orders) {
+        const paidOrders = orders.filter(o => o.paid);
+        let totalSales = 0;
+        let totalBebidas = 0;
+        let totalDesechables = 0;
+        let totalFood = 0;
+
+        const foodCategories = ['hamburguesas', 'perros', 'salchipapas', 'combos'];
+
+        paidOrders.forEach(order => {
+            totalSales += order.totalPrice;
+            order.items.forEach(item => {
+                const catId = (item.category || '').toLowerCase();
+                const catName = (item.categoryName || '').toLowerCase();
+
+                if (catId === 'bebidas' || catName.includes('bebida')) {
+                    totalBebidas += item.price;
+                } else if (catId === 'desechables' || catName.includes('desechable')) {
+                    totalDesechables += item.price;
+                } else if (foodCategories.includes(catId) || foodCategories.some(f => catName.includes(f.substring(0, 4)))) {
+                    totalFood += item.price;
+                }
+            });
+        });
+
+        if (elements.historyTotalSales) elements.historyTotalSales.textContent = formatPrice(totalSales);
+        if (elements.historyTotalBebidas) elements.historyTotalBebidas.textContent = formatPrice(totalBebidas);
+        if (elements.historyTotalDesechables) elements.historyTotalDesechables.textContent = formatPrice(totalDesechables);
+        if (elements.historyTotalFood) elements.historyTotalFood.textContent = formatPrice(totalFood);
+    }
+
     function generateTicketText(order) {
+        if (!order || !order.items) return 'Error: Pedido sin productos';
         const TICKET_WIDTH = 25;
         const labels = { salon: 'SALÓN', llevar: 'LLEVAR', domicilio: 'DOMICILIO' };
         const now = new Date(order.createdAt || Date.now());
@@ -1345,7 +1565,6 @@ document.addEventListener('DOMContentLoaded', () => {
             h += headerRow + "\n";
             h += L_MID + "\n";
             h += "│   PRODUCTO    │ADICION│\n";
-            h += L_BOT;
             return h;
         };
 
@@ -1357,7 +1576,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const fCol = flavors.substring(0, 15).toUpperCase().padEnd(15);
             const adCol = (adi || '').substring(0, 7).toUpperCase().padEnd(7);
 
-            return ` ${fCol} ${adCol} `;
+            return `│${fCol}│${adCol}│`;
         };
 
         const topDivider = '━'.repeat(TICKET_WIDTH);
@@ -1412,6 +1631,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ticket += ' * OBS: ' + item.observations.toUpperCase() + '\n';
                 }
             });
+            ticket += L_BOT + '\n';
         });
 
         ticket += '\n' + justify('TOTAL:', formatPrice(order.totalPrice)) + '\n';

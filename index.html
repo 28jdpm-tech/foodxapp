@@ -186,6 +186,7 @@
 
                 <!-- Payment Modal -->
                 <div class="payment-modal hidden" id="paymentModal">
+                    <div class="modal-overlay" id="paymentModalOverlay"></div>
                     <div class="payment-modal-content">
                         <div class="payment-header">
                             <h3>Cobrar Pedido</h3>
@@ -246,29 +247,55 @@
                     </button>
                 </div>
 
+                <!-- History Summary -->
+                <div class="history-summary" id="historySummary">
+                    <div class="summary-card history-total">
+                        <span class="summary-label">VENTAS TOTALES</span>
+                        <span class="summary-value" id="historyTotalSales">$0</span>
+                    </div>
+                    <div class="summary-card history-food">
+                        <span class="summary-label">COMIDA</span>
+                        <span class="summary-value" id="historyTotalFood">$0</span>
+                    </div>
+                    <div class="summary-card history-drinks">
+                        <span class="summary-label">BEBIDAS</span>
+                        <span class="summary-value" id="historyTotalBebidas">$0</span>
+                    </div>
+                    <div class="summary-card history-disposables">
+                        <span class="summary-label">DESECHABLES</span>
+                        <span class="summary-value" id="historyTotalDesechables">$0</span>
+                    </div>
+                </div>
+
                 <!-- History Orders List -->
                 <div class="history-orders-list" id="historyOrdersList">
                     <!-- Orders will be rendered here -->
                 </div>
 
                 <!-- Order Detail Modal -->
-                <div class="history-order-detail hidden" id="historyOrderDetail">
-                    <div class="detail-header">
-                        <button class="back-btn" id="backToHistoryBtn">
-                            <i data-lucide="arrow-left"></i>
-                            Volver
-                        </button>
-                        <button class="reprint-btn" id="reprintOrderBtn">
-                            <i data-lucide="printer"></i>
-                            Reimprimir
-                        </button>
-                        <button class="btn-delete-order" id="deleteOrderBtnHistory">
-                            <i data-lucide="trash-2"></i>
-                            Eliminar
-                        </button>
-                    </div>
-                    <div class="detail-ticket">
-                        <pre class="ticket-content" id="historyTicketContent"></pre>
+                <div class="modal history-order-modal hidden" id="historyOrderModal">
+                    <div class="modal-overlay" id="historyModalOverlay"></div>
+                    <div class="history-order-detail" id="historyOrderDetail">
+                        <div class="detail-header">
+                            <div class="header-left">
+                                <button class="back-btn" id="backToHistoryBtn">
+                                    <i data-lucide="arrow-left"></i>
+                                    Cerrar
+                                </button>
+                            </div>
+                            <div class="header-actions">
+                                <button class="reprint-btn" id="reprintOrderBtn">
+                                    <i data-lucide="printer"></i>
+                                    Imprimir
+                                </button>
+                                <button class="btn-delete-order" id="deleteOrderBtnHistory">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="detail-ticket">
+                            <pre class="ticket-content" id="historyTicketContent"></pre>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -281,7 +308,18 @@
 
                 <!-- Reports Filter -->
                 <div class="reports-filter">
-                    <input type="date" id="reportDatePicker" class="date-picker-input">
+                    <div class="filter-group">
+                        <label>Reporte por:</label>
+                        <select id="reportPeriodSelect" class="date-picker-input">
+                            <option value="today">Hoy</option>
+                            <option value="date">Día Específico</option>
+                            <option value="month">Mes Actual</option>
+                            <option value="total">Histórico Total</option>
+                        </select>
+                    </div>
+                    <div class="filter-group hidden" id="reportDatePickerGroup">
+                        <input type="date" id="reportDatePicker" class="date-picker-input">
+                    </div>
                     <button class="search-date-btn" id="searchReportBtn">
                         <i data-lucide="search"></i>
                         Consultar
@@ -292,29 +330,78 @@
                     <div class="report-stat-card">
                         <div class="stat-icon sales"><i data-lucide="dollar-sign"></i></div>
                         <div class="stat-info">
-                            <span class="stat-label">Ventas Hoy</span>
+                            <span class="stat-label">Ventas Periodo</span>
                             <span class="stat-value" id="reportDailySales">$0</span>
                         </div>
                     </div>
                     <div class="report-stat-card">
-                        <div class="stat-icon orders"><i data-lucide="shopping-cart"></i></div>
+                        <div class="stat-icon food"><i data-lucide="utensils"></i></div>
                         <div class="stat-info">
-                            <span class="stat-label">Pedidos Hoy</span>
-                            <span class="stat-value" id="reportDailyOrders">0</span>
+                            <span class="stat-label">Comida</span>
+                            <span class="stat-value" id="reportFoodSales">$0</span>
                         </div>
                     </div>
                     <div class="report-stat-card">
-                        <div class="stat-icon avg"><i data-lucide="trending-up"></i></div>
+                        <div class="stat-icon drinks"><i data-lucide="cup-water"></i></div>
                         <div class="stat-info">
-                            <span class="stat-label">Ticket Promedio</span>
-                            <span class="stat-value" id="reportAvgTicket">$0</span>
+                            <span class="stat-label">Bebidas</span>
+                            <span class="stat-value" id="reportBebidasSales">$0</span>
+                        </div>
+                    </div>
+                    <div class="report-stat-card">
+                        <div class="stat-icon disposables"><i data-lucide="package"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Desechables</span>
+                            <span class="stat-value" id="reportDesechablesSales">$0</span>
                         </div>
                     </div>
                 </div>
-                <div class="report-section">
-                    <h3>Ventas por Categoría</h3>
-                    <div class="category-sales-list" id="categorySalesList">
-                        <!-- Populated by JS -->
+
+                <div class="report-details-grid">
+                    <!-- Column 1: Categories & Extras -->
+                    <div class="report-column">
+                        <div class="report-section">
+                            <div class="section-header">
+                                <i data-lucide="layers"></i>
+                                <h3>Ventas por Categoría</h3>
+                            </div>
+                            <div class="category-sales-list" id="categorySalesList"></div>
+                        </div>
+
+                        <div class="report-section">
+                            <div class="section-header">
+                                <i data-lucide="bar-chart-2"></i>
+                                <h3>Conteo de Productos</h3>
+                            </div>
+                            <div class="category-sales-list" id="categoryQtyList"></div>
+                        </div>
+
+                        <div class="report-section">
+                            <div class="section-header">
+                                <i data-lucide="plus-circle"></i>
+                                <h3>Ingresos por Adicionales</h3>
+                            </div>
+                            <div class="category-sales-list" id="extrasSalesList"></div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Flavors & Sizes -->
+                    <div class="report-column">
+                        <div class="report-section">
+                            <div class="section-header">
+                                <i data-lucide="award"></i>
+                                <h3>Sabores Más Vendidos</h3>
+                            </div>
+                            <div class="compact-stats-list" id="flavorSalesList"></div>
+                        </div>
+
+                        <div class="report-section">
+                            <div class="section-header">
+                                <i data-lucide="maximize"></i>
+                                <h3>Distribución por Tamaño</h3>
+                            </div>
+                            <div class="size-stats-grid" id="sizeSalesList"></div>
+                        </div>
                     </div>
                 </div>
             </div>
