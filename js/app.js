@@ -605,10 +605,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else {
                 const customerCode = elements.orderCustomerName.value.trim().toUpperCase();
-                const orderNum = customerCode || generateOrderNumber();
+                const seqNum = generateOrderNumber();
+                const orderIdentifier = customerCode || seqNum;
 
                 pendingOrder = {
-                    orderNumber: orderNum,
+                    orderNumber: orderIdentifier,
+                    sequenceNumber: seqNum,
                     serviceType: state.serviceType,
                     customerInfo: customerCode || (state.serviceType === 'salon' ? 'Mesa' : state.serviceType === 'llevar' ? 'Para llevar' : 'Domicilio'),
                     items: items,
@@ -801,7 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 list.innerHTML = items.map(o => `
                     <div class="kitchen-card">
                         <div class="kitchen-card-header">
-                            <span class="kitchen-order-number">${o.orderNumber}</span>
+                            <span class="kitchen-order-number">${o.orderNumber} ${o.sequenceNumber && o.sequenceNumber !== o.orderNumber ? `(${o.sequenceNumber})` : ''}</span>
                             <span class="kitchen-time">${o.customerInfo}</span>
                         </div>
                         <div class="kitchen-items">
@@ -846,7 +848,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
             <div class="order-list-card ${order.paid ? 'paid' : ''}" data-order-id="${order.id}">
                 <div class="order-card-header">
-                    <span class="order-number">${order.orderNumber}</span>
+                    <span class="order-number">${order.orderNumber} ${order.sequenceNumber && order.sequenceNumber !== order.orderNumber ? `(${order.sequenceNumber})` : ''}</span>
                     <span class="order-status-badge">${order.paid ? 'Pagado' : labels[order.status]}</span>
                 </div>
                 <div class="order-customer-info">
@@ -1339,7 +1341,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let ticket = '';
         ticket += topDivider + '\n';
         ticket += center('FOODX POS PRO') + '\n';
-        ticket += center(`ORDEN: ${order.orderNumber || '1024'}`) + '\n';
+
+        // Show Name/Code and Sequence Number
+        ticket += center(`ID: ${order.orderNumber || '1024'}`) + '\n';
+        if (order.sequenceNumber) {
+            ticket += center(`ORDEN: ${order.sequenceNumber}`) + '\n';
+        }
+
         ticket += topDivider + '\n';
 
         // Date and Time on same line, no labels
