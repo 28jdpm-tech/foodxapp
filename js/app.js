@@ -434,6 +434,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = getRowData();
                 if (data) {
                     data.observation = obsSelect.value;
+                    updateCategoryTotal(category);
+                    updateOrderTotal();
                 }
             });
         }
@@ -470,7 +472,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const categoryExtras = config.extras[category] || [];
                     const extraData = data.extra ? categoryExtras.find(e => e.id === data.extra) : null;
                     const extraPrice = extraData ? extraData.price : 0;
-                    rowPrice = (basePrice + extraPrice) * data.qty;
+
+                    const categoryObs = config.observations[category] || [];
+                    const obsData = data.observation ? categoryObs.find(o => o.id === data.observation) : null;
+                    const obsPrice = obsData ? (obsData.price || 0) : 0;
+
+                    rowPrice = (basePrice + extraPrice + obsPrice) * data.qty;
                 }
                 total += rowPrice;
             }
@@ -547,6 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const categoryObs = config.observations[category] || [];
                     const obsData = rowData.observation ? categoryObs.find(o => o.id === rowData.observation) : null;
                     const obsName = obsData ? obsData.name : '';
+                    const obsPrice = obsData ? (obsData.price || 0) : 0;
 
                     let basePrice = 0;
                     if (isBebida) {
@@ -566,7 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         flavors: flavorNames,
                         extras: extraName ? [extraName] : [],
                         observations: obsName,
-                        price: (basePrice + extraPrice) * rowData.qty
+                        price: (basePrice + extraPrice + obsPrice) * rowData.qty
                     });
                 });
             });
@@ -1403,7 +1411,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const list = all[catId] || [];
         elements.adminObsList.innerHTML = list.map(o => `
             <div class="admin-item">
-                <div class="admin-item-info"><span>${o.name}</span></div>
+                <div class="admin-item-info">
+                    <span>${o.name}</span>
+                    <span>${formatPrice(o.price || 0)}</span>
+                </div>
                 <div class="admin-item-actions">
                     <button class="btn-icon" onclick="window.editAdminItem('observation', '${o.id}', '${catId}')">
                         <i data-lucide="edit-2"></i>
@@ -1448,7 +1459,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="form-group"><label>Precio</label><input type="number" id="editPrice" value="${item.price}"></div>`;
         } else if (type === 'observation') {
             const item = config.observations[parentId].find(o => o.id === id);
-            html = `<div class="form-group"><label>Descripción</label><input type="text" id="editName" value="${item.name}"></div>`;
+            html = `<div class="form-group"><label>Descripción</label><input type="text" id="editName" value="${item.name}"></div>
+                    <div class="form-group"><label>Precio</label><input type="number" id="editPrice" value="${item.price || 0}"></div>`;
         }
         elements.adminModalBody.innerHTML = html;
         elements.adminModal.classList.add('open');
@@ -1518,6 +1530,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!config.observations[parentId]) config.observations[parentId] = [];
                 const o = id ? config.observations[parentId].find(x => x.id === id) : { id: 'o_' + Date.now() };
                 o.name = name;
+                o.price = +document.getElementById('editPrice').value;
                 if (!id) config.observations[parentId].push(o);
             }
             StorageManager.saveConfig(config);
@@ -1573,7 +1586,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const catId = elements.adminCategorySelectObs.value;
             adminEditContext = { type: 'observation', id: null, parentId: catId };
             elements.adminModalTitle.textContent = 'Nueva Observación';
-            elements.adminModalBody.innerHTML = `<div class="form-group"><label>Nombre</label><input type="text" id="editName"></div>`;
+            elements.adminModalBody.innerHTML = `
+                <div class="form-group"><label>Nombre</label><input type="text" id="editName"></div>
+                <div class="form-group"><label>Precio</label><input type="number" id="editPrice" value="0"></div>
+            `;
             elements.adminModal.classList.add('open');
         };
     }
