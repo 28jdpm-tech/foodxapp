@@ -14,7 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
         categoryData: {},
         rowCounter: 0,
         isAdminAuthenticated: false,
-        pendingAdminAction: null
+        pendingAdminAction: null,
+        appendingOrderId: null
     };
 
     // Note: Default category creation is now handled in data.js
@@ -235,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (page === 'admin') {
                 renderAdminPage();
             } else if (page === 'new-order') {
+                state.appendingOrderId = null; // Clear if navigating manually to new order
                 initializeCategories();
                 refreshOrderPageUI();
             }
@@ -584,18 +586,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            pendingOrder = {
-                orderNumber: generateOrderNumber(),
-                serviceType: state.serviceType,
-                customerInfo: state.serviceType === 'salon' ? 'Mesa' : state.serviceType === 'llevar' ? 'Para llevar' : 'Domicilio',
-                items: items,
-                status: 'pending',
-                totalPrice: items.reduce((sum, item) => sum + item.price, 0),
-                createdBy: 'Cajero 1',
-                needsPrint: true,
-                printed: false,
-                checkoutPrinted: false
-            };
+            if (state.appendingOrderId) {
+                const originalOrder = StorageManager.getOrders().find(o => o.id === state.appendingOrderId);
+                if (originalOrder) {
+                    pendingOrder = {
+                        ...originalOrder,
+                        id: originalOrder.id, // Keep original ID
+                        orderNumber: originalOrder.orderNumber,
+                        items: items, // ONLY the new items for the ticket
+                        newItems: items, // Store them specifically to merge later
+                        totalPrice: items.reduce((sum, item) => sum + item.price, 0),
+                        isAppending: true
+                    };
+                    if (elements.ticketModal) {
+                        elements.ticketModal.querySelector('h3').textContent = `Adición a Orden #${originalOrder.orderNumber}`;
+                    }
+                }
+            } else {
+                pendingOrder = {
+                    orderNumber: generateOrderNumber(),
+                    serviceType: state.serviceType,
+                    customerInfo: state.serviceType === 'salon' ? 'Mesa' : state.serviceType === 'llevar' ? 'Para llevar' : 'Domicilio',
+                    items: items,
+                    status: 'pending',
+                    totalPrice: items.reduce((sum, item) => sum + item.price, 0),
+                    createdBy: 'Cajero 1',
+                    needsPrint: true,
+                    printed: false,
+                    checkoutPrinted: false,
+                    isAppending: false
+                };
+                if (elements.ticketModal) {
+                    elements.ticketModal.querySelector('h3').textContent = 'Confirmar Pedido';
+                }
+            }
 
             showTicketModal(pendingOrder);
         });
@@ -621,8 +645,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.printTicket) {
         elements.printTicket.addEventListener('click', () => {
             if (pendingOrder) {
-                pendingOrder.printed = true;
-                StorageManager.addOrder(pendingOrder);
+                if (pendingOrder.isAppending) {
+                    const originalOrder = StorageManager.getOrders().find(o => o.id === pendingOrder.id);
+                    if (originalOrder) {
+                        const updatedItems = [...originalOrder.items, ...pendingOrder.newItems];
+                        const updatedTotalPrice = updatedItems.reduce((sum, item) => sum + item.price, 0);
+                        StorageManager.updateOrder(pendingOrder.id, {
+                            items: updatedItems,
+                            totalPrice: updatedTotalPrice,
+                            checkoutPrinted: false
+                        });
+                    }
+                    state.appendingOrderId = null;
+                } else {
+                    pendingOrder.printed = true;
+                    StorageManager.addOrder(pendingOrder);
+                }
                 window.print();
                 showNotification(`Pedido ${pendingOrder.orderNumber} impreso y enviado`);
                 closeTicketModal();
@@ -634,8 +672,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.confirmTicket) {
         elements.confirmTicket.addEventListener('click', () => {
             if (pendingOrder) {
-                // Save Order without printing
-                StorageManager.addOrder(pendingOrder);
+                if (pendingOrder.isAppending) {
+                    const originalOrder = StorageManager.getOrders().find(o => o.id === pendingOrder.id);
+                    if (originalOrder) {
+                        const updatedItems = [...originalOrder.items, ...pendingOrder.newItems];
+                        const updatedTotalPrice = updatedItems.reduce((sum, item) => sum + item.price, 0);
+                        StorageManager.updateOrder(pendingOrder.id, {
+                            items: updatedItems,
+                            totalPrice: updatedTotalPrice,
+                            checkoutPrinted: false
+                        });
+                    }
+                    state.appendingOrderId = null;
+                } else {
+                    StorageManager.addOrder(pendingOrder);
+                }
                 showNotification(`Pedido ${pendingOrder.orderNumber} enviado a cocina`);
                 closeTicketModal();
                 resetAllCategories();
@@ -807,12 +858,57 @@ document.addEventListener('DOMContentLoaded', () => {
                     `).join('')}
                 </div>
                 <div class="order-card-footer">
-                    <span class="order-total">${formatPrice(order.totalPrice)}</span>
+                    <div style="display: flex; gap: var(--space-sm); align-items: center;">
+                        <span class="order-total">${formatPrice(order.totalPrice)}</span>
+                        ${!order.paid ? `
+                            <button class="btn-append-items" onclick="event.stopPropagation(); window.appendToOrder('${order.id}')" 
+                                style="background: var(--accent-primary); color: white; border: none; padding: 4px 12px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <i data-lucide="plus" style="width: 14px; height: 14px;"></i> AÑADIR
+                            </button>
+                        ` : ''}
+                    </div>
                     ${order.paid ? '<span class="status-indicator paid-chip">PAGADO</span>' : ''}
                 </div>
             </div>
         `;
     }
+
+    window.appendToOrder = function (orderId) {
+        const order = StorageManager.getOrders().find(o => o.id === orderId);
+        if (!order) return;
+
+        state.appendingOrderId = orderId;
+        state.serviceType = order.serviceType;
+
+        // Reset UI to "New Order" page
+        state.currentPage = 'new-order';
+        elements.pages.forEach(p => p.classList.remove('active'));
+        const targetPage = document.getElementById('page-new-order');
+        if (targetPage) targetPage.classList.add('active');
+
+        // Update drawer state
+        elements.drawerItems.forEach(i => i.classList.remove('active'));
+        const newOrderTab = Array.from(elements.drawerItems).find(i => i.dataset.page === 'new-order');
+        if (newOrderTab) newOrderTab.classList.add('active');
+
+        // Initialize/Clear category rows
+        resetAllCategories(); // Ensure we start with a clean UI
+        initializeCategories();
+
+        state.serviceType = order.serviceType;
+
+        // Update Service Tabs to match order
+        elements.serviceTabs.forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.service === order.serviceType);
+        });
+
+        // Show Footer
+        const appFooter = document.getElementById('appFooter');
+        if (appFooter) appFooter.style.display = 'flex';
+
+        showNotification(`Añadiendo productos a la Orden #${order.orderNumber}`);
+        lucide.createIcons();
+    };
 
     function openPaymentModal(orderId) {
         const order = StorageManager.getOrders().find(o => o.id === orderId);
