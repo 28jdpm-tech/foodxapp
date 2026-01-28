@@ -1021,25 +1021,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Show/Hide method selector based on payment status
         // Show/Hide method selector based on payment status
+        // Show/Hide method selector based on payment status
         const methodContainer = document.querySelector('.payment-methods-container');
         if (methodContainer) {
-            // Only show payment methods if we are about to pay (not paid, and printed or forces)
-            // Actually user request: "solo se puedan seleccionar en la opcion cobro al momento de cobrar el pedido"
-            // This means: hide if already paid. Show if pending payment.
-            // Also, logic above sets confirmPayment.display = 'none' if !checkoutPrinted.
-            // So we should sync with that.
-
-            if (order.paid) {
-                methodContainer.style.display = 'none';
-            } else if (!order.checkoutPrinted) {
-                // If not printed yet, usually we print first. 
-                // But user might want to select method before printing? 
-                // Request says "at the moment of charging".
-                // Let's hide it if we are just Printing the ticket initially.
-                methodContainer.style.display = 'none';
-            } else {
-                methodContainer.style.display = 'block';
-            }
+            // Sync visibility with the Confirm Payment button
+            // If the confirm button is hidden (paid or not printed), hide the selector.
+            // If the confirm button is visible (ready to pay), show the selector.
+            methodContainer.style.display = elements.confirmPayment.style.display === 'none' ? 'none' : 'block';
         }
 
         lucide.createIcons();
