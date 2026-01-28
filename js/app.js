@@ -2068,21 +2068,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 console.log('Config synced from cloud');
             },
-            // Print callback (Remote print from other devices)
-            (order) => {
-                // Show ticket modal immediately overlaying the screen
-                if (elements.ticketContent && elements.ticketModal) {
-                    // Set the order as pending so print button works
-                    pendingOrder = order;
-
-                    // Display ticket
-                    elements.ticketContent.textContent = generateTicketText(order);
-                    elements.ticketModal.classList.add('open');
-
-                    // Mark as printed in cloud immediately to prevent duplicates on other PCs
-                    StorageManager.updateOrder(order.id, { printed: true });
-                }
-            }
+            // Print callback (Remote print from other devices) - DISABLED
+            null
         );
     }
 
