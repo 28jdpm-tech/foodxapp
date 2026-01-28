@@ -633,8 +633,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // --- PRINT NEW ITEMS ONLY ---
                     const partialOrder = {
-                        ...originalOrder,
-                        items: items, // Only new items
+                        orderNumber: originalOrder.orderNumber,
+                        sequenceNumber: originalOrder.sequenceNumber,
+                        serviceType: originalOrder.serviceType,
+                        customerInfo: originalOrder.customerInfo,
+                        createdAt: new Date().toISOString(),
+                        items: items, // Only new items collected from current UI
                         totalPrice: items.reduce((s, i) => s + i.price, 0),
                         isAppending: true
                     };
@@ -642,8 +646,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (elements.ticketContent && elements.ticketModal) {
                         elements.ticketContent.textContent = generateTicketText(partialOrder);
                         elements.ticketModal.classList.add('open');
-                        window.print();
-                        elements.ticketModal.classList.remove('open');
+                        setTimeout(() => {
+                            window.print();
+                            elements.ticketModal.classList.remove('open');
+                        }, 50);
                     }
                 }
                 state.appendingOrderId = null;
