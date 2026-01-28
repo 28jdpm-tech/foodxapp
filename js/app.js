@@ -1558,25 +1558,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const tableHeader = (catName, qty) => {
             const title = `${catName} (${qty})`.toUpperCase();
             const innerWidth = 23;
-            const padding = Math.max(0, Math.floor((innerWidth - title.length) / 2));
-            const headerRow = "│" + " ".repeat(padding) + title + " ".repeat(innerWidth - title.length - padding) + "│";
+            // Ensure title fits or is truncated to avoid breaking layout
+            const safeTitle = title.substring(0, innerWidth);
+            const padding = Math.max(0, Math.floor((innerWidth - safeTitle.length) / 2));
+            const headerRow = "│" + " ".repeat(padding) + safeTitle + " ".repeat(innerWidth - safeTitle.length - padding) + "│";
 
             let h = L_TOP + "\n";
             h += headerRow + "\n";
             h += L_MID + "\n";
             h += "│   PRODUCTO    │ADICION│\n";
+            h += L_BOT; // Close the box immediately after headers
             return h;
         };
 
         const tableRow = (s1, s2, s3, adi) => {
             const flavorsList = [s1, s2, s3].filter(f => f && f.trim() !== '');
             const flavors = flavorsList.join('-');
+
             // PRODUCTO column: 15 chars, ADICION column: 7 chars
-            // Aligned with header: "│" (1) + 15 + "│" (1) + 7 + "│" (1) = 25
+            // We use spaces to align with the boxed header above
             const fCol = flavors.substring(0, 15).toUpperCase().padEnd(15);
             const adCol = (adi || '').substring(0, 7).toUpperCase().padEnd(7);
 
-            return `│${fCol}│${adCol}│`;
+            // Return plain text row aligned with the grid
+            return ` ${fCol} ${adCol}`;
         };
 
         const topDivider = '━'.repeat(TICKET_WIDTH);
@@ -1615,7 +1620,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
 
-            // Table Header with category integrated
+            // Table Header with category integrated - now fully enclosed
             ticket += '\n' + tableHeader(cat.name, catTotalQty) + '\n';
 
             cat.items.forEach((item) => {
@@ -1631,7 +1636,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ticket += ' * OBS: ' + item.observations.toUpperCase() + '\n';
                 }
             });
-            ticket += L_BOT + '\n';
+            // Removed L_BOT since header closes itself now
         });
 
         ticket += '\n' + justify('TOTAL:', formatPrice(order.totalPrice)) + '\n';
