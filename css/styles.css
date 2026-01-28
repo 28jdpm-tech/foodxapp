@@ -2312,7 +2312,7 @@ body {
         font-family: 'Courier New', Courier, monospace !important;
         font-size: 16px !important;
         font-weight: 700 !important;
-        line-height: 0.4 !important;
+        line-height: 0.2 !important;
         white-space: pre !important;
         color: #000 !important;
         background: white !important;
@@ -2385,11 +2385,11 @@ body {
         overflow: visible !important;
         white-space: pre !important;
         word-wrap: normal !important;
-        line-height: 0.4 !important;
+        line-height: 0.2 !important;
     }
 
     .ticket-content {
-        line-height: 0.4 !important;
+        line-height: 0.2 !important;
     }
 }
 
