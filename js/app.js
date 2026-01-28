@@ -618,28 +618,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Direct Process Logic (Bypass Ticket Modal)
             if (state.appendingOrderId) {
                 const originalOrder = StorageManager.getOrders().find(o => o.id == state.appendingOrderId);
                 if (originalOrder) {
-                    pendingOrder = {
-                        ...originalOrder,
-                        id: originalOrder.id, // Keep original ID
-                        orderNumber: originalOrder.orderNumber,
-                        items: items, // ONLY the new items for the ticket
-                        newItems: items, // Store them specifically to merge later
-                        totalPrice: items.reduce((sum, item) => sum + item.price, 0),
-                        isAppending: true
-                    };
-                    if (elements.ticketModal) {
-                        elements.ticketModal.querySelector('h3').textContent = `Adición a Orden ${originalOrder.orderNumber}`;
-                    }
+                    const updatedItems = [...originalOrder.items, ...items]; // items here are already newItems
+                    const updatedTotalPrice = updatedItems.reduce((sum, item) => sum + item.price, 0);
+                    StorageManager.updateOrder(originalOrder.id, {
+                        items: updatedItems,
+                        totalPrice: updatedTotalPrice,
+                        checkoutPrinted: false
+                    });
+                    showNotification(`Pedido ${originalOrder.orderNumber} actualizado`);
                 }
+                state.appendingOrderId = null;
             } else {
                 const customerCode = elements.orderCustomerName.value.trim().toUpperCase();
                 const seqNum = generateOrderNumber();
                 const orderIdentifier = customerCode || seqNum;
 
-                pendingOrder = {
+                const newOrder = {
                     orderNumber: orderIdentifier,
                     sequenceNumber: seqNum,
                     serviceType: state.serviceType,
@@ -651,14 +649,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     needsPrint: true,
                     printed: false,
                     checkoutPrinted: false,
-                    isAppending: false
+                    isAppending: false,
+                    createdAt: new Date().toISOString()
                 };
-                if (elements.ticketModal) {
-                    elements.ticketModal.querySelector('h3').textContent = 'Confirmar Pedido';
-                }
+                StorageManager.addOrder(newOrder);
+                showNotification(`Pedido ${newOrder.orderNumber} enviado a cocina`);
             }
 
-            showTicketModal(pendingOrder);
+            resetAllCategories();
         });
     }
 
