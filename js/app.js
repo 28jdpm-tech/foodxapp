@@ -1034,14 +1034,15 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.paymentModal.classList.remove('hidden');
     }
 
-    // Payment Method Selection Listener (Global)
-    document.addEventListener('click', (e) => {
-        const btn = e.target.closest('.method-btn');
-        if (btn) {
+    // Payment Method Selection Listener (Direct attachment for mobile compatibility)
+    const methodBtns = document.querySelectorAll('.method-btn');
+    methodBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent bubbling issues
             state.selectedPaymentMethod = btn.dataset.method;
-            document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+            methodBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-        }
+        });
     });
 
     document.querySelectorAll('.checkout-tab').forEach(tab => {
