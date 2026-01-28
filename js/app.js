@@ -15,7 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
         rowCounter: 0,
         isAdminAuthenticated: false,
         pendingAdminAction: null,
-        appendingOrderId: null
+        appendingOrderId: null,
+        selectedPaymentMethod: 'efectivo'
     };
 
     // Note: Default category creation is now handled in data.js
@@ -1001,9 +1002,35 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.deleteOrderBtn) elements.deleteOrderBtn.style.display = 'flex';
         }
 
+        // Reset Payment Method Logic
+        state.selectedPaymentMethod = 'efectivo';
+        const methodBtns = document.querySelectorAll('.method-btn');
+        methodBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.method === 'efectivo');
+
+            // Re-attach listener (naive but works if not duplicating too much, or better: use a global listener)
+            // Better: We add global listener once, here we just set initial state.
+        });
+
+        // Show/Hide method selector based on payment status
+        const methodContainer = document.querySelector('.payment-methods-container');
+        if (methodContainer) {
+            methodContainer.style.display = order.paid ? 'none' : 'block';
+        }
+
         lucide.createIcons();
         elements.paymentModal.classList.remove('hidden');
     }
+
+    // Payment Method Selection Listener (Global)
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.method-btn');
+        if (btn) {
+            state.selectedPaymentMethod = btn.dataset.method;
+            document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+    });
 
     document.querySelectorAll('.checkout-tab').forEach(tab => {
         tab.addEventListener('click', () => {
@@ -1031,7 +1058,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.confirmPayment) {
         elements.confirmPayment.addEventListener('click', () => {
             if (selectedPaymentOrder) {
-                StorageManager.updateOrder(selectedPaymentOrder.id, { paid: true, status: 'delivered' });
+                StorageManager.updateOrder(selectedPaymentOrder.id, {
+                    paid: true,
+                    status: 'delivered',
+                    paymentMethod: state.selectedPaymentMethod
+                });
                 showNotification(`Pedido ${selectedPaymentOrder.orderNumber} pagado`);
                 elements.paymentModal.classList.add('hidden');
                 renderCheckoutPage();
