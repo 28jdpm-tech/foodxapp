@@ -1615,8 +1615,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
 
-            // Table Header with category integrated - reduced spacing
-            ticket += tableHeader(cat.name, catTotalQty) + '\n';
+            // Table Header with category integrated - separated
+            ticket += '\n' + tableHeader(cat.name, catTotalQty) + '\n';
 
             cat.items.forEach((item) => {
                 const s1 = item.flavors[0] || '';
