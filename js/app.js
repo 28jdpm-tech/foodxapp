@@ -1518,7 +1518,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function generateTicketText(order) {
         if (!order || !order.items) return 'Error: Pedido sin productos';
-        const TICKET_WIDTH = 25;
+        const TICKET_WIDTH = 24;
         const labels = { salon: 'SALÓN', llevar: 'LLEVAR', domicilio: 'DOMICILIO' };
         const now = new Date(order.createdAt || Date.now());
         const dateStr = now.toLocaleDateString('es-CO');
