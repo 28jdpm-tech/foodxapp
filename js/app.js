@@ -630,6 +630,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         checkoutPrinted: false
                     });
                     showNotification(`Pedido ${originalOrder.orderNumber} actualizado`);
+
+                    // --- PRINT NEW ITEMS ONLY ---
+                    const partialOrder = {
+                        ...originalOrder,
+                        items: items, // Only new items
+                        totalPrice: items.reduce((s, i) => s + i.price, 0),
+                        isAppending: true
+                    };
+
+                    if (elements.ticketContent && elements.ticketModal) {
+                        elements.ticketContent.textContent = generateTicketText(partialOrder);
+                        elements.ticketModal.classList.add('open');
+                        window.print();
+                        elements.ticketModal.classList.remove('open');
+                    }
                 }
                 state.appendingOrderId = null;
             } else {
@@ -1579,7 +1594,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let ticket = '';
         ticket += topDivider + '\n';
-        ticket += center('FOODX POS PRO') + '\n';
+        if (order.isAppending) {
+            ticket += center('*** ADICION ***') + '\n';
+        } else {
+            ticket += center('FOODX POS PRO') + '\n';
+        }
 
         // Show Name/Code and Sequence Number
         ticket += center(`ID: ${order.orderNumber || '1024'}`) + '\n';
