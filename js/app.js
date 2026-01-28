@@ -626,8 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const updatedTotalPrice = updatedItems.reduce((sum, item) => sum + item.price, 0);
                     StorageManager.updateOrder(originalOrder.id, {
                         items: updatedItems,
-                        totalPrice: updatedTotalPrice,
-                        checkoutPrinted: false
+                        totalPrice: updatedTotalPrice
                     });
                     showNotification(`Pedido ${originalOrder.orderNumber} actualizado`);
 
