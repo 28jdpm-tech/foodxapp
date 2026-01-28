@@ -1557,8 +1557,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tableHeader = (catName, qty) => {
             const title = `${catName} (${qty})`.toUpperCase();
-            // Simple Text Header without grid
-            return title + "\n";
+            // Simple Text Header without grid, but with columns
+            let h = title + "\n";
+            h += " PRODUCTO        ADICION\n";
+            return h;
         };
 
         const tableRow = (s1, s2, s3, adi) => {
