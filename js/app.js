@@ -1358,8 +1358,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ? StorageManager.getTodayOrders().reverse()
             : StorageManager.getOrdersByDate(elements.historyDatePicker.value).reverse();
 
-        // Filter out partial orders from history
-        const orders = ordersRaw.filter(o => !o.isPartial);
+        // Filter out partial orders from history and show only PAID
+        const orders = ordersRaw.filter(o => !o.isPartial && o.paid);
 
         renderHistoryOrdersList(orders);
         calculateHistorySummary(orders);
