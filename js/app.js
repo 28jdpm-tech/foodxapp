@@ -634,7 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const partialOrder = {
                         orderNumber: `${originalOrder.orderNumber} (ADI)`,
                         sequenceNumber: originalOrder.sequenceNumber,
-                        serviceType: originalOrder.serviceType,
+                        serviceType: state.serviceType, // Use current UI selection (e.g. Llevar)
                         customerInfo: originalOrder.customerInfo,
                         createdAt: new Date().toISOString(),
                         items: items, // Only new items collected from current UI
@@ -1618,7 +1618,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let ticket = '';
         ticket += topDivider + '\n';
         if (order.isAppending) {
-            ticket += center('*** ADICION ***') + '\n';
+            // Show service type prominently for additions (e.g. LLEVAR)
+            const sType = labels[order.serviceType] || 'SALÓN';
+            ticket += center(`*** ${sType} ***`) + '\n';
+            ticket += center('(ADICION)') + '\n';
         } else {
             ticket += center('FOODX POS PRO') + '\n';
         }
