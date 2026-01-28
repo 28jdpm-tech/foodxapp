@@ -648,14 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Save partial order so it appears in "Imprimir" list
                     StorageManager.addOrder(partialOrder);
 
-                    if (elements.ticketContent && elements.ticketModal) {
-                        elements.ticketContent.textContent = generateTicketText(partialOrder);
-                        elements.ticketModal.classList.add('open');
-                        setTimeout(() => {
-                            window.print();
-                            elements.ticketModal.classList.remove('open');
-                        }, 50);
-                    }
+                    showNotification("Adición enviada. Imprimir desde Cobros.");
                 }
                 state.appendingOrderId = null;
             } else {
