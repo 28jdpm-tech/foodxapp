@@ -1557,17 +1557,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tableHeader = (catName, qty) => {
             const title = `${catName} (${qty})`.toUpperCase();
-            const innerWidth = 23;
-            // Ensure title fits or is truncated to avoid breaking layout
-            const safeTitle = title.substring(0, innerWidth);
-            const padding = Math.max(0, Math.floor((innerWidth - safeTitle.length) / 2));
-            const headerRow = "│" + " ".repeat(padding) + safeTitle + " ".repeat(innerWidth - safeTitle.length - padding) + "│";
-
-            let h = L_TOP + "\n";
-            h += headerRow + "\n";
-            h += L_MID + "\n";
+            // Simple Text Header
+            let h = title + "\n";
+            // Only bottom border for headers
+            h += "┌───────────────┬───────┐\n";
             h += "│   PRODUCTO    │ADICION│\n";
-            h += L_BOT; // Close the box immediately after headers
+            h += "├───────────────┴───────┤";
             return h;
         };
 
@@ -1600,7 +1595,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ticket += topDivider + '\n';
 
         // Date and Time on same line, no labels
-        ticket += justify(dateStr, timeStr) + '\n\n';
+        ticket += justify(dateStr, timeStr) + '\n';
         ticket += center(`TIPO: ${labels[order.serviceType]}`) + '\n';
         ticket += center(subDivider) + '\n';
 
@@ -1620,8 +1615,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
 
-            // Table Header with category integrated - now fully enclosed
-            ticket += '\n' + tableHeader(cat.name, catTotalQty) + '\n';
+            // Table Header with category integrated - reduced spacing
+            ticket += tableHeader(cat.name, catTotalQty) + '\n';
 
             cat.items.forEach((item) => {
                 const s1 = item.flavors[0] || '';
