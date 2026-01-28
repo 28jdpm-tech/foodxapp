@@ -1584,8 +1584,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const L_MID = "├───────────────┬───────┤";
         const L_BOT = "└───────────────┴───────┘";
 
-        const tableHeader = (catName, qty) => {
-            const title = `${catName} (${qty})`.toUpperCase();
+        const tableHeader = (catName, qty, price) => {
+            const title = `${catName} (${qty}) ${formatPrice(price)}`.toUpperCase();
             // Simple Text Header without grid, but with columns
             let h = title + "\n";
             h += " PRODUCTO        ADICION\n";
@@ -1647,9 +1647,10 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.keys(itemsByCategory).forEach(catId => {
             const cat = itemsByCategory[catId];
             const catTotalQty = cat.items.reduce((sum, item) => sum + item.qty, 0);
+            const catTotalPrice = cat.items.reduce((sum, item) => sum + item.price, 0);
 
             // Table Header with category integrated - separated
-            ticket += '\n' + tableHeader(cat.name, catTotalQty) + '\n';
+            ticket += '\n' + tableHeader(cat.name, catTotalQty, catTotalPrice) + '\n';
 
             cat.items.forEach((item) => {
                 const s1 = item.flavors[0] || '';
