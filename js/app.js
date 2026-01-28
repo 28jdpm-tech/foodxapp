@@ -632,15 +632,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // --- PRINT NEW ITEMS ONLY ---
                     const partialOrder = {
-                        orderNumber: originalOrder.orderNumber,
+                        orderNumber: `${originalOrder.orderNumber} (ADI)`,
                         sequenceNumber: originalOrder.sequenceNumber,
                         serviceType: originalOrder.serviceType,
                         customerInfo: originalOrder.customerInfo,
                         createdAt: new Date().toISOString(),
                         items: items, // Only new items collected from current UI
                         totalPrice: items.reduce((s, i) => s + i.price, 0),
-                        isAppending: true
+                        isAppending: true,
+                        isPartial: true, // Mark as temporary partial order
+                        checkoutPrinted: false, // Ensure it shows in 'To Print'
+                        paid: false
                     };
+
+                    // Save partial order so it appears in "Imprimir" list
+                    StorageManager.addOrder(partialOrder);
 
                     if (elements.ticketContent && elements.ticketModal) {
                         elements.ticketContent.textContent = generateTicketText(partialOrder);
@@ -1044,14 +1050,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.printPaymentTicket) {
         elements.printPaymentTicket.addEventListener('click', () => {
             if (selectedPaymentOrder) {
-                // Set as printed for checkout
-                StorageManager.updateOrder(selectedPaymentOrder.id, { checkoutPrinted: true });
-
                 // Show Printing Dialog
                 window.print();
 
-                // Refresh and close if needed (or just refresh)
-                showNotification(`Pedido ${selectedPaymentOrder.orderNumber} enviado a cobrar`);
+                if (selectedPaymentOrder.isPartial) {
+                    // If it's a partial order (addition), delete it after printing
+                    StorageManager.deleteOrder(selectedPaymentOrder.id);
+                    showNotification(`Ticket de adición impreso`);
+                } else {
+                    // Normal order: Set as printed for checkout
+                    StorageManager.updateOrder(selectedPaymentOrder.id, { checkoutPrinted: true });
+                    showNotification(`Pedido ${selectedPaymentOrder.orderNumber} enviado a cobrar`);
+                }
+
+                // Refresh and close
                 elements.paymentModal.classList.add('hidden');
                 renderCheckoutPage();
             }
@@ -1156,6 +1168,9 @@ document.addEventListener('DOMContentLoaded', () => {
             default:
                 orders = StorageManager.getTodayOrders();
         }
+
+        // Filter out partial/temporary orders from reports
+        orders = orders.filter(o => !o.isPartial);
 
         const paidOrders = orders.filter(o => o.paid);
 
@@ -1346,9 +1361,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let historyMode = 'today';
 
     function renderHistoryPage() {
-        const orders = historyMode === 'today'
+        const ordersRaw = historyMode === 'today'
             ? StorageManager.getTodayOrders().reverse()
             : StorageManager.getOrdersByDate(elements.historyDatePicker.value).reverse();
+
+        // Filter out partial orders from history
+        const orders = ordersRaw.filter(o => !o.isPartial);
 
         renderHistoryOrdersList(orders);
         calculateHistorySummary(orders);
