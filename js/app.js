@@ -174,6 +174,9 @@ document.addEventListener('DOMContentLoaded', () => {
         saveAdminPasswordBtn: document.getElementById('saveAdminPasswordBtn'),
         // History Summary
         historyTotalSales: document.getElementById('historyTotalSales'),
+        historyTotalEfectivo: document.getElementById('historyTotalEfectivo'),
+        historyTotalNequi: document.getElementById('historyTotalNequi'),
+        historyTotalDaviplata: document.getElementById('historyTotalDaviplata'),
         historyTotalFood: document.getElementById('historyTotalFood'),
         historyTotalBebidas: document.getElementById('historyTotalBebidas'),
         historyTotalDesechables: document.getElementById('historyTotalDesechables'),
@@ -926,7 +929,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             </button>
                         ` : ''}
                     </div>
-                    ${order.paid ? '<span class="status-indicator paid-chip">PAGADO</span>' : ''}
+                    ${order.paid ? `
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span class="status-indicator" style="background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); font-size: 0.75rem; padding: 2px 8px; border-radius: 999px;">
+                                ${(order.paymentMethod || 'EFECTIVO').toUpperCase()}
+                            </span>
+                            <span class="status-indicator paid-chip">PAGADO</span>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -1002,20 +1012,34 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.deleteOrderBtn) elements.deleteOrderBtn.style.display = 'flex';
         }
 
-        // Reset Payment Method Logic
-        state.selectedPaymentMethod = 'efectivo';
+        // Reset Payment Method Logic - No default selection
+        state.selectedPaymentMethod = null;
         const methodBtns = document.querySelectorAll('.method-btn');
         methodBtns.forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.method === 'efectivo');
-
-            // Re-attach listener (naive but works if not duplicating too much, or better: use a global listener)
-            // Better: We add global listener once, here we just set initial state.
+            btn.classList.remove('active');
         });
 
         // Show/Hide method selector based on payment status
+        // Show/Hide method selector based on payment status
         const methodContainer = document.querySelector('.payment-methods-container');
         if (methodContainer) {
-            methodContainer.style.display = order.paid ? 'none' : 'block';
+            // Only show payment methods if we are about to pay (not paid, and printed or forces)
+            // Actually user request: "solo se puedan seleccionar en la opcion cobro al momento de cobrar el pedido"
+            // This means: hide if already paid. Show if pending payment.
+            // Also, logic above sets confirmPayment.display = 'none' if !checkoutPrinted.
+            // So we should sync with that.
+
+            if (order.paid) {
+                methodContainer.style.display = 'none';
+            } else if (!order.checkoutPrinted) {
+                // If not printed yet, usually we print first. 
+                // But user might want to select method before printing? 
+                // Request says "at the moment of charging".
+                // Let's hide it if we are just Printing the ticket initially.
+                methodContainer.style.display = 'none';
+            } else {
+                methodContainer.style.display = 'block';
+            }
         }
 
         lucide.createIcons();
@@ -1058,6 +1082,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.confirmPayment) {
         elements.confirmPayment.addEventListener('click', () => {
             if (selectedPaymentOrder) {
+                if (!state.selectedPaymentMethod) {
+                    showNotification('⚠️ Selecciona un medio de pago', 'error');
+                    return;
+                }
                 StorageManager.updateOrder(selectedPaymentOrder.id, {
                     paid: true,
                     status: 'delivered',
@@ -1548,14 +1576,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function calculateHistorySummary(orders) {
         const paidOrders = orders.filter(o => o.paid);
         let totalSales = 0;
+        let totalEfectivo = 0;
+        let totalNequi = 0;
+        let totalDaviplata = 0;
+        let totalFood = 0;
         let totalBebidas = 0;
         let totalDesechables = 0;
-        let totalFood = 0;
 
         const foodCategories = ['hamburguesas', 'perros', 'salchipapas', 'combos'];
 
         paidOrders.forEach(order => {
             totalSales += order.totalPrice;
+            const method = order.paymentMethod || 'efectivo';
+
+            if (method === 'nequi') totalNequi += order.totalPrice;
+            else if (method === 'daviplata') totalDaviplata += order.totalPrice;
+            else totalEfectivo += order.totalPrice;
+
+            // Category Breakdown
             order.items.forEach(item => {
                 const catId = (item.category || '').toLowerCase();
                 const catName = (item.categoryName || '').toLowerCase();
@@ -1571,9 +1609,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (elements.historyTotalSales) elements.historyTotalSales.textContent = formatPrice(totalSales);
+        if (elements.historyTotalEfectivo) elements.historyTotalEfectivo.textContent = formatPrice(totalEfectivo);
+        if (elements.historyTotalNequi) elements.historyTotalNequi.textContent = formatPrice(totalNequi);
+        if (elements.historyTotalDaviplata) elements.historyTotalDaviplata.textContent = formatPrice(totalDaviplata);
+        if (elements.historyTotalFood) elements.historyTotalFood.textContent = formatPrice(totalFood);
         if (elements.historyTotalBebidas) elements.historyTotalBebidas.textContent = formatPrice(totalBebidas);
         if (elements.historyTotalDesechables) elements.historyTotalDesechables.textContent = formatPrice(totalDesechables);
-        if (elements.historyTotalFood) elements.historyTotalFood.textContent = formatPrice(totalFood);
     }
 
     function generateTicketText(order) {
