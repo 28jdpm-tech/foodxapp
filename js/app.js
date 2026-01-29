@@ -387,8 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <label>ADI</label>
                     <div class="field-content">
                         <div class="multi-select-trigger" id="extra-trigger-${rowId}" data-type="extra">
-                            <span class="selected-text">Ninguno</span>
-                            <i data-lucide="chevron-down" style="width:14px;height:14px;"></i>
+                            <span class="selected-text">Sel.</span>
                         </div>
                     </div>
                 </div>
@@ -396,8 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <label>OBS</label>
                     <div class="field-content">
                         <div class="multi-select-trigger" id="obs-trigger-${rowId}" data-type="obs">
-                            <span class="selected-text">Ninguno</span>
-                            <i data-lucide="chevron-down" style="width:14px;height:14px;"></i>
+                            <span class="selected-text">Sel.</span>
                         </div>
                     </div>
                 </div>
@@ -456,7 +454,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 openFloatingDropdown(extraTrigger, 'Adicionales', options, data.extras, (selectedIds) => {
                     data.extras = selectedIds;
                     const count = data.extras.length;
-                    extraTrigger.querySelector('.selected-text').textContent = count === 0 ? 'Ninguno' : `${count} Sel.`;
+                    let displayText = 'Sel.';
+                    if (count === 1) {
+                        const item = options.find(o => o.id === selectedIds[0]);
+                        displayText = item ? item.name.substring(0, 8) : 'Sel.';
+                    } else if (count > 1) {
+                        displayText = count;
+                    }
+                    extraTrigger.querySelector('.selected-text').textContent = displayText;
                     updateCategoryTotal(category);
                     updateOrderTotal();
                 });
@@ -475,7 +480,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 openFloatingDropdown(obsTrigger, 'Observaciones', options, data.observations, (selectedIds) => {
                     data.observations = selectedIds;
                     const count = data.observations.length;
-                    obsTrigger.querySelector('.selected-text').textContent = count === 0 ? 'Ninguno' : `${count} Sel.`;
+                    let displayText = 'Sel.';
+                    if (count === 1) {
+                        const item = options.find(o => o.id === selectedIds[0]);
+                        displayText = item ? item.name.substring(0, 8) : 'Sel.';
+                    } else if (count > 1) {
+                        displayText = count;
+                    }
+                    obsTrigger.querySelector('.selected-text').textContent = displayText;
                     updateCategoryTotal(category);
                     updateOrderTotal();
                 });

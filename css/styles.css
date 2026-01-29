@@ -145,12 +145,12 @@ body {
     background: var(--bg-card);
     border: 1px solid var(--border-default);
     border-radius: var(--radius-sm);
-    padding: 0 8px;
+    padding: 0 4px;
     font-size: 0.75rem;
     color: var(--text-primary);
     cursor: pointer;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     height: 32px;
     user-select: none;
