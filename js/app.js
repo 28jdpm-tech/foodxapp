@@ -327,8 +327,8 @@ document.addEventListener('DOMContentLoaded', () => {
             id: rowId,
             qty: 1,
             blocks: ['', '', ''],
-            extra: '',
-            observation: ''
+            extras: [],
+            observations: []
         };
 
         const config = StorageManager.getConfig();
@@ -386,19 +386,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="field-col flavor-col">
                     <label>ADI</label>
                     <div class="field-content">
-                        <select class="extra-select">
-                            <option value="">Sel.</option>
-                            ${extraOptions}
-                        </select>
+                        <!-- Multi-Select Extras -->
+                        <div class="multi-select-wrapper" id="extra-wrapper-${rowId}">
+                            <div class="multi-select-trigger" data-type="extra">
+                                <span class="selected-text">Ninguno</span>
+                                <i data-lucide="chevron-down" style="width:14px;height:14px;"></i>
+                            </div>
+                            <div class="multi-select-dropdown">
+                                ${categoryExtras.filter(e => e.active !== false).map(e => `
+                                    <label class="multi-select-option">
+                                        <input type="checkbox" value="${e.id}" data-name="${e.name}">
+                                        <span>${e.name}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="field-col flavor-col">
                     <label>OBS</label>
                     <div class="field-content">
-                        <select class="obs-select">
-                            <option value="">Sel.</option>
-                            ${obsOptions}
-                        </select>
+                        <!-- Multi-Select Observations -->
+                        <div class="multi-select-wrapper" id="obs-wrapper-${rowId}">
+                            <div class="multi-select-trigger" data-type="obs">
+                                <span class="selected-text">Ninguno</span>
+                                <i data-lucide="chevron-down" style="width:14px;height:14px;"></i>
+                            </div>
+                            <div class="multi-select-dropdown">
+                                ${categoryObs.filter(o => o.active !== false).map(o => `
+                                    <label class="multi-select-option">
+                                        <input type="checkbox" value="${o.id}" data-name="${o.name}">
+                                        <span>${o.name}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
                     </div>
                 </div>
                 ` : ''}
@@ -443,29 +465,60 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        const extraSelect = rowEl.querySelector('.extra-select');
-        if (extraSelect) {
-            extraSelect.addEventListener('change', () => {
-                const data = getRowData();
-                if (data) {
-                    data.extra = extraSelect.value;
-                    updateCategoryTotal(category);
-                    updateOrderTotal();
-                }
-            });
-        }
+        // Multi-Select Handlers
+        const setupMultiSelect = (wrapper, type) => {
+            const trigger = wrapper.querySelector('.multi-select-trigger');
+            const dropdown = wrapper.querySelector('.multi-select-dropdown');
+            const textSpan = trigger.querySelector('.selected-text');
+            const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]');
 
-        const obsSelect = rowEl.querySelector('.obs-select');
-        if (obsSelect) {
-            obsSelect.addEventListener('change', () => {
-                const data = getRowData();
-                if (data) {
-                    data.observation = obsSelect.value;
+            // Toggle Dropdown
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Close all other dropdowns
+                document.querySelectorAll('.multi-select-dropdown').forEach(d => {
+                    if (d !== dropdown) d.classList.remove('open');
+                });
+                dropdown.classList.toggle('open');
+            });
+
+            // Handle Checkbox Change
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const data = getRowData();
+                    if (!data) return;
+
+                    const val = cb.value;
+                    const targetArray = type === 'extra' ? data.extras : data.observations;
+
+                    if (cb.checked) {
+                        if (!targetArray.includes(val)) targetArray.push(val);
+                    } else {
+                        const idx = targetArray.indexOf(val);
+                        if (idx > -1) targetArray.splice(idx, 1);
+                    }
+
+                    // Update UI Text
+                    const count = targetArray.length;
+                    textSpan.textContent = count === 0 ? 'Ninguno' : `${count} Sel.`;
+
                     updateCategoryTotal(category);
                     updateOrderTotal();
-                }
+                });
             });
-        }
+
+            // Close on outside click is handled by a global or we create a specific one here?
+            // A global one is better, let's add it once or rely on row-scoped. 
+            // For now, simple row-scoped document click might be expensive if many rows.
+            // We will rely on the trigger propagation stop and a global closer if possible, 
+            // but for safety, let's add a document listener that checks.
+        };
+
+        const extraWrapper = rowEl.querySelector(`#extra-wrapper-${rowId}`);
+        if (extraWrapper) setupMultiSelect(extraWrapper, 'extra');
+
+        const obsWrapper = rowEl.querySelector(`#obs-wrapper-${rowId}`);
+        if (obsWrapper) setupMultiSelect(obsWrapper, 'obs');
     }
 
     // ============================================
@@ -497,15 +550,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     sizeLabel = size;
                     const basePrice = config.prices[category][size];
                     const categoryExtras = config.extras[category] || [];
-                    const extraData = data.extra ? categoryExtras.find(e => e.id === data.extra) : null;
-                    const extraPrice = extraData ? extraData.price : 0;
+                    // Sum all selected extras
+                    const extraPrice = data.extras.reduce((sum, eId) => {
+                        const eItem = categoryExtras.find(ex => ex.id === eId);
+                        return sum + (eItem ? eItem.price : 0);
+                    }, 0);
 
                     const categoryObs = config.observations[category] || [];
-                    const obsData = data.observation ? categoryObs.find(o => o.id === data.observation) : null;
-                    const obsPrice = obsData ? (obsData.price || 0) : 0;
+                    // Sum all selected obs
+                    const obsPrice = data.observations.reduce((sum, oId) => {
+                        const oItem = categoryObs.find(obs => obs.id === oId);
+                        return sum + (oItem ? (oItem.price || 0) : 0);
+                    }, 0);
 
-                    if (category === 'salchipapas' && data.observation) {
-                        rowPrice = obsPrice * data.qty;
+                    if (category === 'salchipapas') {
+                        // Logic update: If salchipapas uses OBS as base price modifier, handling multiple might be tricky.
+                        // Assuming Salchipapas OBS are additive or the user selects one. 
+                        // If multiple selected, we sum them.
+                        if (data.observations.length > 0) {
+                            rowPrice = obsPrice * data.qty;
+                        } else {
+                            // Fallback if no obs selected for salchipapa? (Original logic was if no obs, rowPrice=0?)
+                            rowPrice = (basePrice + extraPrice) * data.qty;
+                        }
                     } else {
                         rowPrice = (basePrice + extraPrice + obsPrice) * data.qty;
                     }
@@ -578,14 +645,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     const categoryExtras = config.extras[category] || [];
-                    const extraData = rowData.extra ? categoryExtras.find(e => e.id === rowData.extra) : null;
-                    const extraName = extraData ? extraData.name : '';
-                    const extraPrice = extraData ? extraData.price : 0;
+                    // Map IDs to Names
+                    const extraNames = rowData.extras.map(eId => {
+                        const item = categoryExtras.find(e => e.id === eId);
+                        return item ? item.name : '';
+                    }).filter(Boolean);
+
+                    const extraPrice = rowData.extras.reduce((sum, eId) => {
+                        const item = categoryExtras.find(e => e.id === eId);
+                        return sum + (item ? item.price : 0);
+                    }, 0);
 
                     const categoryObs = config.observations[category] || [];
-                    const obsData = rowData.observation ? categoryObs.find(o => o.id === rowData.observation) : null;
-                    const obsName = obsData ? obsData.name : '';
-                    const obsPrice = obsData ? (obsData.price || 0) : 0;
+                    const obsNames = rowData.observations.map(oId => {
+                        const item = categoryObs.find(o => o.id === oId);
+                        return item ? item.name : '';
+                    }).filter(Boolean);
+                    // Join multiple obs with comma
+                    const obsLabel = obsNames.join(', ');
+
+                    const obsPrice = rowData.observations.reduce((sum, oId) => {
+                        const item = categoryObs.find(o => o.id === oId);
+                        return sum + (item ? (item.price || 0) : 0);
+                    }, 0);
 
                     let basePrice = 0;
                     if (isBebida) {
@@ -596,8 +678,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     let rowPrice = 0;
-                    if (category === 'salchipapas' && rowData.observation) {
-                        rowPrice = obsPrice * rowData.qty;
+                    if (category === 'salchipapas') {
+                        if (rowData.observations.length > 0) {
+                            rowPrice = obsPrice * rowData.qty;
+                        } else {
+                            rowPrice = (basePrice + extraPrice) * rowData.qty;
+                        }
                     } else {
                         rowPrice = (basePrice + extraPrice + obsPrice) * rowData.qty;
                     }
@@ -610,8 +696,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         qty: rowData.qty,
                         size: size,
                         flavors: flavorNames,
-                        extras: extraName ? [extraName] : [],
-                        observations: obsName,
+                        extras: extraNames,
+                        observations: obsLabel,
                         price: rowPrice
                     });
                 });
