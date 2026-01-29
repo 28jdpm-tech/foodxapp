@@ -1022,6 +1022,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const methodBtns = document.querySelectorAll('.method-btn');
         methodBtns.forEach(btn => {
             btn.classList.remove('active');
+
+            // Explicitly attach listener here to guarantee it works on every open
+            // Using .onclick overrides any previous issues and ensures scope access
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                state.selectedPaymentMethod = btn.dataset.method;
+                methodBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            };
         });
 
         // Show/Hide method selector based on payment status
@@ -1039,16 +1048,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.paymentModal.classList.remove('hidden');
     }
 
-    // Payment Method Selection Listener (Direct attachment for mobile compatibility)
-    const methodBtns = document.querySelectorAll('.method-btn');
-    methodBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent bubbling issues
-            state.selectedPaymentMethod = btn.dataset.method;
-            methodBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
-    });
+
 
     document.querySelectorAll('.checkout-tab').forEach(tab => {
         tab.addEventListener('click', () => {
