@@ -508,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     rowPrice = (flavor ? flavor.price : 0) * data.qty;
                     sizeLabel = '';
                 } else {
-                    const size = calculateSize(filledBlocks.length, category);
+                    const size = calculateSize(filledBlocks, category);
                     sizeLabel = size;
                     const basePrice = config.prices[category][size];
                     const categoryExtras = config.extras[category] || [];
@@ -530,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Assuming Salchipapas OBS are additive or the user selects one. 
                         // If multiple selected, we sum them.
                         if (data.observations.length > 0) {
-                            rowPrice = obsPrice * data.qty;
+                            rowPrice = (obsPrice + extraPrice) * data.qty;
                         } else {
                             // Fallback if no obs selected for salchipapa? (Original logic was if no obs, rowPrice=0?)
                             rowPrice = (basePrice + extraPrice) * data.qty;
