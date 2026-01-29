@@ -431,7 +431,6 @@ body {
 .category-section {
     background: var(--bg-card);
     border-radius: var(--radius-lg);
-    overflow: hidden;
     border: 1px solid var(--border-subtle);
 }
 
