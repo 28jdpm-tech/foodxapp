@@ -259,6 +259,27 @@
                 </div>
             </div>
 
+            <!-- Generic Multi-Select Modal -->
+            <div class="selection-modal hidden" id="selectionModal">
+                <div class="modal-overlay" id="selectionModalOverlay"></div>
+                <div class="selection-modal-content">
+                    <div class="selection-header">
+                        <h3 id="selectionTitle">Seleccionar</h3>
+                        <button class="close-selection" id="closeSelectionBtn">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                    <div class="selection-list" id="selectionList">
+                        <!-- Options injected here -->
+                    </div>
+                    <div class="selection-footer">
+                        <button class="btn-confirm-selection" id="confirmSelectionBtn">
+                            Listo
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Orders Page -->
             <div class="page" id="page-orders">
                 <div class="page-title-bar">
@@ -674,7 +695,7 @@
     <script src="js/data.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/app.js?v=15"></script>
+    <script src="js/app.js?v=16"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

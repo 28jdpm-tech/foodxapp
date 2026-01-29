@@ -386,40 +386,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="field-col flavor-col">
                     <label>ADI</label>
                     <div class="field-content">
-                        <!-- Multi-Select Extras -->
-                        <div class="multi-select-wrapper" id="extra-wrapper-${rowId}">
-                            <div class="multi-select-trigger" data-type="extra">
-                                <span class="selected-text">Ninguno</span>
-                                <i data-lucide="chevron-down" style="width:14px;height:14px;"></i>
-                            </div>
-                            <div class="multi-select-dropdown">
-                                ${categoryExtras.filter(e => e.active !== false).map(e => `
-                                    <label class="multi-select-option">
-                                        <input type="checkbox" value="${e.id}" data-name="${e.name}">
-                                        <span>${e.name}</span>
-                                    </label>
-                                `).join('')}
-                            </div>
+                        <div class="multi-select-trigger" id="extra-trigger-${rowId}" data-type="extra">
+                            <span class="selected-text">Ninguno</span>
+                            <i data-lucide="chevron-down" style="width:14px;height:14px;"></i>
                         </div>
                     </div>
                 </div>
                 <div class="field-col flavor-col">
                     <label>OBS</label>
                     <div class="field-content">
-                        <!-- Multi-Select Observations -->
-                        <div class="multi-select-wrapper" id="obs-wrapper-${rowId}">
-                            <div class="multi-select-trigger" data-type="obs">
-                                <span class="selected-text">Ninguno</span>
-                                <i data-lucide="chevron-down" style="width:14px;height:14px;"></i>
-                            </div>
-                            <div class="multi-select-dropdown">
-                                ${categoryObs.filter(o => o.active !== false).map(o => `
-                                    <label class="multi-select-option">
-                                        <input type="checkbox" value="${o.id}" data-name="${o.name}">
-                                        <span>${o.name}</span>
-                                    </label>
-                                `).join('')}
-                            </div>
+                        <div class="multi-select-trigger" id="obs-trigger-${rowId}" data-type="obs">
+                            <span class="selected-text">Ninguno</span>
+                            <i data-lucide="chevron-down" style="width:14px;height:14px;"></i>
                         </div>
                     </div>
                 </div>
@@ -465,60 +443,40 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Multi-Select Handlers
-        const setupMultiSelect = (wrapper, type) => {
-            const trigger = wrapper.querySelector('.multi-select-trigger');
-            const dropdown = wrapper.querySelector('.multi-select-dropdown');
-            const textSpan = trigger.querySelector('.selected-text');
-            const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]');
-
-            // Toggle Dropdown
-            trigger.addEventListener('click', (e) => {
-                e.stopPropagation();
-                // Close all other dropdowns
-                document.querySelectorAll('.multi-select-dropdown').forEach(d => {
-                    if (d !== dropdown) d.classList.remove('open');
-                });
-                dropdown.classList.toggle('open');
-            });
-
-            // Handle Checkbox Change
-            checkboxes.forEach(cb => {
-                cb.addEventListener('change', () => {
-                    const data = getRowData();
-                    if (!data) return;
-
-                    const val = cb.value;
-                    const targetArray = type === 'extra' ? data.extras : data.observations;
-
-                    if (cb.checked) {
-                        if (!targetArray.includes(val)) targetArray.push(val);
-                    } else {
-                        const idx = targetArray.indexOf(val);
-                        if (idx > -1) targetArray.splice(idx, 1);
-                    }
-
-                    // Update UI Text
-                    const count = targetArray.length;
-                    textSpan.textContent = count === 0 ? 'Ninguno' : `${count} Sel.`;
-
+        // Modal-based Selection Handlers
+        const extraTrigger = rowEl.querySelector(`#extra-trigger-${rowId}`);
+        if (extraTrigger) {
+            extraTrigger.addEventListener('click', () => {
+                const data = getRowData();
+                if (!data) return;
+                const config = StorageManager.getConfig();
+                const options = (config.extras && config.extras[category]) || [];
+                openSelectionModal('Adicionales', options, data.extras, (selectedIds) => {
+                    data.extras = selectedIds;
+                    const count = data.extras.length;
+                    extraTrigger.querySelector('.selected-text').textContent = count === 0 ? 'Ninguno' : `${count} Sel.`;
                     updateCategoryTotal(category);
                     updateOrderTotal();
                 });
             });
+        }
 
-            // Close on outside click is handled by a global or we create a specific one here?
-            // A global one is better, let's add it once or rely on row-scoped. 
-            // For now, simple row-scoped document click might be expensive if many rows.
-            // We will rely on the trigger propagation stop and a global closer if possible, 
-            // but for safety, let's add a document listener that checks.
-        };
-
-        const extraWrapper = rowEl.querySelector(`#extra-wrapper-${rowId}`);
-        if (extraWrapper) setupMultiSelect(extraWrapper, 'extra');
-
-        const obsWrapper = rowEl.querySelector(`#obs-wrapper-${rowId}`);
-        if (obsWrapper) setupMultiSelect(obsWrapper, 'obs');
+        const obsTrigger = rowEl.querySelector(`#obs-trigger-${rowId}`);
+        if (obsTrigger) {
+            obsTrigger.addEventListener('click', () => {
+                const data = getRowData();
+                if (!data) return;
+                const config = StorageManager.getConfig();
+                const options = (config.observations && config.observations[category]) || [];
+                openSelectionModal('Observaciones', options, data.observations, (selectedIds) => {
+                    data.observations = selectedIds;
+                    const count = data.observations.length;
+                    obsTrigger.querySelector('.selected-text').textContent = count === 0 ? 'Ninguno' : `${count} Sel.`;
+                    updateCategoryTotal(category);
+                    updateOrderTotal();
+                });
+            });
+        }
     }
 
     // ============================================
@@ -1144,6 +1102,81 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedPaymentOrder = null;
         });
     }
+
+    // Selection Modal Logic
+    const selectionModal = document.getElementById('selectionModal');
+    const selectionOverlay = document.getElementById('selectionModalOverlay');
+    const closeSelectionBtn = document.getElementById('closeSelectionBtn');
+
+    function closeSelection() {
+        if (selectionModal) selectionModal.classList.add('hidden');
+    }
+
+    if (selectionOverlay) selectionOverlay.addEventListener('click', closeSelection);
+    if (closeSelectionBtn) closeSelectionBtn.addEventListener('click', closeSelection);
+
+    // Global function for opening selection modal
+    window.openSelectionModal = function (title, options, currentIds, onConfirm) {
+        if (!selectionModal) return;
+
+        const titleEl = document.getElementById('selectionTitle');
+        const listEl = document.getElementById('selectionList');
+        const confirmBtn = document.getElementById('confirmSelectionBtn');
+
+        if (!titleEl || !listEl || !confirmBtn) return;
+
+        titleEl.textContent = title;
+        listEl.innerHTML = '';
+
+        // Track temp selection
+        let tempSelected = [...currentIds];
+
+        options.filter(o => o.active !== false).forEach(opt => {
+            const row = document.createElement('div');
+            row.className = 'selection-option';
+            if (tempSelected.includes(opt.id)) row.classList.add('selected');
+
+            // Format price if exists
+            const priceText = opt.price ? ` ($${formatPrice(opt.price)})` : '';
+
+            row.innerHTML = `
+                <input type="checkbox" ${tempSelected.includes(opt.id) ? 'checked' : ''}>
+                <span>${opt.name}${priceText}</span>
+            `;
+
+            // Row click toggle
+            row.addEventListener('click', (e) => {
+                const input = row.querySelector('input');
+                // If clicked directly on input, don't toggle again
+                if (e.target !== input) {
+                    input.checked = !input.checked;
+                }
+
+                if (input.checked) {
+                    row.classList.add('selected');
+                    if (!tempSelected.includes(opt.id)) tempSelected.push(opt.id);
+                } else {
+                    row.classList.remove('selected');
+                    const idx = tempSelected.indexOf(opt.id);
+                    if (idx > -1) tempSelected.splice(idx, 1);
+                }
+            });
+
+            listEl.appendChild(row);
+        });
+
+        // Handle Confirm
+        // We use a clone to clear previous listeners
+        const newBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+
+        newBtn.addEventListener('click', () => {
+            onConfirm(tempSelected);
+            closeSelection();
+        });
+
+        selectionModal.classList.remove('hidden');
+    };
 
     if (elements.confirmPayment) {
         elements.confirmPayment.addEventListener('click', () => {
