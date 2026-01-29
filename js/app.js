@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // App State
     const state = {
         currentPage: 'new-order',
-        serviceType: 'salon',
+        serviceType: null,
         orderTotal: 0,
         categoryData: {},
         rowCounter: 0,
@@ -616,6 +616,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 });
             });
+
+            if (!state.serviceType && !state.appendingOrderId) {
+                showNotification('⚠️ Selecciona: Salón, Llevar o Domicilio', 'error');
+                return;
+            }
 
             if (items.length === 0) {
                 showNotification('Selecciona al menos un producto');
