@@ -642,7 +642,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let rowPrice = 0;
                     if (category === 'salchipapas') {
                         if (rowData.observations.length > 0) {
-                            rowPrice = obsPrice * rowData.qty;
+                            rowPrice = (obsPrice + extraPrice) * rowData.qty;
                         } else {
                             rowPrice = (basePrice + extraPrice) * rowData.qty;
                         }
@@ -1792,23 +1792,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tableHeader = (catName, qty) => {
             const title = `${catName} (${qty})`.toUpperCase();
-            // Simple Text Header without grid, but with columns
             let h = title + "\n";
-            h += " PRODUCTO        ADICION\n";
+            h += " PRODUCTO           CANT\n";
             return h;
         };
 
-        const tableRow = (s1, s2, s3, adi) => {
+        const tableRow = (s1, s2, s3, qty) => {
             const flavorsList = [s1, s2, s3].filter(f => f && f.trim() !== '');
             const flavors = flavorsList.join('-');
 
-            // PRODUCTO column: 15 chars, ADICION column: 7 chars
-            // We use spaces to align with the boxed header above
-            const fCol = flavors.substring(0, 15).toUpperCase().padEnd(15);
-            const adCol = (adi || '').substring(0, 7).toUpperCase().padEnd(7);
+            // PRODUCTO column: 15 chars, QTY column: 5 chars? 
+            // Actually let's keep it simple: 18 chars for flavors
+            const fCol = flavors.substring(0, 18).toUpperCase().padEnd(18);
+            const qCol = String(qty || '').substring(0, 4).padEnd(4);
 
-            // Return plain text row aligned with the grid
-            return ` ${fCol} ${adCol}`;
+            return ` ${fCol} ${qCol}`;
         };
 
         const topDivider = '━'.repeat(TICKET_WIDTH);
@@ -1861,13 +1859,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const s1 = item.flavors[0] || '';
                 const s2 = item.flavors[1] || '';
                 const s3 = item.flavors[2] || '';
-                const adi = item.extras[0] || '';
 
-                // Table row without grid lines
-                ticket += tableRow(s1, s2, s3, adi) + '\n';
+                // Table row: Flavors and Qty
+                ticket += tableRow(s1, s2, s3, item.qty) + '\n';
+
+                // List all Extras on new lines
+                if (item.extras && item.extras.length > 0) {
+                    item.extras.forEach(extra => {
+                        ticket += '  + ADI: ' + extra.toUpperCase() + '\n';
+                    });
+                }
 
                 if (item.observations && item.observations.trim() !== '') {
-                    ticket += ' * OBS: ' + item.observations.toUpperCase() + '\n';
+                    // Observations might be joined string, show it
+                    ticket += '  * OBS: ' + item.observations.toUpperCase() + '\n';
                 }
             });
             // Removed L_BOT since header closes itself now
