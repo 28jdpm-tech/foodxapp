@@ -446,12 +446,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Modal-based Selection Handlers
         const extraTrigger = rowEl.querySelector(`#extra-trigger-${rowId}`);
         if (extraTrigger) {
-            extraTrigger.addEventListener('click', () => {
+            extraTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const data = getRowData();
                 if (!data) return;
                 const config = StorageManager.getConfig();
                 const options = (config.extras && config.extras[category]) || [];
-                openSelectionModal('Adicionales', options, data.extras, (selectedIds) => {
+                // Use Floating Dropdown
+                openFloatingDropdown(extraTrigger, 'Adicionales', options, data.extras, (selectedIds) => {
                     data.extras = selectedIds;
                     const count = data.extras.length;
                     extraTrigger.querySelector('.selected-text').textContent = count === 0 ? 'Ninguno' : `${count} Sel.`;
@@ -463,12 +465,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const obsTrigger = rowEl.querySelector(`#obs-trigger-${rowId}`);
         if (obsTrigger) {
-            obsTrigger.addEventListener('click', () => {
+            obsTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const data = getRowData();
                 if (!data) return;
                 const config = StorageManager.getConfig();
                 const options = (config.observations && config.observations[category]) || [];
-                openSelectionModal('Observaciones', options, data.observations, (selectedIds) => {
+                // Use Floating Dropdown
+                openFloatingDropdown(obsTrigger, 'Observaciones', options, data.observations, (selectedIds) => {
                     data.observations = selectedIds;
                     const count = data.observations.length;
                     obsTrigger.querySelector('.selected-text').textContent = count === 0 ? 'Ninguno' : `${count} Sel.`;
@@ -504,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     rowPrice = (flavor ? flavor.price : 0) * data.qty;
                     sizeLabel = '';
                 } else {
-                    const size = calculateSize(filledBlocks, category);
+                    const size = calculateSize(filledBlocks.length, category);
                     sizeLabel = size;
                     const basePrice = config.prices[category][size];
                     const categoryExtras = config.extras[category] || [];
@@ -1103,80 +1107,107 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Selection Modal Logic
-    const selectionModal = document.getElementById('selectionModal');
-    const selectionOverlay = document.getElementById('selectionModalOverlay');
-    const closeSelectionBtn = document.getElementById('closeSelectionBtn');
+    // Floating Dropdown Logic (Mimics native select)
+    function openFloatingDropdown(trigger, title, options, currentIds, onUpdate) {
+        // Close any existing
+        closeFloatingDropdown();
 
-    function closeSelection() {
-        if (selectionModal) selectionModal.classList.add('hidden');
-    }
+        const rect = trigger.getBoundingClientRect();
 
-    if (selectionOverlay) selectionOverlay.addEventListener('click', closeSelection);
-    if (closeSelectionBtn) closeSelectionBtn.addEventListener('click', closeSelection);
+        const dropdown = document.createElement('div');
+        dropdown.className = 'floating-dropdown';
+        dropdown.style.position = 'fixed';
+        dropdown.style.top = `${rect.bottom + 2}px`;
+        dropdown.style.left = `${rect.left}px`;
+        dropdown.style.width = `${rect.width}px`;
+        dropdown.style.minWidth = '200px';
+        dropdown.style.maxHeight = '300px';
+        dropdown.style.overflowY = 'auto';
+        dropdown.style.background = 'var(--bg-card)';
+        dropdown.style.border = '1px solid var(--border-default)';
+        dropdown.style.borderRadius = 'var(--radius-sm)';
+        dropdown.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+        dropdown.style.zIndex = '9999';
+        dropdown.style.padding = '4px';
+        dropdown.id = 'activeFloatingDropdown';
 
-    // Global function for opening selection modal
-    window.openSelectionModal = function (title, options, currentIds, onConfirm) {
-        if (!selectionModal) return;
+        // Header for context?
+        // Optional: Add a title row
+        // const header = document.createElement('div');
+        // header.textContent = title; ...
 
-        const titleEl = document.getElementById('selectionTitle');
-        const listEl = document.getElementById('selectionList');
-        const confirmBtn = document.getElementById('confirmSelectionBtn');
-
-        if (!titleEl || !listEl || !confirmBtn) return;
-
-        titleEl.textContent = title;
-        listEl.innerHTML = '';
-
-        // Track temp selection
         let tempSelected = [...currentIds];
 
         options.filter(o => o.active !== false).forEach(opt => {
             const row = document.createElement('div');
             row.className = 'selection-option';
-            if (tempSelected.includes(opt.id)) row.classList.add('selected');
+            row.style.padding = '8px';
+            row.style.display = 'flex';
+            row.style.alignItems = 'center';
+            row.style.cursor = 'pointer';
+            row.style.gap = '8px';
 
-            // Format price if exists
+            if (tempSelected.includes(opt.id)) {
+                row.style.background = 'var(--bg-secondary)';
+                row.style.color = 'var(--accent-primary)';
+            }
+
             const priceText = opt.price ? ` ($${formatPrice(opt.price)})` : '';
 
             row.innerHTML = `
-                <input type="checkbox" ${tempSelected.includes(opt.id) ? 'checked' : ''}>
+                <input type="checkbox" ${tempSelected.includes(opt.id) ? 'checked' : ''} style="pointer-events:none;">
                 <span>${opt.name}${priceText}</span>
             `;
 
-            // Row click toggle
             row.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const input = row.querySelector('input');
-                // If clicked directly on input, don't toggle again
-                if (e.target !== input) {
-                    input.checked = !input.checked;
-                }
+                // Toggle
+                const isChecked = !input.checked;
+                input.checked = isChecked;
 
-                if (input.checked) {
-                    row.classList.add('selected');
+                if (isChecked) {
                     if (!tempSelected.includes(opt.id)) tempSelected.push(opt.id);
+                    row.style.background = 'var(--bg-secondary)';
+                    row.style.color = 'var(--accent-primary)';
                 } else {
-                    row.classList.remove('selected');
                     const idx = tempSelected.indexOf(opt.id);
                     if (idx > -1) tempSelected.splice(idx, 1);
+                    row.style.background = 'transparent';
+                    row.style.color = 'var(--text-primary)';
                 }
+                onUpdate(tempSelected);
             });
-
-            listEl.appendChild(row);
+            dropdown.appendChild(row);
         });
 
-        // Handle Confirm
-        // We use a clone to clear previous listeners
-        const newBtn = confirmBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+        // Adjust position if offscreen
+        document.body.appendChild(dropdown);
+        const dropRect = dropdown.getBoundingClientRect();
+        if (dropRect.bottom > window.innerHeight) {
+            dropdown.style.top = `${rect.top - dropRect.height - 2}px`;
+        }
+        if (dropRect.right > window.innerWidth) {
+            dropdown.style.left = `${window.innerWidth - dropRect.width - 10}px`;
+        }
 
-        newBtn.addEventListener('click', () => {
-            onConfirm(tempSelected);
-            closeSelection();
-        });
+        // Click outside closes
+        setTimeout(() => {
+            document.addEventListener('click', closeOnOutsideClick);
+        }, 0);
+    }
 
-        selectionModal.classList.remove('hidden');
-    };
+    function closeFloatingDropdown() {
+        const existing = document.getElementById('activeFloatingDropdown');
+        if (existing) existing.remove();
+        document.removeEventListener('click', closeOnOutsideClick);
+    }
+
+    function closeOnOutsideClick(e) {
+        if (!e.target.closest('#activeFloatingDropdown')) {
+            closeFloatingDropdown();
+        }
+    }
 
     if (elements.confirmPayment) {
         elements.confirmPayment.addEventListener('click', () => {
