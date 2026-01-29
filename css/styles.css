@@ -3007,10 +3007,12 @@ option {
     color: white !important;
     border-color: var(--accent-primary) !important;
     box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.2);
-}/ *  
- N e w  
- R a d i o  
- B u t t o n  
- S t y l i n g  
- * /  
- 
+}
+
+/* Radio Button Styling */
+.payment-radio:checked+.method-card {
+    background-color: var(--accent-primary) !important;
+    color: white !important;
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.2);
+}
