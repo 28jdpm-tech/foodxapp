@@ -204,24 +204,36 @@
                                 style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">Método
                                 de Pago:</label>
                             <div class="method-options" style="display: flex; gap: 8px;">
-                                <button class="method-btn" data-method="efectivo"
-                                    style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: white; cursor: pointer; font-weight: 500;">
-                                    <i data-lucide="banknote"
-                                        style="display: block; margin: 0 auto 4px; width: 20px; height: 20px;"></i>
-                                    EFECTIVO
-                                </button>
-                                <button class="method-btn" data-method="nequi"
-                                    style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: white; cursor: pointer; font-weight: 500;">
-                                    <i data-lucide="smartphone"
-                                        style="display: block; margin: 0 auto 4px; width: 20px; height: 20px;"></i>
-                                    NEQUI
-                                </button>
-                                <button class="method-btn" data-method="daviplata"
-                                    style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: white; cursor: pointer; font-weight: 500;">
-                                    <i data-lucide="smartphone-charging"
-                                        style="display: block; margin: 0 auto 4px; width: 20px; height: 20px;"></i>
-                                    DAVIPLATA
-                                </button>
+                                <label class="method-label" style="flex: 1; cursor: pointer;">
+                                    <input type="radio" name="paymentMethod" value="efectivo" class="payment-radio"
+                                        style="display: none;">
+                                    <div class="method-card"
+                                        style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: white; text-align: center; font-weight: 500; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                        <i data-lucide="banknote"
+                                            style="margin-bottom: 4px; width: 20px; height: 20px;"></i>
+                                        EFECTIVO
+                                    </div>
+                                </label>
+                                <label class="method-label" style="flex: 1; cursor: pointer;">
+                                    <input type="radio" name="paymentMethod" value="nequi" class="payment-radio"
+                                        style="display: none;">
+                                    <div class="method-card"
+                                        style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: white; text-align: center; font-weight: 500; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                        <i data-lucide="smartphone"
+                                            style="margin-bottom: 4px; width: 20px; height: 20px;"></i>
+                                        NEQUI
+                                    </div>
+                                </label>
+                                <label class="method-label" style="flex: 1; cursor: pointer;">
+                                    <input type="radio" name="paymentMethod" value="daviplata" class="payment-radio"
+                                        style="display: none;">
+                                    <div class="method-card"
+                                        style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: white; text-align: center; font-weight: 500; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                        <i data-lucide="smartphone-charging"
+                                            style="margin-bottom: 4px; width: 20px; height: 20px;"></i>
+                                        DAVIPLATA
+                                    </div>
+                                </label>
                             </div>
                         </div>
                         <div class="payment-total-row">
@@ -662,7 +674,7 @@
     <script src="js/data.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/app.js?v=8"></script>
+    <script src="js/app.js?v=9"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

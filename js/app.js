@@ -1019,21 +1019,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-        // Reset Payment Method Logic - No default selection
-        state.selectedPaymentMethod = null;
-        const methodBtns = document.querySelectorAll('.method-btn');
-        methodBtns.forEach(btn => {
-            btn.classList.remove('active');
-
-            // Explicitly attach listener here to guarantee it works on every open
-            // Using .onclick overrides any previous issues and ensures scope access
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                state.selectedPaymentMethod = btn.dataset.method;
-                methodBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            };
-        });
+        // Reset Payment Method Logic (Radio Buttons)
+        const radios = document.querySelectorAll('input[name="paymentMethod"]');
+        radios.forEach(r => r.checked = false);
+        state.selectedPaymentMethod = null; // Clear state just in case, though we read DOM now.
 
         // Show/Hide method selector based on payment status
         const methodContainer = document.querySelector('.payment-methods-container');
@@ -1073,15 +1062,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.confirmPayment) {
         elements.confirmPayment.addEventListener('click', () => {
             if (selectedPaymentOrder) {
-                if (!state.selectedPaymentMethod) {
+                // Get selected radio
+                const selectedRadio = document.querySelector('input[name="paymentMethod"]:checked');
+
+                if (!selectedRadio) {
                     showNotification('⚠️ Selecciona un medio de pago', 'error');
                     return;
                 }
 
+                const method = selectedRadio.value;
+
                 StorageManager.updateOrder(selectedPaymentOrder.id, {
                     paid: true,
                     status: 'delivered',
-                    paymentMethod: state.selectedPaymentMethod
+                    paymentMethod: method
                 });
                 showNotification(`Pedido ${selectedPaymentOrder.orderNumber} pagado`);
                 elements.paymentModal.classList.add('hidden');
