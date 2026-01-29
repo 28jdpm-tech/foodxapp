@@ -1152,11 +1152,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 row.style.color = 'var(--accent-primary)';
             }
 
-            const priceText = opt.price ? ` ($${formatPrice(opt.price)})` : '';
-
             row.innerHTML = `
                 <input type="checkbox" ${tempSelected.includes(opt.id) ? 'checked' : ''} style="pointer-events:none;">
-                <span>${opt.name}${priceText}</span>
+                <span>${opt.name}</span>
             `;
 
             row.addEventListener('click', (e) => {
