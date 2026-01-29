@@ -1792,21 +1792,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tableHeader = (catName, qty) => {
             const title = `${catName} (${qty})`.toUpperCase();
+            // Simple Text Header without grid, but with columns
             let h = title + "\n";
-            h += " PRODUCTO           CANT\n";
+            h += " PRODUCTO        ADICION\n";
             return h;
         };
 
-        const tableRow = (s1, s2, s3, qty) => {
+        const tableRow = (s1, s2, s3, adi) => {
             const flavorsList = [s1, s2, s3].filter(f => f && f.trim() !== '');
             const flavors = flavorsList.join('-');
 
-            // PRODUCTO column: 15 chars, QTY column: 5 chars? 
-            // Actually let's keep it simple: 18 chars for flavors
-            const fCol = flavors.substring(0, 18).toUpperCase().padEnd(18);
-            const qCol = String(qty || '').substring(0, 4).padEnd(4);
+            // PRODUCTO column: 15 chars, ADICION column: 7 chars
+            // We use spaces to align with the boxed header above
+            const fCol = flavors.substring(0, 15).toUpperCase().padEnd(15);
+            const adCol = (adi || '').substring(0, 7).toUpperCase().padEnd(7);
 
-            return ` ${fCol} ${qCol}`;
+            // Return plain text row aligned with the grid
+            return ` ${fCol} ${adCol}`;
         };
 
         const topDivider = '━'.repeat(TICKET_WIDTH);
@@ -1860,19 +1862,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const s2 = item.flavors[1] || '';
                 const s3 = item.flavors[2] || '';
 
-                // Table row: Flavors and Qty
-                ticket += tableRow(s1, s2, s3, item.qty) + '\n';
+                // Join multiple extras with hyphen
+                const extrasLabel = (item.extras || []).join('-');
 
-                // List all Extras on new lines
-                if (item.extras && item.extras.length > 0) {
-                    item.extras.forEach(extra => {
-                        ticket += '  + ADI: ' + extra.toUpperCase() + '\n';
-                    });
-                }
+                // Table row with Adicion column
+                ticket += tableRow(s1, s2, s3, extrasLabel) + '\n';
 
                 if (item.observations && item.observations.trim() !== '') {
-                    // Observations might be joined string, show it
-                    ticket += '  * OBS: ' + item.observations.toUpperCase() + '\n';
+                    ticket += ' * OBS: ' + item.observations.toUpperCase() + '\n';
                 }
             });
             // Removed L_BOT since header closes itself now
