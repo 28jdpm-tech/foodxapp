@@ -525,6 +525,19 @@ document.addEventListener('DOMContentLoaded', () => {
             let rowPrice = 0;
             let sizeLabel = '--';
 
+            // Calculate extras price regardless of flavor selection
+            const categoryExtras = config.extras[category] || [];
+            const extraPrice = data.extras.reduce((sum, eId) => {
+                const eItem = categoryExtras.find(ex => ex.id === eId);
+                return sum + (eItem ? eItem.price : 0);
+            }, 0);
+
+            const categoryObs = config.observations[category] || [];
+            const obsPrice = data.observations.reduce((sum, oId) => {
+                const oItem = categoryObs.find(obs => obs.id === oId);
+                return sum + (oItem ? (oItem.price || 0) : 0);
+            }, 0);
+
             if (filledBlocks > 0) {
                 if (category === 'bebidas') {
                     const flavorId = data.blocks[0];
@@ -535,36 +548,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     const size = calculateSize(filledBlocks, category);
                     sizeLabel = size;
                     const basePrice = config.prices[category][size];
-                    const categoryExtras = config.extras[category] || [];
-                    // Sum all selected extras
-                    const extraPrice = data.extras.reduce((sum, eId) => {
-                        const eItem = categoryExtras.find(ex => ex.id === eId);
-                        return sum + (eItem ? eItem.price : 0);
-                    }, 0);
-
-                    const categoryObs = config.observations[category] || [];
-                    // Sum all selected obs
-                    const obsPrice = data.observations.reduce((sum, oId) => {
-                        const oItem = categoryObs.find(obs => obs.id === oId);
-                        return sum + (oItem ? (oItem.price || 0) : 0);
-                    }, 0);
 
                     if (category === 'salchipapas') {
-                        // Logic update: If salchipapas uses OBS as base price modifier, handling multiple might be tricky.
-                        // Assuming Salchipapas OBS are additive or the user selects one. 
-                        // If multiple selected, we sum them.
                         if (data.observations.length > 0) {
                             rowPrice = (obsPrice + extraPrice) * data.qty;
                         } else {
-                            // Fallback if no obs selected for salchipapa? (Original logic was if no obs, rowPrice=0?)
                             rowPrice = (basePrice + extraPrice) * data.qty;
                         }
                     } else {
                         rowPrice = (basePrice + extraPrice + obsPrice) * data.qty;
                     }
                 }
-                total += rowPrice;
+            } else if (extraPrice > 0 || obsPrice > 0) {
+                // Extras-only order (no flavor selected)
+                rowPrice = (extraPrice + obsPrice) * data.qty;
+                sizeLabel = 'ADI';
             }
+
+            total += rowPrice;
 
             if (rowEl) {
                 const rowPriceEl = rowEl.querySelector('.row-total-price');
