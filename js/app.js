@@ -621,10 +621,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 state.categoryData[category].rows.forEach(rowData => {
                     const filledBlocks = rowData.blocks.filter(b => b !== '');
-                    if (filledBlocks.length === 0) return;
+                    const hasExtras = rowData.extras && rowData.extras.length > 0;
+                    const hasObs = rowData.observations && rowData.observations.length > 0;
+
+                    // Skip if no selections at all
+                    if (filledBlocks.length === 0 && !hasExtras && !hasObs) return;
 
                     const isBebida = category === 'bebidas';
-                    const size = isBebida ? '' : calculateSize(filledBlocks.length, category);
+                    let size = '';
+
+                    if (filledBlocks.length > 0) {
+                        size = isBebida ? '' : calculateSize(filledBlocks.length, category);
+                    } else {
+                        size = 'ADI'; // Extras-only
+                    }
 
                     const flavorNames = rowData.blocks.filter(b => b).map(b => {
                         const flavor = config.flavors[category].find(f => f.id === b);
@@ -657,15 +667,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 0);
 
                     let basePrice = 0;
-                    if (isBebida) {
-                        const flavor = config.flavors[category].find(f => f.id === rowData.blocks[0]);
-                        basePrice = flavor ? flavor.price : 0;
-                    } else {
-                        basePrice = config.prices[category][size];
+                    if (filledBlocks.length > 0) {
+                        if (isBebida) {
+                            const flavor = config.flavors[category].find(f => f.id === rowData.blocks[0]);
+                            basePrice = flavor ? flavor.price : 0;
+                        } else {
+                            basePrice = config.prices[category][size] || 0;
+                        }
                     }
 
                     let rowPrice = 0;
-                    if (category === 'salchipapas') {
+                    if (filledBlocks.length === 0) {
+                        // Extras-only
+                        rowPrice = (extraPrice + obsPrice) * rowData.qty;
+                    } else if (category === 'salchipapas') {
                         if (rowData.observations.length > 0) {
                             rowPrice = (obsPrice + extraPrice) * rowData.qty;
                         } else {
