@@ -1557,6 +1557,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================
 
     let historyMode = 'today';
+    let historyFilter = 'all';
 
     function renderHistoryPage() {
         const ordersRaw = historyMode === 'today'
@@ -1564,10 +1565,28 @@ document.addEventListener('DOMContentLoaded', () => {
             : StorageManager.getOrdersByDate(elements.historyDatePicker.value).reverse();
 
         // Filter out partial orders from history and show only PAID
-        const orders = ordersRaw.filter(o => !o.isPartial && o.paid);
+        let orders = ordersRaw.filter(o => !o.isPartial && o.paid);
+
+        // Apply Payment Method or Category Filter
+        if (historyFilter !== 'all') {
+            if (['efectivo', 'nequi', 'daviplata'].includes(historyFilter)) {
+                orders = orders.filter(o => (o.paymentMethod || 'efectivo') === historyFilter);
+            } else if (['comida', 'bebidas', 'desechables'].includes(historyFilter)) {
+                const foodCategories = ['hamburguesas', 'perros', 'salchipapas', 'combos'];
+                orders = orders.filter(o => {
+                    return o.items.some(item => {
+                        const catId = (item.category || '').toLowerCase();
+                        if (historyFilter === 'comida') return foodCategories.includes(catId);
+                        if (historyFilter === 'bebidas') return catId === 'bebidas';
+                        if (historyFilter === 'desechables') return catId === 'desechables';
+                        return false;
+                    });
+                });
+            }
+        }
 
         renderHistoryOrdersList(orders);
-        calculateHistorySummary(orders);
+        calculateHistorySummary(ordersRaw.filter(o => !o.isPartial && o.paid)); // Total summary always shows all
 
         // Ensure modal is hidden
         if (elements.historyOrderModal) {
@@ -1583,6 +1602,16 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.datePickerContainer.classList.add('hidden');
         }
     }
+
+    // Initialize Clickable Filter Cards in Summary
+    document.querySelectorAll('.filter-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            historyFilter = card.dataset.filter;
+            renderHistoryPage();
+        });
+    });
 
     elements.historyTabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -1705,7 +1734,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     `).join('')}
                 </div>
                 <div class="order-card-footer">
-                    <span class="order-total">${formatPrice(order.totalPrice)}</span>
+                    <div class="footer-left">
+                        <span class="order-total">${formatPrice(order.totalPrice)}</span>
+                        <span class="payment-method-tag">${(order.paymentMethod || 'efectivo').toUpperCase()}</span>
+                    </div>
                     ${order.paid ? '<span class="status-indicator paid-chip">PAGADO</span>' : ''}
                 </div>
             </div>

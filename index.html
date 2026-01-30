@@ -292,32 +292,32 @@
 
                 <!-- History Summary -->
                 <div class="history-summary" id="historySummary">
-                    <div class="summary-card history-total">
+                    <div class="summary-card filter-card active" data-filter="all">
                         <span class="summary-label">VENTAS TOTALES</span>
                         <span class="summary-value" id="historyTotalSales">$0</span>
                     </div>
-                    <div class="summary-card history-food">
+                    <div class="summary-card filter-card" data-filter="efectivo">
                         <span class="summary-label">EFECTIVO</span>
                         <span class="summary-value" id="historyTotalEfectivo">$0</span>
                     </div>
-                    <div class="summary-card history-drinks">
+                    <div class="summary-card filter-card" data-filter="nequi">
                         <span class="summary-label">NEQUI</span>
                         <span class="summary-value" id="historyTotalNequi">$0</span>
                     </div>
-                    <div class="summary-card history-disposables">
+                    <div class="summary-card filter-card" data-filter="daviplata">
                         <span class="summary-label">DAVIPLATA</span>
                         <span class="summary-value" id="historyTotalDaviplata">$0</span>
                     </div>
-                    <!-- Categories -->
-                    <div class="summary-card history-food">
+                    <!-- Categories (can also be filters) -->
+                    <div class="summary-card filter-card" data-filter="comida">
                         <span class="summary-label">COMIDA</span>
                         <span class="summary-value" id="historyTotalFood">$0</span>
                     </div>
-                    <div class="summary-card history-drinks">
+                    <div class="summary-card filter-card" data-filter="bebidas">
                         <span class="summary-label">BEBIDAS</span>
                         <span class="summary-value" id="historyTotalBebidas">$0</span>
                     </div>
-                    <div class="summary-card history-disposables">
+                    <div class="summary-card filter-card" data-filter="desechables">
                         <span class="summary-label">DESECHABLES</span>
                         <span class="summary-value" id="historyTotalDesechables">$0</span>
                     </div>
@@ -676,7 +676,7 @@
     <script src="js/data.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/app.js?v=22"></script>
+    <script src="js/app.js?v=23"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
