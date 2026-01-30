@@ -1624,19 +1624,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         html += `</tbody></table>`;
         elements.reportDetailList.innerHTML = html;
-        elements.reportDetailModal.classList.remove('hidden');
+        elements.reportDetailModal.classList.add('open');
         lucide.createIcons();
     }
 
     // Modal close handlers for report detail
     if (elements.closeReportDetailModal) {
         elements.closeReportDetailModal.addEventListener('click', () => {
-            elements.reportDetailModal.classList.add('hidden');
+            elements.reportDetailModal.classList.remove('open');
         });
     }
     if (elements.closeReportDetailModalOverlay) {
         elements.closeReportDetailModalOverlay.addEventListener('click', () => {
-            elements.reportDetailModal.classList.add('hidden');
+            elements.reportDetailModal.classList.remove('open');
         });
     }
 
