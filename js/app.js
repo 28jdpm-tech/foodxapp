@@ -1469,10 +1469,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Re-attach listeners for detailed view
         document.querySelectorAll('.report-clickable').forEach(card => {
-            card.onclick = () => {
-                const method = card.dataset.reportFilter;
-                showReportPaymentDetail(method);
-            };
+            card.addEventListener('click', () => {
+                const method = card.getAttribute('data-report-filter');
+                if (method) showReportPaymentDetail(method);
+            });
         });
 
         // 1. Render Categories (Sorted by Price)
