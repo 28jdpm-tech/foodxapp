@@ -189,7 +189,15 @@ document.addEventListener('DOMContentLoaded', () => {
         flavorSalesList: document.getElementById('flavorSalesList'),
         sizeSalesList: document.getElementById('sizeSalesList'),
         categoryQtyList: document.getElementById('categoryQtyList'),
+        // Report Detail Modal
+        reportDetailModal: document.getElementById('reportDetailModal'),
+        reportDetailList: document.getElementById('reportDetailList'),
+        reportDetailTitle: document.getElementById('reportDetailTitle'),
+        closeReportDetailModal: document.getElementById('closeReportDetailModal'),
+        closeReportDetailModalOverlay: document.getElementById('closeReportDetailModalOverlay'),
     };
+
+    let currentReportOrders = [];
 
     // ============================================
     // Navigation Drawer
@@ -1447,6 +1455,9 @@ document.addEventListener('DOMContentLoaded', () => {
             else totalEfectivo += order.totalPrice;
         });
 
+        // Store for details
+        currentReportOrders = paidOrders;
+
         // Update top cards
         if (elements.reportDailySales) elements.reportDailySales.textContent = formatPrice(totalSales);
         if (elements.reportFoodSales) elements.reportFoodSales.textContent = formatPrice(totalFood);
@@ -1455,6 +1466,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.reportEfectivoSales) elements.reportEfectivoSales.textContent = formatPrice(totalEfectivo);
         if (elements.reportNequiSales) elements.reportNequiSales.textContent = formatPrice(totalNequi);
         if (elements.reportDaviplataSales) elements.reportDaviplataSales.textContent = formatPrice(totalDaviplata);
+
+        // Re-attach listeners for detailed view
+        document.querySelectorAll('.report-clickable').forEach(card => {
+            card.onclick = () => {
+                const method = card.dataset.reportFilter;
+                showReportPaymentDetail(method);
+            };
+        });
 
         // 1. Render Categories (Sorted by Price)
         if (elements.categorySalesList) {
@@ -1553,6 +1572,71 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.searchReportBtn) {
         elements.searchReportBtn.addEventListener('click', () => {
             renderReportsPage();
+        });
+    }
+
+    function showReportPaymentDetail(method) {
+        if (!elements.reportDetailModal || !elements.reportDetailList) return;
+
+        const filtered = currentReportOrders.filter(o => {
+            const m = o.paymentMethod || 'efectivo';
+            return m === method;
+        });
+
+        elements.reportDetailTitle.textContent = `Detalle: ${method.toUpperCase()}`;
+
+        let html = `
+            <table class="report-detail-table">
+                <thead>
+                    <tr>
+                        <th>Fecha/Hora</th>
+                        <th>Comanda</th>
+                        <th>Cliente</th>
+                        <th style="text-align: right;">Monto</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        if (filtered.length === 0) {
+            html += `<tr><td colspan="4" style="text-align:center; padding: 2rem;">No hay transacciones registradas</td></tr>`;
+        } else {
+            filtered.forEach(o => {
+                const dateObj = new Date(o.createdAt);
+                const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateStr = dateObj.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+
+                html += `
+                    <tr>
+                        <td>
+                            <div class="detail-date">${dateStr}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">${timeStr}</div>
+                        </td>
+                        <td class="detail-order-num">${o.orderNumber}</td>
+                        <td style="font-size: 0.8rem; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            ${o.customerInfo}
+                        </td>
+                        <td class="detail-amount">${formatPrice(o.totalPrice)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        html += `</tbody></table>`;
+        elements.reportDetailList.innerHTML = html;
+        elements.reportDetailModal.classList.remove('hidden');
+        lucide.createIcons();
+    }
+
+    // Modal close handlers for report detail
+    if (elements.closeReportDetailModal) {
+        elements.closeReportDetailModal.addEventListener('click', () => {
+            elements.reportDetailModal.classList.add('hidden');
+        });
+    }
+    if (elements.closeReportDetailModalOverlay) {
+        elements.closeReportDetailModalOverlay.addEventListener('click', () => {
+            elements.reportDetailModal.classList.add('hidden');
         });
     }
 
