@@ -164,6 +164,9 @@ document.addEventListener('DOMContentLoaded', () => {
         reportFoodSales: document.getElementById('reportFoodSales'),
         reportBebidasSales: document.getElementById('reportBebidasSales'),
         reportDesechablesSales: document.getElementById('reportDesechablesSales'),
+        reportEfectivoSales: document.getElementById('reportEfectivoSales'),
+        reportNequiSales: document.getElementById('reportNequiSales'),
+        reportDaviplataSales: document.getElementById('reportDaviplataSales'),
         // Admin Security
         adminLoginModal: document.getElementById('adminLoginModal'),
         adminPasswordInput: document.getElementById('adminPasswordInput'),
@@ -1376,6 +1379,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalFood = 0;
         let totalBebidas = 0;
         let totalDesechables = 0;
+        let totalEfectivo = 0;
+        let totalNequi = 0;
+        let totalDaviplata = 0;
 
         const foodCategories = ['hamburguesas', 'perros', 'salchipapas', 'combos'];
 
@@ -1433,6 +1439,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (extraName) extrasSales[extraName] = (extrasSales[extraName] || 0) + item.qty;
                 });
             });
+
+            // Payment Method Breakdown
+            const method = order.paymentMethod || 'efectivo';
+            if (method === 'nequi') totalNequi += order.totalPrice;
+            else if (method === 'daviplata') totalDaviplata += order.totalPrice;
+            else totalEfectivo += order.totalPrice;
         });
 
         // Update top cards
@@ -1440,6 +1452,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.reportFoodSales) elements.reportFoodSales.textContent = formatPrice(totalFood);
         if (elements.reportBebidasSales) elements.reportBebidasSales.textContent = formatPrice(totalBebidas);
         if (elements.reportDesechablesSales) elements.reportDesechablesSales.textContent = formatPrice(totalDesechables);
+        if (elements.reportEfectivoSales) elements.reportEfectivoSales.textContent = formatPrice(totalEfectivo);
+        if (elements.reportNequiSales) elements.reportNequiSales.textContent = formatPrice(totalNequi);
+        if (elements.reportDaviplataSales) elements.reportDaviplataSales.textContent = formatPrice(totalDaviplata);
 
         // 1. Render Categories (Sorted by Price)
         if (elements.categorySalesList) {
