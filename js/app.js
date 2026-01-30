@@ -226,15 +226,16 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const page = item.dataset.page;
 
-            // Protection for Admin page
-            if (page === 'admin' && !state.isAdminAuthenticated) {
+            // Protection for Admin, History, and Reports pages
+            const protectedPages = ['admin', 'history', 'reports'];
+            if (protectedPages.includes(page) && !state.isAdminAuthenticated) {
                 if (elements.adminLoginModal) {
                     elements.adminLoginModal.classList.add('open');
                     elements.adminPasswordInput.value = '';
                     elements.adminPasswordInput.focus();
                     elements.navDrawer.classList.remove('open');
                     // Store the intended page for after login
-                    state.pendingAdminRedirect = true;
+                    state.pendingAdminPage = page;
                 }
                 return;
             }
@@ -2358,10 +2359,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     state.pendingAdminAction = null;
                 }
 
-                // Trigger the pending navigation
-                if (state.pendingAdminRedirect) {
-                    const adminBtn = Array.from(elements.drawerItems).find(i => i.dataset.page === 'admin');
-                    if (adminBtn) adminBtn.click();
+                // Trigger the pending navigation to protected page
+                if (state.pendingAdminPage) {
+                    const targetBtn = Array.from(elements.drawerItems).find(i => i.dataset.page === state.pendingAdminPage);
+                    if (targetBtn) targetBtn.click();
+                    state.pendingAdminPage = null;
                 }
             } else {
                 showNotification('Contraseña incorrecta', 'error');
@@ -2379,7 +2381,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.closeAdminLoginModal) {
         elements.closeAdminLoginModal.addEventListener('click', () => {
             elements.adminLoginModal.classList.remove('open');
-            state.pendingAdminRedirect = false;
+            state.pendingAdminPage = null;
             state.pendingAdminAction = null;
         });
     }
