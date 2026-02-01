@@ -351,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
         rowEl.dataset.rowId = rowId;
 
         const flavors = config.flavors[category] || [];
-        const flavorOptions = flavors.map(f => `<option value="${f.id}">${f.name.substring(0, 8)}</option>`).join('');
+        const flavorOptions = flavors.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
 
         // Use category-specific extras and observations
         const categoryExtras = (config.extras && config.extras[category]) || [];
@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const categoryObs = (config.observations && config.observations[category]) || [];
         const obsOptions = categoryObs.filter(o => o.active !== false).map(o =>
-            `<option value="${o.id}">${o.name.substring(0, 12)}</option>`
+            `<option value="${o.id}">${o.name}</option>`
         ).join('');
 
         const isBebida = category === 'bebidas';
@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let displayText = 'Sel.';
                     if (count === 1) {
                         const item = options.find(o => o.id === selectedIds[0]);
-                        displayText = item ? item.name.substring(0, 8) : 'Sel.';
+                        displayText = item ? item.name : 'Sel.';
                     } else if (count > 1) {
                         displayText = count;
                     }
@@ -495,7 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let displayText = 'Sel.';
                     if (count === 1) {
                         const item = options.find(o => o.id === selectedIds[0]);
-                        displayText = item ? item.name.substring(0, 8) : 'Sel.';
+                        displayText = item ? item.name : 'Sel.';
                     } else if (count > 1) {
                         displayText = count;
                     }
