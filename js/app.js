@@ -715,6 +715,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Validate customer name/table number (mandatory)
+            const customerCode = elements.orderCustomerName?.value.trim();
+            if (!state.appendingOrderId && !customerCode) {
+                showNotification('⚠️ Ingresa nombre del cliente o número de mesa', 'error');
+                elements.orderCustomerName?.focus();
+                return;
+            }
+
             // Direct Process Logic (Bypass Ticket Modal)
             if (state.appendingOrderId) {
                 const originalOrder = StorageManager.getOrders().find(o => o.id == state.appendingOrderId);
@@ -749,15 +757,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 state.appendingOrderId = null;
             } else {
-                const customerCode = elements.orderCustomerName.value.trim().toUpperCase();
+                const customerCodeUpper = customerCode.toUpperCase();
                 const seqNum = generateOrderNumber();
-                const orderIdentifier = customerCode || seqNum;
+                const orderIdentifier = customerCodeUpper || seqNum;
 
                 const newOrder = {
                     orderNumber: orderIdentifier,
                     sequenceNumber: seqNum,
                     serviceType: state.serviceType,
-                    customerInfo: customerCode || (state.serviceType === 'salon' ? 'Mesa' : state.serviceType === 'llevar' ? 'Para llevar' : 'Domicilio'),
+                    customerInfo: customerCodeUpper,
                     items: items,
                     status: 'pending',
                     totalPrice: items.reduce((sum, item) => sum + item.price, 0),
