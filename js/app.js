@@ -1256,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (elements.confirmPayment) {
-        elements.confirmPayment.addEventListener('click', () => {
+        elements.confirmPayment.addEventListener('click', async () => {
             if (selectedPaymentOrder) {
                 // Get selected radio
                 const selectedRadio = document.querySelector('input[name="paymentMethod"]:checked');
@@ -1267,6 +1267,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const method = selectedRadio.value;
+
+                // Open cash drawer if printer is connected
+                if (window.openCashDrawer) {
+                    await window.openCashDrawer();
+                }
 
                 StorageManager.updateOrder(selectedPaymentOrder.id, {
                     paid: true,
@@ -2653,4 +2658,29 @@ esta configurada correctamente.
     // Expose printer function globally for use in other parts of the app
     window.printToThermalPrinter = printToThermal;
     window.isPrinterConnected = () => state.printerConnected;
+
+    // Cash Drawer Function
+    async function openCashDrawer() {
+        if (!printerWriter || !printerPort) {
+            console.log('No printer connected, cannot open drawer');
+            return false;
+        }
+
+        try {
+            // ESC/POS command to open cash drawer
+            // ESC p m t1 t2
+            // m = drawer pin (0 or 1)
+            // t1 = on time (25ms * value)
+            // t2 = off time (25ms * value)
+            // Common: 1B 70 00 19 FA
+            await printerWriter.write(new Uint8Array([0x1B, 0x70, 0x00, 0x19, 0xFA]));
+            console.log('Cash drawer command sent');
+            return true;
+        } catch (error) {
+            console.error('Error opening cash drawer:', error);
+            return false;
+        }
+    }
+
+    window.openCashDrawer = openCashDrawer;
 });
