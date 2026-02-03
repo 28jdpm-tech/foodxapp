@@ -2585,32 +2585,71 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function selectUSBPort() {
-        if (!('serial' in navigator)) {
-            showNotification('Tu navegador no soporta Web Serial API. Usa Chrome o Edge.', 'error');
-            return;
-        }
+        // Try WebUSB first (for USB Vendor Class printers like ESDPRT001)
+        if ('usb' in navigator) {
+            try {
+                const device = await navigator.usb.requestDevice({
+                    filters: [] // Accept all USB devices
+                });
 
-        try {
-            printerPort = await navigator.serial.requestPort();
-            await printerPort.open({ baudRate: 9600 });
-            printerWriter = printerPort.writable.getWriter();
+                await device.open();
 
-            // Test connection
-            await printerWriter.write(new Uint8Array([0x1B, 0x40])); // ESC @
-            await new Promise(resolve => setTimeout(resolve, 200));
+                // Select configuration and claim interface
+                if (device.configuration === null) {
+                    await device.selectConfiguration(1);
+                }
 
-            const info = printerPort.getInfo();
-            const portName = `USB (VID: ${info.usbVendorId || 'N/A'})`;
+                // Find the first interface
+                const interfaceNumber = device.configuration.interfaces[0].interfaceNumber;
+                await device.claimInterface(interfaceNumber);
 
-            printerConfig.usbConnected = true;
-            updatePrinterStatus(true, portName);
-            showNotification('✅ Impresora USB conectada');
-        } catch (error) {
-            console.error('USB connection error:', error);
-            if (error.name !== 'NotFoundError') {
-                showNotification('Error al conectar: ' + error.message, 'error');
+                // Store device reference
+                printerPort = device;
+                printerWriter = { type: 'webusb', device: device };
+
+                const portName = `USB: ${device.productName || 'Impresora'} (${device.vendorId})`;
+
+                printerConfig.usbConnected = true;
+                printerConfig.usbType = 'webusb';
+                updatePrinterStatus(true, portName);
+                showNotification('✅ Impresora USB conectada (WebUSB)');
+                return;
+            } catch (error) {
+                console.log('WebUSB error:', error);
+                if (error.name !== 'NotFoundError') {
+                    // Try Web Serial as fallback
+                }
             }
         }
+
+        // Fallback to Web Serial API (for serial printers)
+        if ('serial' in navigator) {
+            try {
+                printerPort = await navigator.serial.requestPort();
+                await printerPort.open({ baudRate: 9600 });
+                printerWriter = printerPort.writable.getWriter();
+
+                // Test connection
+                await printerWriter.write(new Uint8Array([0x1B, 0x40])); // ESC @
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                const info = printerPort.getInfo();
+                const portName = `USB Serial (VID: ${info.usbVendorId || 'N/A'})`;
+
+                printerConfig.usbConnected = true;
+                printerConfig.usbType = 'serial';
+                updatePrinterStatus(true, portName);
+                showNotification('✅ Impresora USB conectada (Serial)');
+                return;
+            } catch (error) {
+                console.error('Serial connection error:', error);
+                if (error.name !== 'NotFoundError') {
+                    showNotification('Error al conectar: ' + error.message, 'error');
+                }
+            }
+        }
+
+        showNotification('Tu navegador no soporta WebUSB ni Web Serial. Usa Chrome o Edge.', 'error');
     }
 
     async function testPrint() {
@@ -2634,17 +2673,41 @@ ${printerConfig.type === 'ip' ? `IP: ${printerConfig.ip}:${printerConfig.port}` 
 `;
 
         // Try USB direct print if connected
-        if (printerConfig.type === 'usb' && printerWriter && printerPort) {
+        if (printerConfig.type === 'usb' && printerConfig.usbConnected && printerPort) {
             try {
                 const encoder = new TextEncoder();
-                await printerWriter.write(new Uint8Array([0x1B, 0x40])); // Init
-                await printerWriter.write(encoder.encode(testTicket));
-                await printerWriter.write(new Uint8Array([0x0A, 0x0A, 0x0A, 0x0A])); // Line feeds
-                await printerWriter.write(new Uint8Array([0x1D, 0x56, 0x01])); // Cut
-                showNotification('✅ Impreso via USB');
-                return;
+                const initCmd = new Uint8Array([0x1B, 0x40]); // Init
+                const textData = encoder.encode(testTicket);
+                const lineFeeds = new Uint8Array([0x0A, 0x0A, 0x0A, 0x0A]);
+                const cutCmd = new Uint8Array([0x1D, 0x56, 0x01]); // Cut
+
+                if (printerConfig.usbType === 'webusb') {
+                    // WebUSB - find OUT endpoint and send data
+                    const device = printerPort;
+                    const iface = device.configuration.interfaces[0];
+                    const alternate = iface.alternates[0];
+                    const endpoint = alternate.endpoints.find(e => e.direction === 'out');
+
+                    if (endpoint) {
+                        await device.transferOut(endpoint.endpointNumber, initCmd);
+                        await device.transferOut(endpoint.endpointNumber, textData);
+                        await device.transferOut(endpoint.endpointNumber, lineFeeds);
+                        await device.transferOut(endpoint.endpointNumber, cutCmd);
+                        showNotification('✅ Impreso via WebUSB');
+                        return;
+                    }
+                } else {
+                    // Web Serial
+                    await printerWriter.write(initCmd);
+                    await printerWriter.write(textData);
+                    await printerWriter.write(lineFeeds);
+                    await printerWriter.write(cutCmd);
+                    showNotification('✅ Impreso via Serial');
+                    return;
+                }
             } catch (err) {
                 console.error('USB print failed:', err);
+                showNotification('⚠️ Error de impresión USB: ' + err.message, 'error');
             }
         }
 
@@ -2696,7 +2759,7 @@ ${printerConfig.type === 'ip' ? `IP: ${printerConfig.ip}:${printerConfig.port}` 
     const openDrawerBtn = document.getElementById('openDrawerBtn');
 
     async function openCashDrawer() {
-        if (!printerWriter || !printerPort) {
+        if (!printerConfig.usbConnected || !printerPort) {
             showNotification('⚠️ Conecta la impresora USB primero', 'error');
             return false;
         }
@@ -2704,9 +2767,26 @@ ${printerConfig.type === 'ip' ? `IP: ${printerConfig.ip}:${printerConfig.port}` 
         try {
             // ESC/POS command to open cash drawer
             // ESC p m t1 t2 (1B 70 00 19 FA)
-            await printerWriter.write(new Uint8Array([0x1B, 0x70, 0x00, 0x19, 0xFA]));
-            showNotification('✅ Caja abierta');
-            return true;
+            const drawerCmd = new Uint8Array([0x1B, 0x70, 0x00, 0x19, 0xFA]);
+
+            if (printerConfig.usbType === 'webusb') {
+                // WebUSB
+                const device = printerPort;
+                const iface = device.configuration.interfaces[0];
+                const alternate = iface.alternates[0];
+                const endpoint = alternate.endpoints.find(e => e.direction === 'out');
+
+                if (endpoint) {
+                    await device.transferOut(endpoint.endpointNumber, drawerCmd);
+                    showNotification('✅ Caja abierta');
+                    return true;
+                }
+            } else {
+                // Web Serial
+                await printerWriter.write(drawerCmd);
+                showNotification('✅ Caja abierta');
+                return true;
+            }
         } catch (error) {
             console.error('Error opening drawer:', error);
             showNotification('Error al abrir caja: ' + error.message, 'error');
