@@ -2692,9 +2692,36 @@ ${printerConfig.type === 'ip' ? `IP: ${printerConfig.ip}:${printerConfig.port}` 
         printerElements.testBtn.addEventListener('click', testPrint);
     }
 
+    // Cash Drawer functionality
+    const openDrawerBtn = document.getElementById('openDrawerBtn');
+
+    async function openCashDrawer() {
+        if (!printerWriter || !printerPort) {
+            showNotification('⚠️ Conecta la impresora USB primero', 'error');
+            return false;
+        }
+
+        try {
+            // ESC/POS command to open cash drawer
+            // ESC p m t1 t2 (1B 70 00 19 FA)
+            await printerWriter.write(new Uint8Array([0x1B, 0x70, 0x00, 0x19, 0xFA]));
+            showNotification('✅ Caja abierta');
+            return true;
+        } catch (error) {
+            console.error('Error opening drawer:', error);
+            showNotification('Error al abrir caja: ' + error.message, 'error');
+            return false;
+        }
+    }
+
+    if (openDrawerBtn) {
+        openDrawerBtn.addEventListener('click', openCashDrawer);
+    }
+
     // Load saved config
     loadPrinterConfig();
 
     // Expose for global use
     window.getPrinterConfig = () => printerConfig;
+    window.openCashDrawer = openCashDrawer;
 });
