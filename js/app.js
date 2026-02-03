@@ -2679,7 +2679,36 @@ esta configurada correctamente.
 ================================
 
 `;
-        // Use browser print dialog (same as order printing)
+        // Try direct thermal print first (no dialog)
+        if (printerWriter && printerPort && state.printerConnected) {
+            try {
+                const encoder = new TextEncoder();
+                const ESC = 0x1B;
+                const GS = 0x1D;
+
+                // Initialize printer
+                await printerWriter.write(new Uint8Array([ESC, 0x40]));
+
+                // Set character encoding (PC437)
+                await printerWriter.write(new Uint8Array([ESC, 0x74, 0x00]));
+
+                // Print text
+                const textBytes = encoder.encode(testTicket);
+                await printerWriter.write(textBytes);
+
+                // Line feeds and partial cut
+                await printerWriter.write(new Uint8Array([0x0A, 0x0A, 0x0A, 0x0A, 0x0A]));
+                await printerWriter.write(new Uint8Array([GS, 0x56, 0x01])); // Partial cut
+
+                showNotification('✅ Impreso directamente (sin dialogo)');
+                return;
+            } catch (err) {
+                console.error('Direct print failed:', err);
+                showNotification('⚠️ Impresion directa fallo, usando dialogo...', 'error');
+            }
+        }
+
+        // Fallback: Use browser print dialog
         const printWindow = window.open('', '_blank', 'width=300,height=400');
         if (!printWindow) {
             showNotification('⚠️ Permite ventanas emergentes para imprimir', 'error');
