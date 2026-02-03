@@ -522,7 +522,6 @@
                     <button class="admin-tab" data-tab="flavors">Sabores</button>
                     <button class="admin-tab" data-tab="extras">Adicionales</button>
                     <button class="admin-tab" data-tab="observations">Observaciones</button>
-                    <button class="admin-tab" data-tab="printer">Impresora</button>
                     <button class="admin-tab" data-tab="security">Seguridad</button>
                 </div>
 
@@ -603,61 +602,6 @@
                                 style="font-size: 0.75rem; color: var(--text-muted); margin-top: var(--space-md); text-align: center;">
                                 <i data-lucide="info" style="width: 12px; height: 12px; vertical-align: middle;"></i>
                                 La nueva contraseña se sincronizará con todos los dispositivos.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Printer Panel -->
-                    <div class="admin-panel" id="panel-printer">
-                        <div class="panel-header">
-                            <h3>Configuración de Impresora</h3>
-                        </div>
-                        <div class="security-card">
-                            <h4><i data-lucide="printer"></i> Impresora Térmica USB</h4>
-
-                            <div class="printer-status-box" id="printerStatusBox">
-                                <div class="printer-status-indicator" id="printerStatusIndicator">
-                                    <span class="status-dot disconnected"></span>
-                                    <span class="status-text" id="printerStatusText">No conectada</span>
-                                </div>
-                                <div class="printer-name" id="printerName">--</div>
-                            </div>
-
-                            <div class="form-group" style="margin-bottom: var(--space-md);">
-                                <label style="font-size: 0.8rem; color: var(--text-secondary);">Velocidad (Baud
-                                    Rate)</label>
-                                <select id="printerBaudRate" class="admin-category-selector" style="width: 100%;">
-                                    <option value="9600">9600 (Común)</option>
-                                    <option value="19200">19200</option>
-                                    <option value="38400">38400</option>
-                                    <option value="57600">57600</option>
-                                    <option value="115200">115200 (Alta velocidad)</option>
-                                </select>
-                            </div>
-
-                            <div class="printer-actions">
-                                <button class="btn-add" id="connectPrinterBtn" style="flex: 1;">
-                                    <i data-lucide="plug"></i> Conectar Impresora
-                                </button>
-                                <button class="btn-delete" id="disconnectPrinterBtn" style="flex: 1; display: none;">
-                                    <i data-lucide="plug-off"></i> Desconectar
-                                </button>
-                            </div>
-
-                            <button class="btn-pay" id="testPrintBtn" style="width: 100%; margin-top: var(--space-md);">
-                                <i data-lucide="file-text"></i> Imprimir Prueba
-                            </button>
-
-                            <button class="btn-add" id="testDrawerBtn"
-                                style="width: 100%; margin-top: var(--space-sm);">
-                                <i data-lucide="lock-open"></i> Abrir Caja
-                            </button>
-
-                            <p
-                                style="font-size: 0.75rem; color: var(--text-muted); margin-top: var(--space-lg); text-align: center;">
-                                <i data-lucide="info" style="width: 12px; height: 12px; vertical-align: middle;"></i>
-                                La impresion de prueba usa el dialogo del navegador.
-                                <br>La caja monedero requiere conexion USB directa.
                             </p>
                         </div>
                     </div>
@@ -781,7 +725,7 @@
     <script src="js/data.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/app.js?v=40"></script>
+    <script src="js/app.js?v=41"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
