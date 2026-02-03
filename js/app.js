@@ -2490,4 +2490,162 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize
     updateOrderTotal();
+
+    // ============================================
+    // USB Thermal Printer Integration
+    // ============================================
+
+    let printerPort = null;
+    let printerWriter = null;
+
+    const printerElements = {
+        connectBtn: document.getElementById('connectPrinterBtn'),
+        disconnectBtn: document.getElementById('disconnectPrinterBtn'),
+        testPrintBtn: document.getElementById('testPrintBtn'),
+        statusDot: document.querySelector('.status-dot'),
+        statusText: document.getElementById('printerStatusText'),
+        printerName: document.getElementById('printerName')
+    };
+
+    function updatePrinterUI(connected, portInfo = null) {
+        if (printerElements.statusDot) {
+            printerElements.statusDot.classList.toggle('connected', connected);
+            printerElements.statusDot.classList.toggle('disconnected', !connected);
+        }
+        if (printerElements.statusText) {
+            printerElements.statusText.textContent = connected ? 'Conectada' : 'No conectada';
+        }
+        if (printerElements.printerName) {
+            printerElements.printerName.textContent = portInfo || '--';
+        }
+        if (printerElements.connectBtn) {
+            printerElements.connectBtn.style.display = connected ? 'none' : 'flex';
+        }
+        if (printerElements.disconnectBtn) {
+            printerElements.disconnectBtn.style.display = connected ? 'flex' : 'none';
+        }
+        if (printerElements.testPrintBtn) {
+            printerElements.testPrintBtn.disabled = !connected;
+        }
+    }
+
+    async function connectPrinter() {
+        if (!('serial' in navigator)) {
+            showNotification('Tu navegador no soporta Web Serial API. Usa Chrome o Edge.', 'error');
+            return;
+        }
+
+        try {
+            printerPort = await navigator.serial.requestPort();
+            await printerPort.open({ baudRate: 9600 });
+
+            const encoder = new TextEncoderStream();
+            encoder.readable.pipeTo(printerPort.writable);
+            printerWriter = encoder.writable.getWriter();
+
+            const info = printerPort.getInfo();
+            const portName = `USB (VID: ${info.usbVendorId || 'N/A'}, PID: ${info.usbProductId || 'N/A'})`;
+
+            updatePrinterUI(true, portName);
+            showNotification('✅ Impresora conectada correctamente');
+
+            // Store connection state
+            state.printerConnected = true;
+        } catch (error) {
+            console.error('Error connecting printer:', error);
+            if (error.name !== 'NotFoundError') {
+                showNotification('Error al conectar impresora: ' + error.message, 'error');
+            }
+        }
+    }
+
+    async function disconnectPrinter() {
+        try {
+            if (printerWriter) {
+                await printerWriter.close();
+                printerWriter = null;
+            }
+            if (printerPort) {
+                await printerPort.close();
+                printerPort = null;
+            }
+            state.printerConnected = false;
+            updatePrinterUI(false);
+            showNotification('Impresora desconectada');
+        } catch (error) {
+            console.error('Error disconnecting printer:', error);
+        }
+    }
+
+    async function printToThermal(text) {
+        if (!printerWriter) {
+            showNotification('No hay impresora conectada', 'error');
+            return false;
+        }
+
+        try {
+            // ESC/POS Commands
+            const ESC = '\x1B';
+            const GS = '\x1D';
+
+            // Initialize printer
+            await printerWriter.write(ESC + '@');
+
+            // Set character set (Spanish)
+            await printerWriter.write(ESC + 't' + '\x10');
+
+            // Print text
+            await printerWriter.write(text);
+
+            // Feed and cut
+            await printerWriter.write('\n\n\n\n');
+            await printerWriter.write(GS + 'V' + '\x00'); // Full cut
+
+            return true;
+        } catch (error) {
+            console.error('Print error:', error);
+            showNotification('Error al imprimir: ' + error.message, 'error');
+            return false;
+        }
+    }
+
+    async function testPrint() {
+        const testTicket = `
+================================
+       PRUEBA DE IMPRESION
+================================
+
+FoodX POS - Sistema Activo
+
+Fecha: ${new Date().toLocaleString()}
+
+--------------------------------
+Si puedes leer esto, tu impresora
+esta configurada correctamente.
+--------------------------------
+
+        *** FIN DE PRUEBA ***
+================================
+
+`;
+        const success = await printToThermal(testTicket);
+        if (success) {
+            showNotification('✅ Prueba de impresión enviada');
+        }
+    }
+
+    // Event listeners for printer
+    if (printerElements.connectBtn) {
+        printerElements.connectBtn.addEventListener('click', connectPrinter);
+    }
+    if (printerElements.disconnectBtn) {
+        printerElements.disconnectBtn.addEventListener('click', disconnectPrinter);
+    }
+    if (printerElements.testPrintBtn) {
+        printerElements.testPrintBtn.addEventListener('click', testPrint);
+    }
+
+    // Expose printer function globally for use in other parts of the app
+    window.printToThermalPrinter = printToThermal;
+    window.isPrinterConnected = () => state.printerConnected;
 });
