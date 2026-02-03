@@ -522,7 +522,6 @@
                     <button class="admin-tab" data-tab="flavors">Sabores</button>
                     <button class="admin-tab" data-tab="extras">Adicionales</button>
                     <button class="admin-tab" data-tab="observations">Observaciones</button>
-                    <button class="admin-tab" data-tab="printer">Impresora</button>
                     <button class="admin-tab" data-tab="security">Seguridad</button>
                 </div>
 
@@ -603,71 +602,6 @@
                                 style="font-size: 0.75rem; color: var(--text-muted); margin-top: var(--space-md); text-align: center;">
                                 <i data-lucide="info" style="width: 12px; height: 12px; vertical-align: middle;"></i>
                                 La nueva contraseña se sincronizará con todos los dispositivos.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Printer Panel -->
-                    <div class="admin-panel" id="panel-printer">
-                        <div class="panel-header">
-                            <h3>Configuración de Impresora</h3>
-                        </div>
-                        <div class="security-card">
-                            <h4><i data-lucide="printer"></i> Impresora Térmica</h4>
-
-                            <div class="printer-status-box" id="printerStatusBox">
-                                <div class="printer-status-indicator" id="printerStatusIndicator">
-                                    <span class="status-dot disconnected" id="printerStatusDot"></span>
-                                    <span class="status-text" id="printerStatusText">No configurada</span>
-                                </div>
-                            </div>
-
-                            <div class="form-group" style="margin-bottom: var(--space-md);">
-                                <label style="font-size: 0.8rem; color: var(--text-secondary);">Tipo de Conexión</label>
-                                <select id="printerConnectionType" class="admin-category-selector" style="width: 100%;">
-                                    <option value="usb">USB (Puerto Serial)</option>
-                                    <option value="ip">Red (IP)</option>
-                                </select>
-                            </div>
-
-                            <div id="usbConfig" class="form-group" style="margin-bottom: var(--space-md);">
-                                <label style="font-size: 0.8rem; color: var(--text-secondary);">Puerto USB</label>
-                                <button class="btn-add" id="selectUSBPortBtn" style="width: 100%;">
-                                    <i data-lucide="usb"></i> Seleccionar Puerto USB
-                                </button>
-                            </div>
-
-                            <div id="ipConfig" class="form-group"
-                                style="margin-bottom: var(--space-md); display: none;">
-                                <label style="font-size: 0.8rem; color: var(--text-secondary);">Dirección IP de la
-                                    Impresora</label>
-                                <input type="text" id="printerIPAddress" placeholder="Ej: 192.168.1.100"
-                                    style="width: 100%;">
-                                <label
-                                    style="font-size: 0.8rem; color: var(--text-secondary); margin-top: var(--space-sm);">Puerto</label>
-                                <input type="number" id="printerPort" placeholder="9100" value="9100"
-                                    style="width: 100%;">
-                            </div>
-
-                            <button class="btn-pay" id="savePrinterConfigBtn"
-                                style="width: 100%; margin-top: var(--space-md);">
-                                <i data-lucide="save"></i> Guardar Configuración
-                            </button>
-
-                            <button class="btn-add" id="testPrintBtn" style="width: 100%; margin-top: var(--space-sm);">
-                                <i data-lucide="file-text"></i> Imprimir Prueba
-                            </button>
-
-                            <button class="btn-add" id="openDrawerBtn"
-                                style="width: 100%; margin-top: var(--space-sm);">
-                                <i data-lucide="lock-open"></i> Abrir Caja
-                            </button>
-
-                            <p
-                                style="font-size: 0.75rem; color: var(--text-muted); margin-top: var(--space-lg); text-align: center;">
-                                <i data-lucide="info" style="width: 12px; height: 12px; vertical-align: middle;"></i>
-                                USB: Selecciona el puerto COM de tu impresora.
-                                <br>IP: Ingresa la dirección IP de tu impresora de red.
                             </p>
                         </div>
                     </div>
@@ -791,7 +725,7 @@
     <script src="js/data.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/app.js?v=44"></script>
+    <script src="js/app.js?v=45"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
