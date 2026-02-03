@@ -623,6 +623,18 @@
                                 <div class="printer-name" id="printerName">--</div>
                             </div>
 
+                            <div class="form-group" style="margin-bottom: var(--space-md);">
+                                <label style="font-size: 0.8rem; color: var(--text-secondary);">Velocidad (Baud
+                                    Rate)</label>
+                                <select id="printerBaudRate" class="admin-category-selector" style="width: 100%;">
+                                    <option value="9600">9600 (Común)</option>
+                                    <option value="19200">19200</option>
+                                    <option value="38400">38400</option>
+                                    <option value="57600">57600</option>
+                                    <option value="115200">115200 (Alta velocidad)</option>
+                                </select>
+                            </div>
+
                             <div class="printer-actions">
                                 <button class="btn-add" id="connectPrinterBtn" style="flex: 1;">
                                     <i data-lucide="plug"></i> Conectar Impresora
@@ -644,8 +656,8 @@
                             <p
                                 style="font-size: 0.75rem; color: var(--text-muted); margin-top: var(--space-lg); text-align: center;">
                                 <i data-lucide="info" style="width: 12px; height: 12px; vertical-align: middle;"></i>
-                                Conecta tu impresora térmica USB (58mm/80mm) al PC.
-                                <br>Al hacer clic en "Conectar", selecciona el puerto COM de la impresora.
+                                La impresion de prueba usa el dialogo del navegador.
+                                <br>La caja monedero requiere conexion USB directa.
                             </p>
                         </div>
                     </div>
@@ -769,7 +781,7 @@
     <script src="js/data.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/app.js?v=38"></script>
+    <script src="js/app.js?v=39"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

@@ -2546,8 +2546,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             printerPort = await navigator.serial.requestPort();
-            // Try common baud rates for thermal printers
-            await printerPort.open({ baudRate: 9600 });
+            // Get baud rate from selector
+            const baudRateSelect = document.getElementById('printerBaudRate');
+            const baudRate = baudRateSelect ? parseInt(baudRateSelect.value) : 9600;
+            await printerPort.open({ baudRate: baudRate });
 
             printerWriter = printerPort.writable.getWriter();
 
@@ -2677,27 +2679,27 @@ esta configurada correctamente.
 ================================
 
 `;
-        // Try thermal print first, fallback to browser print
-        if (printerWriter && printerPort) {
-            const success = await printToThermal(testTicket);
-            if (success) {
-                showNotification('✅ Prueba enviada a impresora termica');
-                return;
-            }
-        }
-
-        // Fallback: Use browser print dialog
+        // Use browser print dialog (same as order printing)
         const printWindow = window.open('', '_blank', 'width=300,height=400');
+        if (!printWindow) {
+            showNotification('⚠️ Permite ventanas emergentes para imprimir', 'error');
+            return;
+        }
         printWindow.document.write(`
             <html>
             <head>
                 <title>Prueba de Impresion</title>
                 <style>
+                    @page { 
+                        size: 80mm auto; 
+                        margin: 0; 
+                    }
                     body { 
                         font-family: monospace; 
                         font-size: 12px; 
-                        padding: 10px;
+                        padding: 5mm;
                         margin: 0;
+                        width: 70mm;
                     }
                     pre { white-space: pre-wrap; margin: 0; }
                 </style>
@@ -2707,7 +2709,7 @@ esta configurada correctamente.
                 <script>
                     window.onload = function() {
                         window.print();
-                        setTimeout(function() { window.close(); }, 500);
+                        setTimeout(function() { window.close(); }, 1000);
                     };
                 <\/script>
             </body>
