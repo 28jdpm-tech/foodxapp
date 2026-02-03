@@ -2495,4 +2495,206 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize
     updateOrderTotal();
+
+    // ============================================
+    // Printer Configuration
+    // ============================================
+
+    let printerPort = null;
+    let printerWriter = null;
+
+    const printerConfig = {
+        type: localStorage.getItem('printerType') || 'usb',
+        ip: localStorage.getItem('printerIP') || '',
+        port: localStorage.getItem('printerPort') || '9100',
+        usbConnected: false
+    };
+
+    // UI Elements
+    const printerElements = {
+        connectionType: document.getElementById('printerConnectionType'),
+        usbConfig: document.getElementById('usbConfig'),
+        ipConfig: document.getElementById('ipConfig'),
+        selectUSBBtn: document.getElementById('selectUSBPortBtn'),
+        ipAddress: document.getElementById('printerIPAddress'),
+        portInput: document.getElementById('printerPort'),
+        saveBtn: document.getElementById('savePrinterConfigBtn'),
+        testBtn: document.getElementById('testPrintBtn'),
+        statusDot: document.getElementById('printerStatusDot'),
+        statusText: document.getElementById('printerStatusText')
+    };
+
+    function updatePrinterStatus(connected, message) {
+        if (printerElements.statusDot) {
+            printerElements.statusDot.classList.toggle('connected', connected);
+            printerElements.statusDot.classList.toggle('disconnected', !connected);
+        }
+        if (printerElements.statusText) {
+            printerElements.statusText.textContent = message;
+        }
+    }
+
+    function toggleConnectionType() {
+        const type = printerElements.connectionType?.value || 'usb';
+        if (printerElements.usbConfig) {
+            printerElements.usbConfig.style.display = type === 'usb' ? 'block' : 'none';
+        }
+        if (printerElements.ipConfig) {
+            printerElements.ipConfig.style.display = type === 'ip' ? 'block' : 'none';
+        }
+    }
+
+    function loadPrinterConfig() {
+        if (printerElements.connectionType) {
+            printerElements.connectionType.value = printerConfig.type;
+        }
+        if (printerElements.ipAddress) {
+            printerElements.ipAddress.value = printerConfig.ip;
+        }
+        if (printerElements.portInput) {
+            printerElements.portInput.value = printerConfig.port;
+        }
+        toggleConnectionType();
+
+        if (printerConfig.ip && printerConfig.type === 'ip') {
+            updatePrinterStatus(true, `IP: ${printerConfig.ip}:${printerConfig.port}`);
+        }
+    }
+
+    function savePrinterConfig() {
+        const type = printerElements.connectionType?.value || 'usb';
+        const ip = printerElements.ipAddress?.value || '';
+        const port = printerElements.portInput?.value || '9100';
+
+        localStorage.setItem('printerType', type);
+        localStorage.setItem('printerIP', ip);
+        localStorage.setItem('printerPort', port);
+
+        printerConfig.type = type;
+        printerConfig.ip = ip;
+        printerConfig.port = port;
+
+        if (type === 'ip' && ip) {
+            updatePrinterStatus(true, `IP: ${ip}:${port}`);
+            showNotification('✅ Configuración de impresora guardada');
+        } else if (type === 'usb' && printerConfig.usbConnected) {
+            showNotification('✅ Configuración USB guardada');
+        } else {
+            showNotification('✅ Configuración guardada');
+        }
+    }
+
+    async function selectUSBPort() {
+        if (!('serial' in navigator)) {
+            showNotification('Tu navegador no soporta Web Serial API. Usa Chrome o Edge.', 'error');
+            return;
+        }
+
+        try {
+            printerPort = await navigator.serial.requestPort();
+            await printerPort.open({ baudRate: 9600 });
+            printerWriter = printerPort.writable.getWriter();
+
+            // Test connection
+            await printerWriter.write(new Uint8Array([0x1B, 0x40])); // ESC @
+            await new Promise(resolve => setTimeout(resolve, 200));
+
+            const info = printerPort.getInfo();
+            const portName = `USB (VID: ${info.usbVendorId || 'N/A'})`;
+
+            printerConfig.usbConnected = true;
+            updatePrinterStatus(true, portName);
+            showNotification('✅ Impresora USB conectada');
+        } catch (error) {
+            console.error('USB connection error:', error);
+            if (error.name !== 'NotFoundError') {
+                showNotification('Error al conectar: ' + error.message, 'error');
+            }
+        }
+    }
+
+    async function testPrint() {
+        const testTicket = `
+================================
+     PRUEBA DE IMPRESION
+================================
+
+FoodX POS - Sistema Activo
+
+Fecha: ${new Date().toLocaleString()}
+
+--------------------------------
+Tipo: ${printerConfig.type.toUpperCase()}
+${printerConfig.type === 'ip' ? `IP: ${printerConfig.ip}:${printerConfig.port}` : 'Puerto: USB'}
+--------------------------------
+
+      *** FIN DE PRUEBA ***
+================================
+
+`;
+
+        // Try USB direct print if connected
+        if (printerConfig.type === 'usb' && printerWriter && printerPort) {
+            try {
+                const encoder = new TextEncoder();
+                await printerWriter.write(new Uint8Array([0x1B, 0x40])); // Init
+                await printerWriter.write(encoder.encode(testTicket));
+                await printerWriter.write(new Uint8Array([0x0A, 0x0A, 0x0A, 0x0A])); // Line feeds
+                await printerWriter.write(new Uint8Array([0x1D, 0x56, 0x01])); // Cut
+                showNotification('✅ Impreso via USB');
+                return;
+            } catch (err) {
+                console.error('USB print failed:', err);
+            }
+        }
+
+        // Fallback to browser print dialog
+        const printWindow = window.open('', '_blank', 'width=300,height=400');
+        if (!printWindow) {
+            showNotification('⚠️ Permite ventanas emergentes', 'error');
+            return;
+        }
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Prueba</title>
+                <style>
+                    @page { size: 80mm auto; margin: 0; }
+                    body { font-family: monospace; font-size: 12px; padding: 5mm; margin: 0; width: 70mm; }
+                    pre { white-space: pre-wrap; margin: 0; }
+                </style>
+            </head>
+            <body>
+                <pre>${testTicket}</pre>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        setTimeout(function() { window.close(); }, 1000);
+                    };
+                <\/script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    }
+
+    // Event Listeners
+    if (printerElements.connectionType) {
+        printerElements.connectionType.addEventListener('change', toggleConnectionType);
+    }
+    if (printerElements.selectUSBBtn) {
+        printerElements.selectUSBBtn.addEventListener('click', selectUSBPort);
+    }
+    if (printerElements.saveBtn) {
+        printerElements.saveBtn.addEventListener('click', savePrinterConfig);
+    }
+    if (printerElements.testBtn) {
+        printerElements.testBtn.addEventListener('click', testPrint);
+    }
+
+    // Load saved config
+    loadPrinterConfig();
+
+    // Expose for global use
+    window.getPrinterConfig = () => printerConfig;
 });
