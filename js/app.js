@@ -2642,10 +2642,44 @@ esta configurada correctamente.
 ================================
 
 `;
-        const success = await printToThermal(testTicket);
-        if (success) {
-            showNotification('✅ Prueba de impresion enviada');
+        // Try thermal print first, fallback to browser print
+        if (printerWriter && printerPort) {
+            const success = await printToThermal(testTicket);
+            if (success) {
+                showNotification('✅ Prueba enviada a impresora termica');
+                return;
+            }
         }
+
+        // Fallback: Use browser print dialog
+        const printWindow = window.open('', '_blank', 'width=300,height=400');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Prueba de Impresion</title>
+                <style>
+                    body { 
+                        font-family: monospace; 
+                        font-size: 12px; 
+                        padding: 10px;
+                        margin: 0;
+                    }
+                    pre { white-space: pre-wrap; margin: 0; }
+                </style>
+            </head>
+            <body>
+                <pre>${testTicket}</pre>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        setTimeout(function() { window.close(); }, 500);
+                    };
+                <\/script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        showNotification('✅ Dialogo de impresion abierto');
     }
 
     // Event listeners for printer
@@ -2656,10 +2690,18 @@ esta configurada correctamente.
         printerElements.disconnectBtn.addEventListener('click', disconnectPrinter);
     }
     if (printerElements.testPrintBtn) {
+        // Always enable test print button (uses browser print as fallback)
+        printerElements.testPrintBtn.disabled = false;
         printerElements.testPrintBtn.addEventListener('click', testPrint);
     }
     if (printerElements.testDrawerBtn) {
+        // Always enable test drawer button
+        printerElements.testDrawerBtn.disabled = false;
         printerElements.testDrawerBtn.addEventListener('click', async () => {
+            if (!printerWriter || !printerPort) {
+                showNotification('⚠️ Conecta la impresora USB primero para abrir la caja', 'error');
+                return;
+            }
             const success = await openCashDrawer();
             if (success) {
                 showNotification('✅ Comando de apertura de caja enviado');
