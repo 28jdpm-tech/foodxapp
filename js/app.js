@@ -2551,18 +2551,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
             printerWriter = printerPort.writable.getWriter();
 
-            const info = printerPort.getInfo();
-            const portName = `USB (VID: ${info.usbVendorId || 'N/A'}, PID: ${info.usbProductId || 'N/A'})`;
+            // Verify printer is actually connected by sending initialize command
+            try {
+                // ESC @ (Initialize printer)
+                await printerWriter.write(new Uint8Array([0x1B, 0x40]));
 
-            updatePrinterUI(true, portName);
-            showNotification('✅ Impresora conectada correctamente');
+                // Wait a moment for the printer to respond
+                await new Promise(resolve => setTimeout(resolve, 300));
 
-            // Store connection state
-            state.printerConnected = true;
+                // Check if we can get port signals (indicates real device)
+                const signals = await printerPort.getSignals();
+                console.log('Port signals:', signals);
+
+                // If we got here without error, printer seems connected
+                const info = printerPort.getInfo();
+                const portName = `USB (VID: ${info.usbVendorId || 'N/A'}, PID: ${info.usbProductId || 'N/A'})`;
+
+                updatePrinterUI(true, portName);
+                showNotification('✅ Impresora conectada y verificada');
+
+                // Store connection state
+                state.printerConnected = true;
+            } catch (verifyError) {
+                // Verification failed - printer not responding
+                console.error('Printer verification failed:', verifyError);
+
+                // Clean up
+                await printerWriter.releaseLock();
+                printerWriter = null;
+                await printerPort.close();
+                printerPort = null;
+
+                showNotification('⚠️ Puerto abierto pero impresora no responde. Verifica que esté encendida.', 'error');
+                return;
+            }
         } catch (error) {
             console.error('Error connecting printer:', error);
             if (error.name !== 'NotFoundError') {
                 showNotification('Error al conectar impresora: ' + error.message, 'error');
+            }
+            // Clean up on error
+            if (printerWriter) {
+                try { await printerWriter.releaseLock(); } catch (e) { }
+                printerWriter = null;
+            }
+            if (printerPort) {
+                try { await printerPort.close(); } catch (e) { }
+                printerPort = null;
             }
         }
     }
