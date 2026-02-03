@@ -2537,11 +2537,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             printerPort = await navigator.serial.requestPort();
+            // Try common baud rates for thermal printers
             await printerPort.open({ baudRate: 9600 });
 
-            const encoder = new TextEncoderStream();
-            encoder.readable.pipeTo(printerPort.writable);
-            printerWriter = encoder.writable.getWriter();
+            printerWriter = printerPort.writable.getWriter();
 
             const info = printerPort.getInfo();
             const portName = `USB (VID: ${info.usbVendorId || 'N/A'}, PID: ${info.usbProductId || 'N/A'})`;
@@ -2562,7 +2561,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function disconnectPrinter() {
         try {
             if (printerWriter) {
-                await printerWriter.close();
+                await printerWriter.releaseLock();
                 printerWriter = null;
             }
             if (printerPort) {
@@ -2574,32 +2573,38 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification('Impresora desconectada');
         } catch (error) {
             console.error('Error disconnecting printer:', error);
+            showNotification('Error al desconectar: ' + error.message, 'error');
         }
     }
 
     async function printToThermal(text) {
-        if (!printerWriter) {
+        if (!printerWriter || !printerPort) {
             showNotification('No hay impresora conectada', 'error');
             return false;
         }
 
         try {
-            // ESC/POS Commands
-            const ESC = '\x1B';
-            const GS = '\x1D';
+            const encoder = new TextEncoder();
 
-            // Initialize printer
-            await printerWriter.write(ESC + '@');
+            // ESC/POS Commands as bytes
+            const ESC = 0x1B;
+            const GS = 0x1D;
 
-            // Set character set (Spanish)
-            await printerWriter.write(ESC + 't' + '\x10');
+            // Initialize printer: ESC @
+            await printerWriter.write(new Uint8Array([ESC, 0x40]));
 
-            // Print text
-            await printerWriter.write(text);
+            // Set code page for Spanish characters: ESC t 16
+            await printerWriter.write(new Uint8Array([ESC, 0x74, 0x10]));
 
-            // Feed and cut
-            await printerWriter.write('\n\n\n\n');
-            await printerWriter.write(GS + 'V' + '\x00'); // Full cut
+            // Print text (convert to bytes)
+            const textBytes = encoder.encode(text);
+            await printerWriter.write(textBytes);
+
+            // Line feeds
+            await printerWriter.write(new Uint8Array([0x0A, 0x0A, 0x0A, 0x0A]));
+
+            // Cut paper: GS V 0 (full cut)
+            await printerWriter.write(new Uint8Array([GS, 0x56, 0x00]));
 
             return true;
         } catch (error) {
@@ -2610,9 +2615,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function testPrint() {
-        const testTicket = `
-================================
-       PRUEBA DE IMPRESION
+        const testTicket =
+            `================================
+     PRUEBA DE IMPRESION
 ================================
 
 FoodX POS - Sistema Activo
@@ -2624,13 +2629,13 @@ Si puedes leer esto, tu impresora
 esta configurada correctamente.
 --------------------------------
 
-        *** FIN DE PRUEBA ***
+      *** FIN DE PRUEBA ***
 ================================
 
 `;
         const success = await printToThermal(testTicket);
         if (success) {
-            showNotification('✅ Prueba de impresión enviada');
+            showNotification('✅ Prueba de impresion enviada');
         }
     }
 
