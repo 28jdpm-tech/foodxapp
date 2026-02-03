@@ -2507,6 +2507,7 @@ document.addEventListener('DOMContentLoaded', () => {
         connectBtn: document.getElementById('connectPrinterBtn'),
         disconnectBtn: document.getElementById('disconnectPrinterBtn'),
         testPrintBtn: document.getElementById('testPrintBtn'),
+        testDrawerBtn: document.getElementById('testDrawerBtn'),
         statusDot: document.querySelector('.status-dot'),
         statusText: document.getElementById('printerStatusText'),
         printerName: document.getElementById('printerName')
@@ -2531,6 +2532,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (printerElements.testPrintBtn) {
             printerElements.testPrintBtn.disabled = !connected;
+        }
+        if (printerElements.testDrawerBtn) {
+            printerElements.testDrawerBtn.disabled = !connected;
         }
     }
 
@@ -2653,6 +2657,14 @@ esta configurada correctamente.
     }
     if (printerElements.testPrintBtn) {
         printerElements.testPrintBtn.addEventListener('click', testPrint);
+    }
+    if (printerElements.testDrawerBtn) {
+        printerElements.testDrawerBtn.addEventListener('click', async () => {
+            const success = await openCashDrawer();
+            if (success) {
+                showNotification('✅ Comando de apertura de caja enviado');
+            }
+        });
     }
 
     // Expose printer function globally for use in other parts of the app
