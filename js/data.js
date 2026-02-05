@@ -156,9 +156,53 @@ function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
-// Generate order number with daily reset
+// Generate order number with daily reset - SYNCHRONIZED via Firebase
 let orderCounter = parseInt(localStorage.getItem('foodx_order_counter') || '0');
-function generateOrderNumber() {
+let lastOrderDate = localStorage.getItem('foodx_last_order_date') || '';
+
+// Async function to get next order number from Firebase
+async function getNextOrderNumber() {
+    const today = new Date().toDateString();
+    const todayKey = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+
+    try {
+        // Use Firebase transaction to atomically increment counter
+        const counterRef = db.collection('counters').doc('orders');
+
+        const result = await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(counterRef);
+
+            let data = doc.exists ? doc.data() : { date: '', counter: 0 };
+
+            // Reset counter if it's a new day
+            if (data.date !== todayKey) {
+                data = { date: todayKey, counter: 0 };
+            }
+
+            // Increment counter
+            data.counter++;
+
+            // Save to Firebase
+            transaction.set(counterRef, data);
+
+            return data.counter;
+        });
+
+        // Also update local storage as backup
+        orderCounter = result;
+        localStorage.setItem('foodx_order_counter', result.toString());
+        localStorage.setItem('foodx_last_order_date', today);
+
+        return '#' + String(result).padStart(3, '0');
+    } catch (error) {
+        console.error('Firebase counter error, using local fallback:', error);
+        // Fallback to local counter if Firebase fails
+        return generateOrderNumberLocal();
+    }
+}
+
+// Local fallback function (original logic)
+function generateOrderNumberLocal() {
     const today = new Date().toDateString();
     const lastDate = localStorage.getItem('foodx_last_order_date');
 
@@ -170,4 +214,10 @@ function generateOrderNumber() {
     orderCounter++;
     localStorage.setItem('foodx_order_counter', orderCounter.toString());
     return '#' + String(orderCounter).padStart(3, '0');
+}
+
+// Sync wrapper - returns a promise
+function generateOrderNumber() {
+    // Return the async result, but for backward compatibility also have sync fallback
+    return getNextOrderNumber();
 }

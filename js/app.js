@@ -612,7 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let pendingOrder = null;
 
     if (elements.sendToKitchenBtn) {
-        elements.sendToKitchenBtn.addEventListener('click', () => {
+        elements.sendToKitchenBtn.addEventListener('click', async () => {
             const config = StorageManager.getConfig();
             const items = [];
 
@@ -758,7 +758,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.appendingOrderId = null;
             } else {
                 const customerCodeUpper = customerCode.toUpperCase();
-                const seqNum = generateOrderNumber();
+                const seqNum = await generateOrderNumber(); // Await Firebase counter
                 const orderIdentifier = customerCodeUpper || seqNum;
 
                 const newOrder = {
