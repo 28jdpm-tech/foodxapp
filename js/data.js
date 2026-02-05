@@ -160,10 +160,19 @@ function generateId() {
 let orderCounter = parseInt(localStorage.getItem('foodx_order_counter') || '0');
 let lastOrderDate = localStorage.getItem('foodx_last_order_date') || '';
 
+// Get local date key (YYYY-MM-DD in local timezone)
+function getLocalDateKey() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 // Async function to get next order number from Firebase
 async function getNextOrderNumber() {
     const today = new Date().toDateString();
-    const todayKey = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const todayKey = getLocalDateKey(); // Use local date, not UTC
 
     try {
         // Use Firebase transaction to atomically increment counter
@@ -174,8 +183,11 @@ async function getNextOrderNumber() {
 
             let data = doc.exists ? doc.data() : { date: '', counter: 0 };
 
+            console.log('Firebase counter data:', data, 'Today:', todayKey);
+
             // Reset counter if it's a new day
             if (data.date !== todayKey) {
+                console.log('New day detected, resetting counter from', data.counter, 'to 0');
                 data = { date: todayKey, counter: 0 };
             }
 
@@ -193,6 +205,7 @@ async function getNextOrderNumber() {
         localStorage.setItem('foodx_order_counter', result.toString());
         localStorage.setItem('foodx_last_order_date', today);
 
+        console.log('Order number generated:', result);
         return '#' + String(result).padStart(3, '0');
     } catch (error) {
         console.error('Firebase counter error, using local fallback:', error);
