@@ -2446,6 +2446,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const bgColor = isError ? 'rgba(220, 38, 38, 0.95)' : 'rgba(16, 185, 129, 0.95)';
         const icon = isError ? 'alert-circle' : 'check-circle';
 
+        // Vibration and sound for errors
+        if (isError) {
+            // Vibrate (mobile devices)
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]); // vibrate-pause-vibrate pattern
+            }
+
+            // Play error sound using Web Audio API
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.frequency.value = 400; // Low frequency buzz
+                oscillator.type = 'square';
+                gainNode.gain.value = 0.3;
+
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                oscillator.stop(audioCtx.currentTime + 0.2);
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+
         notification.style.cssText = `
             position: fixed;
             top: 20px;
