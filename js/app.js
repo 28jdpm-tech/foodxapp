@@ -2440,27 +2440,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function showNotification(message) {
+    function showNotification(message, type = 'success') {
         const notification = document.createElement('div');
+        const isError = type === 'error';
+        const bgColor = isError ? 'rgba(220, 38, 38, 0.95)' : 'rgba(16, 185, 129, 0.95)';
+        const icon = isError ? 'alert-circle' : 'check-circle';
+
         notification.style.cssText = `
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(16, 185, 129, 0.95);
+            background: ${bgColor};
             backdrop-filter: blur(10px);
             color: white;
             padding: 12px 24px;
             border-radius: 12px;
             font-weight: 600;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.15);
             z-index: 9999;
             animation: slideInDown 0.3s ease-out;
             display: flex;
             align-items: center;
             gap: 10px;
         `;
-        notification.innerHTML = `<i data-lucide="check-circle" style="width: 18px; height: 18px;"></i> ${message}`;
+        notification.innerHTML = `<i data-lucide="${icon}" style="width: 18px; height: 18px;"></i> ${message}`;
         document.body.appendChild(notification);
         lucide.createIcons();
 
