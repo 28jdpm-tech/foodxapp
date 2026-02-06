@@ -550,10 +550,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const basePrice = config.prices[category][size];
 
                     if (category === 'salchipapas') {
-                        if (data.observations.length > 0) {
+                        // If observations exist but have price 0, use base price
+                        if (data.observations.length > 0 && obsPrice > 0) {
                             rowPrice = (obsPrice + extraPrice) * data.qty;
                         } else {
-                            rowPrice = (basePrice + extraPrice) * data.qty;
+                            // No observations, or observations with price 0: use base price
+                            rowPrice = (basePrice + extraPrice + obsPrice) * data.qty;
                         }
                     } else {
                         rowPrice = (basePrice + extraPrice + obsPrice) * data.qty;
@@ -681,10 +683,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Extras-only
                         rowPrice = (extraPrice + obsPrice) * rowData.qty;
                     } else if (category === 'salchipapas') {
-                        if (rowData.observations.length > 0) {
+                        // If observations exist but have price 0, use base price
+                        if (rowData.observations.length > 0 && obsPrice > 0) {
                             rowPrice = (obsPrice + extraPrice) * rowData.qty;
                         } else {
-                            rowPrice = (basePrice + extraPrice) * rowData.qty;
+                            // No observations, or observations with price 0: use base price
+                            rowPrice = (basePrice + extraPrice + obsPrice) * rowData.qty;
                         }
                     } else {
                         rowPrice = (basePrice + extraPrice + obsPrice) * rowData.qty;
