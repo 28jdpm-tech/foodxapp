@@ -2594,6 +2594,108 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
+    // ============================================
+    // Cash Drawer Functionality (Direct USB Connection)
+    // ============================================
+    let cashDrawerDevice = null;
+    let cashDrawerPort = null;
+
+    async function openCashDrawer() {
+        // ESC/POS command to open cash drawer: ESC p 0 25 250
+        const drawerCmd = new Uint8Array([0x1B, 0x70, 0x00, 0x19, 0xFA]);
+
+        // Try using cached WebUSB device first
+        if (cashDrawerDevice && cashDrawerDevice.opened) {
+            try {
+                const iface = cashDrawerDevice.configuration.interfaces[0];
+                const endpoint = iface.alternates[0].endpoints.find(e => e.direction === 'out');
+                if (endpoint) {
+                    await cashDrawerDevice.transferOut(endpoint.endpointNumber, drawerCmd);
+                    showNotification('✅ Caja abierta');
+                    return true;
+                }
+            } catch (e) {
+                console.log('Cached WebUSB device failed:', e);
+                cashDrawerDevice = null;
+            }
+        }
+
+        // Try using cached Serial port
+        if (cashDrawerPort) {
+            try {
+                const writer = cashDrawerPort.writable.getWriter();
+                await writer.write(drawerCmd);
+                writer.releaseLock();
+                showNotification('✅ Caja abierta');
+                return true;
+            } catch (e) {
+                console.log('Cached serial port failed:', e);
+                cashDrawerPort = null;
+            }
+        }
+
+        // Try WebUSB first (for USB devices)
+        if ('usb' in navigator) {
+            try {
+                cashDrawerDevice = await navigator.usb.requestDevice({
+                    filters: [] // Accept all USB devices
+                });
+
+                await cashDrawerDevice.open();
+
+                if (cashDrawerDevice.configuration === null) {
+                    await cashDrawerDevice.selectConfiguration(1);
+                }
+
+                const iface = cashDrawerDevice.configuration.interfaces[0];
+                await cashDrawerDevice.claimInterface(iface.interfaceNumber);
+
+                const endpoint = iface.alternates[0].endpoints.find(e => e.direction === 'out');
+
+                if (endpoint) {
+                    await cashDrawerDevice.transferOut(endpoint.endpointNumber, drawerCmd);
+                    showNotification('✅ Caja abierta (WebUSB)');
+                    return true;
+                }
+            } catch (error) {
+                if (error.name !== 'NotFoundError') {
+                    console.log('WebUSB failed, trying Serial...', error);
+                }
+                cashDrawerDevice = null;
+            }
+        }
+
+        // Fallback to Web Serial API
+        if ('serial' in navigator) {
+            try {
+                cashDrawerPort = await navigator.serial.requestPort();
+                await cashDrawerPort.open({ baudRate: 9600 });
+
+                const writer = cashDrawerPort.writable.getWriter();
+                await writer.write(drawerCmd);
+                writer.releaseLock();
+
+                showNotification('✅ Caja abierta (Serial)');
+                return true;
+            } catch (error) {
+                if (error.name !== 'NotFoundError') {
+                    console.error('Serial port error:', error);
+                    showNotification('⚠️ Error: ' + error.message, 'error');
+                }
+                cashDrawerPort = null;
+            }
+        }
+
+        showNotification('❌ No se pudo conectar al monedero. Selecciona el dispositivo.', 'error');
+        return false;
+    }
+
+    // Bind cash drawer button
+    const openCashDrawerBtn = document.getElementById('openCashDrawerBtn');
+    if (openCashDrawerBtn) {
+        openCashDrawerBtn.addEventListener('click', openCashDrawer);
+    }
+
     // Initialize
     updateOrderTotal();
 });
