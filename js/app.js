@@ -2440,6 +2440,75 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ============================================
+    // Order Counter Reset Functionality
+    // ============================================
+    const resetOrderCounterBtn = document.getElementById('resetOrderCounterBtn');
+    const currentOrderCounterEl = document.getElementById('currentOrderCounter');
+
+    // Load and display current counter
+    async function loadCurrentOrderCounter() {
+        if (!currentOrderCounterEl) return;
+
+        try {
+            const counterRef = db.collection('counters').doc('orders');
+            const doc = await counterRef.get();
+
+            if (doc.exists) {
+                const data = doc.data();
+                currentOrderCounterEl.textContent = '#' + String(data.counter || 0).padStart(3, '0');
+            } else {
+                currentOrderCounterEl.textContent = '#000';
+            }
+        } catch (error) {
+            console.error('Error loading counter:', error);
+            // Fallback to local
+            const localCounter = localStorage.getItem('foodx_order_counter') || '0';
+            currentOrderCounterEl.textContent = '#' + String(parseInt(localCounter)).padStart(3, '0');
+        }
+    }
+
+    // Reset counter to 0
+    async function resetOrderCounter() {
+        const todayKey = getLocalDateKey();
+
+        try {
+            const counterRef = db.collection('counters').doc('orders');
+            await counterRef.set({ date: todayKey, counter: 0 });
+
+            // Also reset local storage
+            localStorage.setItem('foodx_order_counter', '0');
+            localStorage.setItem('foodx_last_order_date', new Date().toDateString());
+
+            showNotification('✅ Contador reiniciado a #001');
+            loadCurrentOrderCounter();
+        } catch (error) {
+            console.error('Error resetting counter:', error);
+            showNotification('⚠️ Error al reiniciar: ' + error.message, 'error');
+        }
+    }
+
+    if (resetOrderCounterBtn) {
+        resetOrderCounterBtn.addEventListener('click', async () => {
+            if (confirm('¿Estás seguro que deseas reiniciar el contador de pedidos a #001?')) {
+                await resetOrderCounter();
+            }
+        });
+    }
+
+    // Load counter when navigating to admin
+    const originalRenderAdminPage = typeof renderAdminPage === 'function' ? renderAdminPage : null;
+    if (originalRenderAdminPage) {
+        const extendedRenderAdmin = () => {
+            originalRenderAdminPage();
+            loadCurrentOrderCounter();
+        };
+        // Override if needed - for now just call on page load
+    }
+
+    // Also load on DOMContentLoaded for admin page
+    loadCurrentOrderCounter();
+
     function showNotification(message, type = 'success') {
         const notification = document.createElement('div');
         const isError = type === 'error';
