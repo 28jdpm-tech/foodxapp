@@ -615,176 +615,192 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.sendToKitchenBtn) {
         elements.sendToKitchenBtn.addEventListener('click', async () => {
-            const config = StorageManager.getConfig();
-            const items = [];
+            // Show loading indicator
+            const originalBtnText = elements.sendToKitchenBtn.innerHTML;
+            elements.sendToKitchenBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> Enviando...';
+            elements.sendToKitchenBtn.disabled = true;
+            lucide.createIcons();
 
-            Object.keys(state.categoryData).forEach(category => {
-                const categoryInfo = config.categories.find(c => c.id === category);
+            try {
+                const config = StorageManager.getConfig();
+                const items = [];
 
-                state.categoryData[category].rows.forEach(rowData => {
-                    const filledBlocks = rowData.blocks.filter(b => b !== '');
-                    const hasExtras = rowData.extras && rowData.extras.length > 0;
-                    const hasObs = rowData.observations && rowData.observations.length > 0;
+                Object.keys(state.categoryData).forEach(category => {
+                    const categoryInfo = config.categories.find(c => c.id === category);
 
-                    // Skip if no selections at all
-                    if (filledBlocks.length === 0 && !hasExtras && !hasObs) return;
+                    state.categoryData[category].rows.forEach(rowData => {
+                        const filledBlocks = rowData.blocks.filter(b => b !== '');
+                        const hasExtras = rowData.extras && rowData.extras.length > 0;
+                        const hasObs = rowData.observations && rowData.observations.length > 0;
 
-                    const isBebida = category === 'bebidas';
-                    let size = '';
+                        // Skip if no selections at all
+                        if (filledBlocks.length === 0 && !hasExtras && !hasObs) return;
 
-                    if (filledBlocks.length > 0) {
-                        size = isBebida ? '' : calculateSize(filledBlocks.length, category);
-                    } else {
-                        size = 'ADI'; // Extras-only
-                    }
+                        const isBebida = category === 'bebidas';
+                        let size = '';
 
-                    const flavorNames = rowData.blocks.filter(b => b).map(b => {
-                        const flavor = config.flavors[category].find(f => f.id === b);
-                        return flavor ? flavor.name : '';
-                    });
-
-                    const categoryExtras = config.extras[category] || [];
-                    // Map IDs to Names
-                    const extraNames = rowData.extras.map(eId => {
-                        const item = categoryExtras.find(e => e.id === eId);
-                        return item ? item.name : '';
-                    }).filter(Boolean);
-
-                    const extraPrice = rowData.extras.reduce((sum, eId) => {
-                        const item = categoryExtras.find(e => e.id === eId);
-                        return sum + (item ? item.price : 0);
-                    }, 0);
-
-                    const categoryObs = config.observations[category] || [];
-                    const obsNames = rowData.observations.map(oId => {
-                        const item = categoryObs.find(o => o.id === oId);
-                        return item ? item.name : '';
-                    }).filter(Boolean);
-                    // Join multiple obs with comma
-                    const obsLabel = obsNames.join(', ');
-
-                    const obsPrice = rowData.observations.reduce((sum, oId) => {
-                        const item = categoryObs.find(o => o.id === oId);
-                        return sum + (item ? (item.price || 0) : 0);
-                    }, 0);
-
-                    let basePrice = 0;
-                    if (filledBlocks.length > 0) {
-                        if (isBebida) {
-                            const flavor = config.flavors[category].find(f => f.id === rowData.blocks[0]);
-                            basePrice = flavor ? flavor.price : 0;
+                        if (filledBlocks.length > 0) {
+                            size = isBebida ? '' : calculateSize(filledBlocks.length, category);
                         } else {
-                            basePrice = config.prices[category][size] || 0;
+                            size = 'ADI'; // Extras-only
                         }
-                    }
 
-                    let rowPrice = 0;
-                    if (filledBlocks.length === 0) {
-                        // Extras-only
-                        rowPrice = (extraPrice + obsPrice) * rowData.qty;
-                    } else if (category === 'salchipapas') {
-                        // If observations exist but have price 0, use base price
-                        if (rowData.observations.length > 0 && obsPrice > 0) {
-                            rowPrice = (obsPrice + extraPrice) * rowData.qty;
+                        const flavorNames = rowData.blocks.filter(b => b).map(b => {
+                            const flavor = config.flavors[category].find(f => f.id === b);
+                            return flavor ? flavor.name : '';
+                        });
+
+                        const categoryExtras = config.extras[category] || [];
+                        // Map IDs to Names
+                        const extraNames = rowData.extras.map(eId => {
+                            const item = categoryExtras.find(e => e.id === eId);
+                            return item ? item.name : '';
+                        }).filter(Boolean);
+
+                        const extraPrice = rowData.extras.reduce((sum, eId) => {
+                            const item = categoryExtras.find(e => e.id === eId);
+                            return sum + (item ? item.price : 0);
+                        }, 0);
+
+                        const categoryObs = config.observations[category] || [];
+                        const obsNames = rowData.observations.map(oId => {
+                            const item = categoryObs.find(o => o.id === oId);
+                            return item ? item.name : '';
+                        }).filter(Boolean);
+                        // Join multiple obs with comma
+                        const obsLabel = obsNames.join(', ');
+
+                        const obsPrice = rowData.observations.reduce((sum, oId) => {
+                            const item = categoryObs.find(o => o.id === oId);
+                            return sum + (item ? (item.price || 0) : 0);
+                        }, 0);
+
+                        let basePrice = 0;
+                        if (filledBlocks.length > 0) {
+                            if (isBebida) {
+                                const flavor = config.flavors[category].find(f => f.id === rowData.blocks[0]);
+                                basePrice = flavor ? flavor.price : 0;
+                            } else {
+                                basePrice = config.prices[category][size] || 0;
+                            }
+                        }
+
+                        let rowPrice = 0;
+                        if (filledBlocks.length === 0) {
+                            // Extras-only
+                            rowPrice = (extraPrice + obsPrice) * rowData.qty;
+                        } else if (category === 'salchipapas') {
+                            // If observations exist but have price 0, use base price
+                            if (rowData.observations.length > 0 && obsPrice > 0) {
+                                rowPrice = (obsPrice + extraPrice) * rowData.qty;
+                            } else {
+                                // No observations, or observations with price 0: use base price
+                                rowPrice = (basePrice + extraPrice + obsPrice) * rowData.qty;
+                            }
                         } else {
-                            // No observations, or observations with price 0: use base price
                             rowPrice = (basePrice + extraPrice + obsPrice) * rowData.qty;
                         }
-                    } else {
-                        rowPrice = (basePrice + extraPrice + obsPrice) * rowData.qty;
-                    }
 
-                    items.push({
-                        id: generateId(),
-                        category: category,
-                        categoryName: categoryInfo.name,
-                        categoryIcon: categoryInfo.icon,
-                        qty: rowData.qty,
-                        size: size,
-                        flavors: flavorNames,
-                        extras: extraNames,
-                        observations: obsLabel,
-                        price: rowPrice
+                        items.push({
+                            id: generateId(),
+                            category: category,
+                            categoryName: categoryInfo.name,
+                            categoryIcon: categoryInfo.icon,
+                            qty: rowData.qty,
+                            size: size,
+                            flavors: flavorNames,
+                            extras: extraNames,
+                            observations: obsLabel,
+                            price: rowPrice
+                        });
                     });
                 });
-            });
 
-            if (!state.serviceType && !state.appendingOrderId) {
-                showNotification('⚠️ Selecciona: Salón, Llevar o Domicilio', 'error');
-                return;
-            }
-
-            if (items.length === 0) {
-                showNotification('Selecciona al menos un producto');
-                return;
-            }
-
-            // Validate customer name/table number (mandatory)
-            const customerCode = elements.orderCustomerName?.value.trim();
-            if (!state.appendingOrderId && !customerCode) {
-                showNotification('⚠️ Ingresa nombre del cliente o número de mesa', 'error');
-                elements.orderCustomerName?.focus();
-                return;
-            }
-
-            // Direct Process Logic (Bypass Ticket Modal)
-            if (state.appendingOrderId) {
-                const originalOrder = StorageManager.getOrders().find(o => o.id == state.appendingOrderId);
-                if (originalOrder) {
-                    const updatedItems = [...originalOrder.items, ...items]; // items here are already newItems
-                    const updatedTotalPrice = updatedItems.reduce((sum, item) => sum + item.price, 0);
-                    StorageManager.updateOrder(originalOrder.id, {
-                        items: updatedItems,
-                        totalPrice: updatedTotalPrice
-                    });
-                    showNotification(`Pedido ${originalOrder.orderNumber} actualizado`);
-
-                    // --- PRINT NEW ITEMS ONLY ---
-                    const partialOrder = {
-                        orderNumber: `${originalOrder.orderNumber} (ADI)`,
-                        sequenceNumber: originalOrder.sequenceNumber,
-                        serviceType: state.serviceType, // Use current UI selection (e.g. Llevar)
-                        customerInfo: originalOrder.customerInfo,
-                        createdAt: new Date().toISOString(),
-                        items: items, // Only new items collected from current UI
-                        totalPrice: items.reduce((s, i) => s + i.price, 0),
-                        isAppending: true,
-                        isPartial: true, // Mark as temporary partial order
-                        checkoutPrinted: false, // Ensure it shows in 'To Print'
-                        paid: false
-                    };
-
-                    // Save partial order so it appears in "Imprimir" list
-                    StorageManager.addOrder(partialOrder);
-
-                    showNotification("Adición enviada. Imprimir desde Cobros.");
+                if (!state.serviceType && !state.appendingOrderId) {
+                    showNotification('⚠️ Selecciona: Salón, Llevar o Domicilio', 'error');
+                    return;
                 }
-                state.appendingOrderId = null;
-            } else {
-                const customerCodeUpper = customerCode.toUpperCase();
-                const seqNum = await generateOrderNumber(); // Await Firebase counter
-                const orderIdentifier = customerCodeUpper || seqNum;
 
-                const newOrder = {
-                    orderNumber: orderIdentifier,
-                    sequenceNumber: seqNum,
-                    serviceType: state.serviceType,
-                    customerInfo: customerCodeUpper,
-                    items: items,
-                    status: 'pending',
-                    totalPrice: items.reduce((sum, item) => sum + item.price, 0),
-                    createdBy: 'Cajero 1',
-                    needsPrint: true,
-                    printed: false,
-                    checkoutPrinted: false,
-                    isAppending: false,
-                    createdAt: new Date().toISOString()
-                };
-                StorageManager.addOrder(newOrder);
-                showNotification(`Pedido ${newOrder.orderNumber} enviado a cocina`);
+                if (items.length === 0) {
+                    showNotification('Selecciona al menos un producto');
+                    return;
+                }
+
+                // Validate customer name/table number (mandatory)
+                const customerCode = elements.orderCustomerName?.value.trim();
+                if (!state.appendingOrderId && !customerCode) {
+                    showNotification('⚠️ Ingresa nombre del cliente o número de mesa', 'error');
+                    elements.orderCustomerName?.focus();
+                    return;
+                }
+
+                // Direct Process Logic (Bypass Ticket Modal)
+                if (state.appendingOrderId) {
+                    const originalOrder = StorageManager.getOrders().find(o => o.id == state.appendingOrderId);
+                    if (originalOrder) {
+                        const updatedItems = [...originalOrder.items, ...items]; // items here are already newItems
+                        const updatedTotalPrice = updatedItems.reduce((sum, item) => sum + item.price, 0);
+                        StorageManager.updateOrder(originalOrder.id, {
+                            items: updatedItems,
+                            totalPrice: updatedTotalPrice
+                        });
+                        showNotification(`Pedido ${originalOrder.orderNumber} actualizado`);
+
+                        // --- PRINT NEW ITEMS ONLY ---
+                        const partialOrder = {
+                            orderNumber: `${originalOrder.orderNumber} (ADI)`,
+                            sequenceNumber: originalOrder.sequenceNumber,
+                            serviceType: state.serviceType, // Use current UI selection (e.g. Llevar)
+                            customerInfo: originalOrder.customerInfo,
+                            createdAt: new Date().toISOString(),
+                            items: items, // Only new items collected from current UI
+                            totalPrice: items.reduce((s, i) => s + i.price, 0),
+                            isAppending: true,
+                            isPartial: true, // Mark as temporary partial order
+                            checkoutPrinted: false, // Ensure it shows in 'To Print'
+                            paid: false
+                        };
+
+                        // Save partial order so it appears in "Imprimir" list
+                        StorageManager.addOrder(partialOrder);
+
+                        showNotification("Adición enviada. Imprimir desde Cobros.");
+                    }
+                    state.appendingOrderId = null;
+                } else {
+                    const customerCodeUpper = customerCode.toUpperCase();
+                    const seqNum = await generateOrderNumber(); // Await Firebase counter
+                    const orderIdentifier = customerCodeUpper || seqNum;
+
+                    const newOrder = {
+                        orderNumber: orderIdentifier,
+                        sequenceNumber: seqNum,
+                        serviceType: state.serviceType,
+                        customerInfo: customerCodeUpper,
+                        items: items,
+                        status: 'pending',
+                        totalPrice: items.reduce((sum, item) => sum + item.price, 0),
+                        createdBy: 'Cajero 1',
+                        needsPrint: true,
+                        printed: false,
+                        checkoutPrinted: false,
+                        isAppending: false,
+                        createdAt: new Date().toISOString()
+                    };
+                    StorageManager.addOrder(newOrder);
+                    showNotification(`Pedido ${newOrder.orderNumber} enviado a cocina`);
+                }
+
+                resetAllCategories();
+            } catch (error) {
+                console.error('Error sending order:', error);
+                showNotification('⚠️ Error al enviar pedido', 'error');
+            } finally {
+                // Restore button
+                elements.sendToKitchenBtn.innerHTML = originalBtnText;
+                elements.sendToKitchenBtn.disabled = false;
+                lucide.createIcons();
             }
-
-            resetAllCategories();
         });
     }
 
