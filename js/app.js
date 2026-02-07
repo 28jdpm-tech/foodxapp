@@ -806,7 +806,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showTicketModal(order) {
         if (!elements.ticketModal) return;
-        elements.ticketContent.textContent = generateTicketText(order);
+        elements.ticketContent.innerHTML = generateTicketText(order);
         elements.ticketModal.classList.add('open');
     }
 
@@ -1111,7 +1111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedPaymentOrder = order;
         elements.paymentOrderNum.textContent = order.orderNumber;
         elements.paymentTotal.textContent = formatPrice(order.totalPrice);
-        elements.paymentTicketContent.textContent = generateTicketText(order);
+        elements.paymentTicketContent.innerHTML = generateTicketText(order);
 
         const modalTitle = elements.paymentModal.querySelector('h3');
 
@@ -1815,7 +1815,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!order) return;
 
         selectedHistoryOrder = order;
-        elements.historyTicketContent.textContent = generateTicketText(order);
+        elements.historyTicketContent.innerHTML = generateTicketText(order);
 
         elements.historyOrderModal.classList.remove('hidden');
         elements.historyOrderModal.style.display = 'flex';
@@ -1985,8 +1985,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tableHeader = (catName, qty) => {
             const title = `${catName} (${qty})`.toUpperCase();
-            // Simple Text Header without grid, but with columns
-            let h = title + "\n";
+            // Category title will be bold - use special marker that we'll convert to HTML
+            let h = `<b>${title}</b>\n`;
             h += " PRODUCTO        ADICION\n";
             return h;
         };
