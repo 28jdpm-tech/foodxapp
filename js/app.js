@@ -1146,6 +1146,15 @@ document.addEventListener('DOMContentLoaded', () => {
             methodContainer.style.display = elements.confirmPayment.style.display === 'none' ? 'none' : 'block';
         }
 
+        // Hide combined payment panel
+        const combinedPanel = document.getElementById('combinedPaymentPanel');
+        if (combinedPanel) {
+            combinedPanel.style.display = 'none';
+            document.getElementById('combinedEfectivo').value = '';
+            document.getElementById('combinedNequi').value = '';
+            document.getElementById('combinedDaviplata').value = '';
+        }
+
         lucide.createIcons();
         elements.paymentModal.classList.remove('hidden');
     }
@@ -1287,6 +1296,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const method = selectedRadio.value;
+                let paymentDetails = null;
+
+                // Handle combined payment
+                if (method === 'combinado') {
+                    const efectivo = parseFloat(document.getElementById('combinedEfectivo').value) || 0;
+                    const nequi = parseFloat(document.getElementById('combinedNequi').value) || 0;
+                    const daviplata = parseFloat(document.getElementById('combinedDaviplata').value) || 0;
+                    const total = efectivo + nequi + daviplata;
+
+                    if (total < selectedPaymentOrder.totalPrice) {
+                        showNotification(`⚠️ Faltan $${formatPrice(selectedPaymentOrder.totalPrice - total).replace('$', '')} para completar el pago`, 'error');
+                        return;
+                    }
+
+                    paymentDetails = {
+                        efectivo: efectivo,
+                        nequi: nequi,
+                        daviplata: daviplata,
+                        total: total
+                    };
+                }
 
                 // Open cash drawer if printer is connected
                 if (window.openCashDrawer) {
@@ -1296,7 +1326,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 StorageManager.updateOrder(selectedPaymentOrder.id, {
                     paid: true,
                     status: 'delivered',
-                    paymentMethod: method
+                    paymentMethod: method,
+                    paymentDetails: paymentDetails
                 });
                 showNotification(`Pedido ${selectedPaymentOrder.orderNumber} pagado`);
                 elements.paymentModal.classList.add('hidden');
@@ -1304,6 +1335,53 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Combined payment panel toggle
+    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const panel = document.getElementById('combinedPaymentPanel');
+            if (panel) {
+                panel.style.display = e.target.value === 'combinado' ? 'block' : 'none';
+                if (e.target.value === 'combinado') {
+                    // Pre-fill with total in efectivo
+                    const totalEl = document.getElementById('paymentTotal');
+                    if (totalEl && selectedPaymentOrder) {
+                        document.getElementById('combinedEfectivo').value = selectedPaymentOrder.totalPrice;
+                        document.getElementById('combinedNequi').value = '';
+                        document.getElementById('combinedDaviplata').value = '';
+                        updateCombinedTotal();
+                    }
+                }
+            }
+        });
+    });
+
+    // Update combined total display
+    function updateCombinedTotal() {
+        const efectivo = parseFloat(document.getElementById('combinedEfectivo').value) || 0;
+        const nequi = parseFloat(document.getElementById('combinedNequi').value) || 0;
+        const daviplata = parseFloat(document.getElementById('combinedDaviplata').value) || 0;
+        const total = efectivo + nequi + daviplata;
+        const totalEl = document.getElementById('combinedTotal');
+        if (totalEl && selectedPaymentOrder) {
+            const diff = total - selectedPaymentOrder.totalPrice;
+            if (diff >= 0) {
+                totalEl.innerHTML = `✓ Total: ${formatPrice(total)}`;
+                totalEl.style.color = '#059669';
+            } else {
+                totalEl.innerHTML = `Faltan: ${formatPrice(Math.abs(diff))}`;
+                totalEl.style.color = '#dc2626';
+            }
+        }
+    }
+
+    // Bind combined payment inputs
+    ['combinedEfectivo', 'combinedNequi', 'combinedDaviplata'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', updateCombinedTotal);
+        }
+    });
 
     // Print button in payment modal
     if (elements.printPaymentTicket) {
