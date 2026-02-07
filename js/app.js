@@ -1576,11 +1576,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
 
-            // Payment Method Breakdown
+            // Payment Method Breakdown (including combined payments)
             const method = order.paymentMethod || 'efectivo';
-            if (method === 'nequi') totalNequi += order.totalPrice;
-            else if (method === 'daviplata') totalDaviplata += order.totalPrice;
-            else totalEfectivo += order.totalPrice;
+            if (method === 'combinado' && order.paymentDetails) {
+                // Split combined payments to their respective methods
+                totalEfectivo += order.paymentDetails.efectivo || 0;
+                totalNequi += order.paymentDetails.nequi || 0;
+                totalDaviplata += order.paymentDetails.daviplata || 0;
+            } else if (method === 'nequi') {
+                totalNequi += order.totalPrice;
+            } else if (method === 'daviplata') {
+                totalDaviplata += order.totalPrice;
+            } else {
+                totalEfectivo += order.totalPrice;
+            }
         });
 
         // Store for details
@@ -1706,9 +1715,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function showReportPaymentDetail(method) {
         if (!elements.reportDetailModal || !elements.reportDetailList) return;
 
-        const filtered = currentReportOrders.filter(o => {
+        // Filter orders and get amounts per method (including combined)
+        const filtered = [];
+        currentReportOrders.forEach(o => {
             const m = o.paymentMethod || 'efectivo';
-            return m === method;
+
+            if (m === 'combinado' && o.paymentDetails) {
+                // For combined payments, check if this method has an amount
+                const amount = o.paymentDetails[method] || 0;
+                if (amount > 0) {
+                    filtered.push({ ...o, displayAmount: amount, isCombined: true });
+                }
+            } else if (m === method) {
+                filtered.push({ ...o, displayAmount: o.totalPrice, isCombined: false });
+            }
         });
 
         elements.reportDetailTitle.textContent = `Detalle: ${method.toUpperCase()}`;
@@ -1740,11 +1760,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="detail-date">${dateStr}</div>
                             <div style="font-size: 0.7rem; color: var(--text-muted);">${timeStr}</div>
                         </td>
-                        <td class="detail-order-num">${o.orderNumber}</td>
+                        <td class="detail-order-num">
+                            ${o.orderNumber}
+                            ${o.isCombined ? '<span style="font-size: 0.65rem; color: var(--text-muted); display: block;">(Combinado)</span>' : ''}
+                        </td>
                         <td style="font-size: 0.8rem; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                             ${o.customerInfo}
                         </td>
-                        <td class="detail-amount">${formatPrice(o.totalPrice)}</td>
+                        <td class="detail-amount">${formatPrice(o.displayAmount)}</td>
                     </tr>
                 `;
             });
