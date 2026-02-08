@@ -2717,4 +2717,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize
     updateOrderTotal();
+
+    // ============================================
+    // Cash Drawer Manual Open
+    // ============================================
+    const openCashDrawerBtn = document.getElementById('openCashDrawerBtn');
+    if (openCashDrawerBtn) {
+        openCashDrawerBtn.addEventListener('click', async () => {
+            try {
+                // Create a hidden iframe to send print command with drawer open
+                const iframe = document.createElement('iframe');
+                iframe.style.position = 'absolute';
+                iframe.style.width = '0';
+                iframe.style.height = '0';
+                iframe.style.border = 'none';
+                iframe.style.visibility = 'hidden';
+                document.body.appendChild(iframe);
+
+                // Write minimal content - the printer driver will handle drawer open
+                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                doc.open();
+                doc.write(`
+                    <html>
+                    <head>
+                        <style>
+                            @page { size: 80mm auto; margin: 0; }
+                            body { margin: 0; padding: 0; font-size: 1px; }
+                        </style>
+                    </head>
+                    <body>.</body>
+                    </html>
+                `);
+                doc.close();
+
+                // Print the invisible document (triggers drawer via printer driver)
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+
+                // Clean up
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 1000);
+
+                showNotification('📤 Comando enviado a la caja');
+            } catch (error) {
+                console.error('Error opening cash drawer:', error);
+                showNotification('⚠️ Error al abrir la caja', 'error');
+            }
+        });
+    }
 });
