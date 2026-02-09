@@ -2267,7 +2267,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }).join('');
         }
 
-        // Render expense list
+        // Render expense list as table
         const listEl = document.getElementById('expensesList');
         if (listEl) {
             if (expenses.length === 0) {
@@ -2278,30 +2278,51 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
             } else {
-                listEl.innerHTML = expenses.map(expense => {
+                let tableHtml = `
+                    <div style="overflow-x: auto; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+                        <thead>
+                            <tr style="background: var(--bg-tertiary);">
+                                <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Fecha</th>
+                                <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Categoría</th>
+                                <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Descripción</th>
+                                <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Monto</th>
+                                <th style="padding: 10px 6px; width: 30px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                expenses.forEach(expense => {
                     const cat = EXPENSE_CATEGORIES[expense.category] || { label: 'Otros', emoji: '📌' };
                     const dateObj = new Date(expense.date || expense.createdAt);
-                    const dateStr = dateObj.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
-                    return `
-                        <div style="background: var(--bg-secondary); border-radius: var(--radius-md); padding: 12px 16px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border-subtle);">
-                            <div style="font-size: 1.4rem;">${cat.emoji}</div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                    ${expense.description || cat.label}
-                                </div>
-                                <div style="font-size: 0.7rem; color: var(--text-muted);">${cat.label} · ${dateStr}</div>
-                            </div>
-                            <div style="font-weight: 700; color: #ef4444; font-size: 0.95rem; white-space: nowrap;">
+                    const dateStr = dateObj.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: '2-digit' });
+
+                    tableHtml += `
+                        <tr style="border-top: 1px solid var(--border-subtle); background: var(--bg-secondary);">
+                            <td style="padding: 10px 12px; color: var(--text-secondary); white-space: nowrap; font-size: 0.8rem;">${dateStr}</td>
+                            <td style="padding: 10px 12px; white-space: nowrap;">
+                                <span style="font-size: 0.8rem;">${cat.emoji} ${cat.label}</span>
+                            </td>
+                            <td style="padding: 10px 12px; color: var(--text-primary); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem;">
+                                ${expense.description || '-'}
+                            </td>
+                            <td style="padding: 10px 12px; text-align: right; font-weight: 700; color: #ef4444; white-space: nowrap;">
                                 -${formatPrice(expense.amount)}
-                            </div>
-                            <button onclick="window.deleteExpense('${expense.id}')"
-                                style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; opacity: 0.6;"
-                                title="Eliminar">
-                                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-                            </button>
-                        </div>
+                            </td>
+                            <td style="padding: 10px 6px; text-align: center;">
+                                <button onclick="window.deleteExpense('${expense.id}')"
+                                    style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; opacity: 0.5;"
+                                    title="Eliminar">
+                                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                </button>
+                            </td>
+                        </tr>
                     `;
-                }).join('');
+                });
+
+                tableHtml += `</tbody></table></div>`;
+                listEl.innerHTML = tableHtml;
             }
         }
 
