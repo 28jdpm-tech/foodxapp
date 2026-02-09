@@ -8,7 +8,8 @@ const STORAGE_KEYS = {
     CATEGORIES: 'foodx_categories',
     FLAVORS: 'foodx_flavors',
     EXTRAS: 'foodx_extras',
-    PRICES: 'foodx_prices'
+    PRICES: 'foodx_prices',
+    EXPENSES: 'foodx_expenses'
 };
 
 const StorageManager = {
@@ -259,6 +260,63 @@ const StorageManager = {
         } catch (e) {
             console.error("Error deleting from cloud:", e);
         }
+    },
+
+    // ============================================
+    // Expenses (Egresos)
+    // ============================================
+
+    getExpenses() {
+        const data = localStorage.getItem(STORAGE_KEYS.EXPENSES);
+        return data ? JSON.parse(data) : [];
+    },
+
+    saveExpenses(expenses) {
+        localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(expenses));
+    },
+
+    addExpense(expense) {
+        expense.id = generateId();
+        expense.createdAt = new Date().toISOString();
+        const expenses = this.getExpenses();
+        expenses.push(expense);
+        this.saveExpenses(expenses);
+        // Sync to cloud
+        this.syncExpenseToCloud(expense);
+        return expense;
+    },
+
+    async deleteExpense(expenseId) {
+        const expenses = this.getExpenses().filter(e => e.id !== expenseId);
+        this.saveExpenses(expenses);
+        try {
+            await db.collection('expenses').doc(expenseId).delete();
+        } catch (e) {
+            console.error("Error deleting expense from cloud:", e);
+        }
+    },
+
+    async syncExpenseToCloud(expense) {
+        try {
+            await db.collection('expenses').doc(expense.id).set(expense);
+        } catch (e) {
+            console.error("Error syncing expense:", e);
+        }
+    },
+
+    getTodayExpenses() {
+        const today = new Date().toDateString();
+        return this.getExpenses().filter(e => new Date(e.date || e.createdAt).toDateString() === today);
+    },
+
+    getCurrentMonthExpenses() {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        return this.getExpenses().filter(e => {
+            const date = new Date(e.date || e.createdAt);
+            return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+        });
     },
 
     // Clear all data (for testing)

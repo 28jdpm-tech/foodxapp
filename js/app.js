@@ -270,6 +270,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     elements.reportDatePicker.value = new Date().toISOString().split('T')[0];
                 }
                 renderReportsPage();
+            } else if (page === 'expenses') {
+                renderExpensesPage();
             } else if (page === 'admin') {
                 renderAdminPage();
             } else if (page === 'new-order') {
@@ -2189,6 +2191,195 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return ticket;
     }
+
+    // ============================================
+    // Expenses (Egresos)
+    // ============================================
+
+    const EXPENSE_CATEGORIES = {
+        nomina: { label: 'Nómina', emoji: '💰' },
+        materia_prima: { label: 'Materia Prima', emoji: '🥩' },
+        arriendo: { label: 'Arriendo', emoji: '🏠' },
+        suministros: { label: 'Suministros', emoji: '📦' },
+        bebidas: { label: 'Bebidas', emoji: '🥤' },
+        servicios: { label: 'Servicios Públicos', emoji: '💡' },
+        transporte: { label: 'Transporte', emoji: '🚚' },
+        otros: { label: 'Otros', emoji: '📌' }
+    };
+
+    function renderExpensesPage() {
+        const period = document.getElementById('expensePeriodSelect')?.value || 'today';
+        let expenses = [];
+
+        switch (period) {
+            case 'today':
+                expenses = StorageManager.getTodayExpenses();
+                break;
+            case 'month':
+                expenses = StorageManager.getCurrentMonthExpenses();
+                break;
+            case 'total':
+                expenses = StorageManager.getExpenses();
+                break;
+            default:
+                expenses = StorageManager.getTodayExpenses();
+        }
+
+        // Sort by date descending
+        expenses.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+
+        // Calculate totals
+        const totalAmount = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+        const categoryTotals = {};
+        expenses.forEach(e => {
+            const cat = e.category || 'otros';
+            categoryTotals[cat] = (categoryTotals[cat] || 0) + (e.amount || 0);
+        });
+
+        // Update total card
+        const totalEl = document.getElementById('expenseTotalAmount');
+        if (totalEl) totalEl.textContent = formatPrice(totalAmount);
+
+        // Render category summary
+        const summaryEl = document.getElementById('expenseCategorySummary');
+        if (summaryEl) {
+            const catColors = {
+                nomina: '#f59e0b',
+                materia_prima: '#ef4444',
+                arriendo: '#8b5cf6',
+                suministros: '#3b82f6',
+                bebidas: '#06b6d4',
+                servicios: '#10b981',
+                transporte: '#f97316',
+                otros: '#6b7280'
+            };
+            summaryEl.innerHTML = Object.entries(categoryTotals)
+                .sort((a, b) => b[1] - a[1])
+                .map(([catId, amount]) => {
+                    const cat = EXPENSE_CATEGORIES[catId] || { label: catId, emoji: '📌' };
+                    const color = catColors[catId] || '#6b7280';
+                    return `
+                        <div style="background: var(--bg-secondary); border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md); border-left: 3px solid ${color};">
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">${cat.emoji} ${cat.label}</div>
+                            <div style="font-size: 1rem; font-weight: 700; color: var(--text-primary);">${formatPrice(amount)}</div>
+                        </div>
+                    `;
+                }).join('');
+        }
+
+        // Render expense list
+        const listEl = document.getElementById('expensesList');
+        if (listEl) {
+            if (expenses.length === 0) {
+                listEl.innerHTML = `
+                    <div class="empty-state" style="padding: 2rem; text-align: center;">
+                        <i data-lucide="wallet" style="width: 40px; height: 40px; color: var(--text-muted); margin-bottom: 8px;"></i>
+                        <p style="color: var(--text-muted);">No hay egresos registrados</p>
+                    </div>
+                `;
+            } else {
+                listEl.innerHTML = expenses.map(expense => {
+                    const cat = EXPENSE_CATEGORIES[expense.category] || { label: 'Otros', emoji: '📌' };
+                    const dateObj = new Date(expense.date || expense.createdAt);
+                    const dateStr = dateObj.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    return `
+                        <div style="background: var(--bg-secondary); border-radius: var(--radius-md); padding: 12px 16px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border-subtle);">
+                            <div style="font-size: 1.4rem;">${cat.emoji}</div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    ${expense.description || cat.label}
+                                </div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">${cat.label} · ${dateStr}</div>
+                            </div>
+                            <div style="font-weight: 700; color: #ef4444; font-size: 0.95rem; white-space: nowrap;">
+                                -${formatPrice(expense.amount)}
+                            </div>
+                            <button onclick="window.deleteExpense('${expense.id}')"
+                                style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; opacity: 0.6;"
+                                title="Eliminar">
+                                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Set default date
+        const dateInput = document.getElementById('expenseDate');
+        if (dateInput && !dateInput.value) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+
+        lucide.createIcons();
+    }
+
+    // Add expense handler
+    const addExpenseBtn = document.getElementById('addExpenseBtn');
+    if (addExpenseBtn) {
+        addExpenseBtn.addEventListener('click', () => {
+            const category = document.getElementById('expenseCategory').value;
+            const description = document.getElementById('expenseDescription').value.trim();
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const date = document.getElementById('expenseDate').value;
+
+            if (!amount || amount <= 0) {
+                showNotification('⚠️ Ingresa un monto válido', 'error');
+                return;
+            }
+
+            if (!date) {
+                showNotification('⚠️ Selecciona una fecha', 'error');
+                return;
+            }
+
+            const cat = EXPENSE_CATEGORIES[category] || { label: 'Otros', emoji: '📌' };
+
+            StorageManager.addExpense({
+                category: category,
+                categoryLabel: cat.label,
+                description: description || cat.label,
+                amount: amount,
+                date: date + 'T12:00:00'
+            });
+
+            showNotification(`${cat.emoji} Egreso registrado: ${formatPrice(amount)}`);
+
+            // Clear form
+            document.getElementById('expenseDescription').value = '';
+            document.getElementById('expenseAmount').value = '';
+
+            renderExpensesPage();
+        });
+    }
+
+    // Period filter change
+    const expensePeriodSelect = document.getElementById('expensePeriodSelect');
+    if (expensePeriodSelect) {
+        expensePeriodSelect.addEventListener('change', () => {
+            renderExpensesPage();
+        });
+    }
+
+    // Delete expense (global handler)
+    window.deleteExpense = function (expenseId) {
+        const performDelete = async () => {
+            if (confirm('¿Eliminar este egreso?')) {
+                await StorageManager.deleteExpense(expenseId);
+                showNotification('Egreso eliminado');
+                renderExpensesPage();
+            }
+        };
+
+        if (state.isAdminAuthenticated) {
+            performDelete();
+        } else {
+            state.pendingAdminAction = performDelete;
+            elements.adminLoginModal.classList.add('open');
+            elements.adminPasswordInput.value = '';
+            elements.adminPasswordInput.focus();
+        }
+    };
 
     // ============================================
     // Administration Logic
