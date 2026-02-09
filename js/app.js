@@ -2196,16 +2196,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Expenses (Egresos)
     // ============================================
 
-    const EXPENSE_CATEGORIES = {
-        nomina: { label: 'Nómina', emoji: '💰' },
-        materia_prima: { label: 'Materia Prima', emoji: '🥩' },
-        arriendo: { label: 'Arriendo', emoji: '🏠' },
-        suministros: { label: 'Suministros', emoji: '📦' },
-        bebidas: { label: 'Bebidas', emoji: '🥤' },
-        servicios: { label: 'Servicios Públicos', emoji: '💡' },
-        transporte: { label: 'Transporte', emoji: '🚚' },
-        otros: { label: 'Otros', emoji: '📌' }
-    };
+    // Helper to get categories as a map { id: { label, emoji } }
+    function getExpenseCatMap() {
+        const cats = StorageManager.getExpenseCategories();
+        const map = {};
+        cats.forEach(c => { map[c.id] = { label: c.label, emoji: c.emoji }; });
+        return map;
+    }
+
+    // Color palette for category cards
+    const expenseCatColors = ['#f59e0b', '#ef4444', '#8b5cf6', '#3b82f6', '#06b6d4', '#10b981', '#f97316', '#6b7280', '#e11d48', '#84cc16', '#14b8a6', '#a855f7'];
 
     function renderExpensesPage() {
         const period = document.getElementById('expensePeriodSelect')?.value || 'today';
@@ -2228,6 +2228,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // Sort by date descending
         expenses.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
 
+        const CATS = getExpenseCatMap();
+
+        // Populate category select dynamically
+        const catSelect = document.getElementById('expenseCategory');
+        if (catSelect) {
+            const currentVal = catSelect.value;
+            const allCats = StorageManager.getExpenseCategories();
+            catSelect.innerHTML = allCats.map(c => `<option value="${c.id}">${c.emoji} ${c.label}</option>`).join('');
+            if (currentVal && allCats.find(c => c.id === currentVal)) catSelect.value = currentVal;
+        }
+
         // Calculate totals
         const totalAmount = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
         const categoryTotals = {};
@@ -2243,21 +2254,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Render category summary
         const summaryEl = document.getElementById('expenseCategorySummary');
         if (summaryEl) {
-            const catColors = {
-                nomina: '#f59e0b',
-                materia_prima: '#ef4444',
-                arriendo: '#8b5cf6',
-                suministros: '#3b82f6',
-                bebidas: '#06b6d4',
-                servicios: '#10b981',
-                transporte: '#f97316',
-                otros: '#6b7280'
-            };
+            const allCatsForColors = StorageManager.getExpenseCategories();
             summaryEl.innerHTML = Object.entries(categoryTotals)
                 .sort((a, b) => b[1] - a[1])
                 .map(([catId, amount]) => {
-                    const cat = EXPENSE_CATEGORIES[catId] || { label: catId, emoji: '📌' };
-                    const color = catColors[catId] || '#6b7280';
+                    const cat = CATS[catId] || { label: catId, emoji: '📌' };
+                    const idx = allCatsForColors.findIndex(c => c.id === catId);
+                    const color = expenseCatColors[idx % expenseCatColors.length] || '#6b7280';
                     return `
                         <div style="background: var(--bg-secondary); border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md); border-left: 3px solid ${color};">
                             <div style="font-size: 0.7rem; color: var(--text-muted);">${cat.emoji} ${cat.label}</div>
@@ -2294,7 +2297,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
 
                 expenses.forEach(expense => {
-                    const cat = EXPENSE_CATEGORIES[expense.category] || { label: 'Otros', emoji: '📌' };
+                    const cat = CATS[expense.category] || { label: 'Otros', emoji: '📌' };
                     const dateObj = new Date(expense.date || expense.createdAt);
                     const dateStr = dateObj.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: '2-digit' });
 
@@ -2332,8 +2335,128 @@ document.addEventListener('DOMContentLoaded', () => {
             dateInput.value = new Date().toISOString().split('T')[0];
         }
 
+        // Render category manager
+        renderExpenseCategoriesManager();
+
         lucide.createIcons();
     }
+
+    // ---- Expense Category Manager ----
+    function renderExpenseCategoriesManager() {
+        const container = document.getElementById('expenseCatManager');
+        if (!container) return;
+
+        const cats = StorageManager.getExpenseCategories();
+        let html = `
+            <div style="overflow-x: auto; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-bottom: var(--space-sm);">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+                <thead>
+                    <tr style="background: var(--bg-tertiary);">
+                        <th style="padding: 8px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Emoji</th>
+                        <th style="padding: 8px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Nombre</th>
+                        <th style="padding: 8px 6px; width: 60px; text-align: center; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        cats.forEach(cat => {
+            html += `
+                <tr style="border-top: 1px solid var(--border-subtle); background: var(--bg-secondary);">
+                    <td style="padding: 8px 12px; font-size: 1.1rem;">${cat.emoji}</td>
+                    <td style="padding: 8px 12px; color: var(--text-primary); font-size: 0.85rem;">${cat.label}</td>
+                    <td style="padding: 8px 6px; text-align: center; white-space: nowrap;">
+                        <button onclick="window.editExpenseCategory('${cat.id}')"
+                            style="background: none; border: none; color: var(--accent-primary); cursor: pointer; padding: 2px;" title="Editar">
+                            <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
+                        </button>
+                        <button onclick="window.deleteExpenseCategory('${cat.id}')"
+                            style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 2px; margin-left: 4px;" title="Eliminar">
+                            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table></div>`;
+
+        // Add new category form
+        html += `
+            <div style="display: flex; gap: var(--space-xs); align-items: center;">
+                <input type="text" id="newExpenseCatEmoji" placeholder="📌" maxlength="2"
+                    style="width: 45px; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: var(--text-primary); font-size: 1.1rem; text-align: center; box-sizing: border-box;">
+                <input type="text" id="newExpenseCatLabel" placeholder="Nombre de categoría"
+                    style="flex: 1; padding: 8px 12px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: var(--text-primary); font-size: 0.85rem; box-sizing: border-box;">
+                <button onclick="window.addExpenseCategory()"
+                    style="padding: 8px 14px; background: var(--accent-primary); color: var(--bg-primary); border: none; border-radius: var(--radius-md); font-weight: 700; font-size: 0.8rem; cursor: pointer; white-space: nowrap;">
+                    + Agregar
+                </button>
+            </div>
+        `;
+
+        container.innerHTML = html;
+    }
+
+    // Global handlers for category management
+    window.addExpenseCategory = function () {
+        const emoji = document.getElementById('newExpenseCatEmoji')?.value.trim() || '📌';
+        const label = document.getElementById('newExpenseCatLabel')?.value.trim();
+
+        if (!label) {
+            showNotification('⚠️ Ingresa un nombre para la categoría', 'error');
+            return;
+        }
+
+        const cats = StorageManager.getExpenseCategories();
+        const id = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+
+        if (cats.find(c => c.id === id)) {
+            showNotification('⚠️ Ya existe una categoría con ese nombre', 'error');
+            return;
+        }
+
+        cats.push({ id, label, emoji });
+        StorageManager.saveExpenseCategories(cats);
+        showNotification(`${emoji} Categoría "${label}" creada`);
+        renderExpensesPage();
+    };
+
+    window.editExpenseCategory = function (catId) {
+        const cats = StorageManager.getExpenseCategories();
+        const cat = cats.find(c => c.id === catId);
+        if (!cat) return;
+
+        const newLabel = prompt('Nombre de la categoría:', cat.label);
+        if (newLabel === null) return;
+        const newEmoji = prompt('Emoji:', cat.emoji);
+        if (newEmoji === null) return;
+
+        cat.label = newLabel.trim() || cat.label;
+        cat.emoji = newEmoji.trim() || cat.emoji;
+        StorageManager.saveExpenseCategories(cats);
+        showNotification(`Categoría actualizada: ${cat.emoji} ${cat.label}`);
+        renderExpensesPage();
+    };
+
+    window.deleteExpenseCategory = function (catId) {
+        const performDelete = () => {
+            if (!confirm('¿Eliminar esta categoría de egreso?')) return;
+            const cats = StorageManager.getExpenseCategories().filter(c => c.id !== catId);
+            StorageManager.saveExpenseCategories(cats);
+            showNotification('Categoría eliminada');
+            renderExpensesPage();
+        };
+
+        if (state.isAdminAuthenticated) {
+            performDelete();
+        } else {
+            state.pendingAdminAction = performDelete;
+            elements.adminLoginModal.classList.add('open');
+            elements.adminPasswordInput.value = '';
+            elements.adminPasswordInput.focus();
+        }
+    };
 
     // Add expense handler
     const addExpenseBtn = document.getElementById('addExpenseBtn');
@@ -2354,7 +2477,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const cat = EXPENSE_CATEGORIES[category] || { label: 'Otros', emoji: '📌' };
+            const CATS = getExpenseCatMap();
+            const cat = CATS[category] || { label: 'Otros', emoji: '📌' };
 
             StorageManager.addExpense({
                 category: category,

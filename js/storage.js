@@ -9,7 +9,8 @@ const STORAGE_KEYS = {
     FLAVORS: 'foodx_flavors',
     EXTRAS: 'foodx_extras',
     PRICES: 'foodx_prices',
-    EXPENSES: 'foodx_expenses'
+    EXPENSES: 'foodx_expenses',
+    EXPENSE_CATEGORIES: 'foodx_expense_categories'
 };
 
 const StorageManager = {
@@ -259,6 +260,36 @@ const StorageManager = {
             await db.collection('orders').doc(orderId).delete();
         } catch (e) {
             console.error("Error deleting from cloud:", e);
+        }
+    },
+
+    // ============================================
+    // Expense Categories (Categorías de Egresos)
+    // ============================================
+
+    getExpenseCategories() {
+        const data = localStorage.getItem(STORAGE_KEYS.EXPENSE_CATEGORIES);
+        if (data) return JSON.parse(data);
+        // Default categories
+        return [
+            { id: 'nomina', label: 'Nómina', emoji: '💰' },
+            { id: 'materia_prima', label: 'Materia Prima', emoji: '🥩' },
+            { id: 'arriendo', label: 'Arriendo', emoji: '🏠' },
+            { id: 'suministros', label: 'Suministros', emoji: '📦' },
+            { id: 'bebidas', label: 'Bebidas', emoji: '🥤' },
+            { id: 'servicios', label: 'Servicios Públicos', emoji: '💡' },
+            { id: 'transporte', label: 'Transporte', emoji: '🚚' },
+            { id: 'otros', label: 'Otros', emoji: '📌' }
+        ];
+    },
+
+    saveExpenseCategories(categories) {
+        localStorage.setItem(STORAGE_KEYS.EXPENSE_CATEGORIES, JSON.stringify(categories));
+        // Sync to cloud
+        try {
+            db.collection('config').doc('expense_categories').set({ categories });
+        } catch (e) {
+            console.error("Error syncing expense categories:", e);
         }
     },
 
