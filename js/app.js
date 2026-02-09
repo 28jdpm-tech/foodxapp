@@ -1820,7 +1820,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Apply Payment Method or Category Filter
         if (historyFilter !== 'all') {
             if (['efectivo', 'nequi', 'daviplata'].includes(historyFilter)) {
-                orders = orders.filter(o => (o.paymentMethod || 'efectivo') === historyFilter);
+                orders = orders.filter(o => {
+                    const m = o.paymentMethod || 'efectivo';
+                    if (m === historyFilter) return true;
+                    if (m === 'combinado' && o.paymentDetails && (o.paymentDetails[historyFilter] || 0) > 0) return true;
+                    return false;
+                });
             } else if (['comida', 'bebidas', 'desechables'].includes(historyFilter)) {
                 const foodCategories = ['hamburguesas', 'perros', 'salchipapas', 'combos'];
                 orders = orders.filter(o => {
@@ -2017,9 +2022,17 @@ document.addEventListener('DOMContentLoaded', () => {
             totalSales += order.totalPrice;
             const method = order.paymentMethod || 'efectivo';
 
-            if (method === 'nequi') totalNequi += order.totalPrice;
-            else if (method === 'daviplata') totalDaviplata += order.totalPrice;
-            else totalEfectivo += order.totalPrice;
+            if (method === 'combinado' && order.paymentDetails) {
+                totalEfectivo += order.paymentDetails.efectivo || 0;
+                totalNequi += order.paymentDetails.nequi || 0;
+                totalDaviplata += order.paymentDetails.daviplata || 0;
+            } else if (method === 'nequi') {
+                totalNequi += order.totalPrice;
+            } else if (method === 'daviplata') {
+                totalDaviplata += order.totalPrice;
+            } else {
+                totalEfectivo += order.totalPrice;
+            }
 
             // Category Breakdown
             order.items.forEach(item => {
