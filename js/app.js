@@ -2527,6 +2527,76 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Download Expenses as Excel (CSV)
+    window.downloadExpensesExcel = function () {
+        const period = document.getElementById('expensePeriodSelect')?.value || 'today';
+        let expenses = [];
+        let periodLabel = '';
+
+        switch (period) {
+            case 'today':
+                expenses = StorageManager.getTodayExpenses();
+                periodLabel = 'Hoy';
+                break;
+            case 'month':
+                expenses = StorageManager.getCurrentMonthExpenses();
+                periodLabel = 'Este_Mes';
+                break;
+            case 'total':
+                expenses = StorageManager.getExpenses();
+                periodLabel = 'Todo';
+                break;
+            default:
+                expenses = StorageManager.getTodayExpenses();
+                periodLabel = 'Hoy';
+        }
+
+        if (expenses.length === 0) {
+            showNotification('⚠️ No hay egresos para descargar', 'error');
+            return;
+        }
+
+        // Sort by date
+        expenses.sort((a, b) => new Date(a.date || a.createdAt) - new Date(b.date || b.createdAt));
+
+        const CATS = getExpenseCatMap();
+
+        // BOM for UTF-8 in Excel
+        let csv = '\uFEFF';
+        // Header
+        csv += 'Fecha,Categoría,Descripción,Monto\n';
+
+        let total = 0;
+        expenses.forEach(expense => {
+            const cat = CATS[expense.category] || { label: 'Otros', emoji: '📌' };
+            const dateObj = new Date(expense.date || expense.createdAt);
+            const dateStr = dateObj.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const desc = (expense.description || cat.label).replace(/"/g, '""');
+            const amount = expense.amount || 0;
+            total += amount;
+
+            csv += `"${dateStr}","${cat.emoji} ${cat.label}","${desc}",${amount}\n`;
+        });
+
+        // Total row
+        csv += `"","","TOTAL",${total}\n`;
+
+        // Download
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const now = new Date();
+        const dateFile = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        link.href = url;
+        link.download = `Egresos_${periodLabel}_${dateFile}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        showNotification('📥 Archivo descargado');
+    };
+
     // ============================================
     // Administration Logic
     // ============================================
