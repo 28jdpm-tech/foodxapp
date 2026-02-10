@@ -2364,12 +2364,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td style="padding: 8px 12px; color: var(--text-primary); font-size: 0.85rem;">${cat.label}</td>
                     <td style="padding: 8px 6px; text-align: center; white-space: nowrap;">
                         <button onclick="window.editExpenseCategory('${cat.id}')"
-                            style="background: none; border: none; color: var(--accent-primary); cursor: pointer; padding: 2px;" title="Editar">
-                            <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
+                            style="background: none; border: none; color: var(--accent-primary); cursor: pointer; padding: 4px; font-size: 1rem;" title="Editar">
+                            ✏️
                         </button>
                         <button onclick="window.deleteExpenseCategory('${cat.id}')"
-                            style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 2px; margin-left: 4px;" title="Eliminar">
-                            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                            style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 4px; margin-left: 2px; font-size: 1rem;" title="Eliminar">
+                            🗑️
                         </button>
                     </td>
                 </tr>
