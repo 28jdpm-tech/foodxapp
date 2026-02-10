@@ -2527,7 +2527,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Download Expenses as Excel (CSV)
+    // Download Expenses as Excel (.xlsx)
     window.downloadExpensesExcel = function () {
         const period = document.getElementById('expensePeriodSelect')?.value || 'today';
         let expenses = [];
@@ -2556,45 +2556,54 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Sort by date
+        // Sort by date ascending
         expenses.sort((a, b) => new Date(a.date || a.createdAt) - new Date(b.date || b.createdAt));
 
         const CATS = getExpenseCatMap();
 
-        // BOM for UTF-8 in Excel
-        let csv = '\uFEFF';
-        // Header
-        csv += 'Fecha,Categoría,Descripción,Monto\n';
+        // Build data rows matching the table: Fecha | Categoría | Descripción | Monto
+        const rows = [['Fecha', 'Categoría', 'Descripción', 'Monto']];
 
         let total = 0;
         expenses.forEach(expense => {
             const cat = CATS[expense.category] || { label: 'Otros', emoji: '📌' };
             const dateObj = new Date(expense.date || expense.createdAt);
             const dateStr = dateObj.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const desc = (expense.description || cat.label).replace(/"/g, '""');
             const amount = expense.amount || 0;
             total += amount;
 
-            csv += `"${dateStr}","${cat.emoji} ${cat.label}","${desc}",${amount}\n`;
+            rows.push([
+                dateStr,
+                `${cat.emoji} ${cat.label}`,
+                expense.description || cat.label,
+                amount
+            ]);
         });
 
         // Total row
-        csv += `"","","TOTAL",${total}\n`;
+        rows.push(['', '', 'TOTAL', total]);
 
-        // Download
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
+        // Create workbook
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+
+        // Set column widths
+        ws['!cols'] = [
+            { wch: 14 },  // Fecha
+            { wch: 22 },  // Categoría
+            { wch: 35 },  // Descripción
+            { wch: 15 }   // Monto
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Egresos');
+
+        // Generate filename
         const now = new Date();
         const dateFile = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        link.href = url;
-        link.download = `Egresos_${periodLabel}_${dateFile}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
 
-        showNotification('📥 Archivo descargado');
+        XLSX.writeFile(wb, `Egresos_${periodLabel}_${dateFile}.xlsx`);
+
+        showNotification('📥 Excel descargado');
     };
 
     // ============================================
