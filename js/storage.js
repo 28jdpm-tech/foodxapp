@@ -227,6 +227,51 @@ const StorageManager = {
                 }
             }
         });
+
+        // Expense Categories sync
+        db.collection('config').doc('expense_categories').onSnapshot((doc) => {
+            if (doc.exists) {
+                const cloudData = doc.data();
+                if (cloudData && cloudData.categories) {
+                    const localCats = JSON.stringify(this.getExpenseCategories());
+                    const cloudCats = JSON.stringify(cloudData.categories);
+                    if (localCats !== cloudCats) {
+                        localStorage.setItem(STORAGE_KEYS.EXPENSE_CATEGORIES, JSON.stringify(cloudData.categories));
+                        if (configCallback) configCallback();
+                    }
+                }
+            }
+        });
+
+        // Expenses sync
+        db.collection('expenses').onSnapshot((snapshot) => {
+            let expenses = this.getExpenses();
+            let hasChanges = false;
+
+            snapshot.docChanges().forEach((change) => {
+                const cloudExpense = change.doc.data();
+                const localIndex = expenses.findIndex(e => e.id === cloudExpense.id);
+
+                if (change.type === "added" || change.type === "modified") {
+                    if (localIndex === -1) {
+                        expenses.push(cloudExpense);
+                        hasChanges = true;
+                    } else if (JSON.stringify(expenses[localIndex]) !== JSON.stringify(cloudExpense)) {
+                        expenses[localIndex] = cloudExpense;
+                        hasChanges = true;
+                    }
+                }
+                if (change.type === "removed" && localIndex !== -1) {
+                    expenses.splice(localIndex, 1);
+                    hasChanges = true;
+                }
+            });
+
+            if (hasChanges) {
+                this.saveExpenses(expenses);
+                if (callback) callback();
+            }
+        });
     },
 
     // --- Original methods with cloud hooks ---
