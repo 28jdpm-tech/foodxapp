@@ -629,10 +629,32 @@
                 <div style="padding: 0 var(--space-md); margin-bottom: var(--space-md);">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm);">
                         <div
-                            style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); border-radius: var(--radius-lg); padding: var(--space-md); grid-column: 1 / -1;">
-                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.8); margin-bottom: 4px;">TOTAL
-                                EGRESOS</div>
-                            <div id="expenseTotalAmount" style="font-size: 1.5rem; font-weight: 800; color: white;">$0
+                            style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: var(--radius-lg); padding: var(--space-md);">
+                            <div
+                                style="font-size: 0.7rem; color: rgba(255,255,255,0.8); font-weight: 600; text-transform: uppercase;">
+                                Ingresos (Ventas)</div>
+                            <div id="expenseTotalIncome" style="font-size: 1.2rem; font-weight: 800; color: white;">$0
+                            </div>
+                        </div>
+                        <div
+                            style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); border-radius: var(--radius-lg); padding: var(--space-md);">
+                            <div
+                                style="font-size: 0.7rem; color: rgba(255,255,255,0.8); font-weight: 600; text-transform: uppercase;">
+                                Egresos (Gastos)</div>
+                            <div id="expenseTotalAmount" style="font-size: 1.2rem; font-weight: 800; color: white;">$0
+                            </div>
+                        </div>
+                        <div
+                            style="background: var(--bg-secondary); border-radius: var(--radius-lg); padding: var(--space-md); grid-column: 1 / -1; border: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div
+                                    style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+                                    Saldo en Caja</div>
+                                <div id="expenseNetBalance"
+                                    style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);">$0</div>
+                            </div>
+                            <div id="balanceStatus"
+                                style="padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">
                             </div>
                         </div>
                     </div>
@@ -901,7 +923,7 @@
     <script src="js/data.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/app.js?v=69"></script>
+    <script src="js/app.js?v=70"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

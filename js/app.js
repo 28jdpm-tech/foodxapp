@@ -2210,19 +2210,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderExpensesPage() {
         const period = document.getElementById('expensePeriodSelect')?.value || 'today';
         let expenses = [];
+        let income = 0;
 
         switch (period) {
             case 'today':
                 expenses = StorageManager.getTodayExpenses();
+                income = StorageManager.getTodaySales();
                 break;
             case 'month':
                 expenses = StorageManager.getCurrentMonthExpenses();
+                income = StorageManager.getCurrentMonthSales();
                 break;
             case 'total':
                 expenses = StorageManager.getExpenses();
+                income = StorageManager.getTotalSales();
                 break;
             default:
                 expenses = StorageManager.getTodayExpenses();
+                income = StorageManager.getTodaySales();
         }
 
         // Sort by date descending
@@ -2240,16 +2245,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Calculate totals
-        const totalAmount = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+        const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+        const netBalance = income - totalExpenses;
+
         const categoryTotals = {};
         expenses.forEach(e => {
             const cat = e.category || 'otros';
             categoryTotals[cat] = (categoryTotals[cat] || 0) + (e.amount || 0);
         });
 
-        // Update total card
+        // Update cards
+        const incomeEl = document.getElementById('expenseTotalIncome');
         const totalEl = document.getElementById('expenseTotalAmount');
-        if (totalEl) totalEl.textContent = formatPrice(totalAmount);
+        const netEl = document.getElementById('expenseNetBalance');
+        const statusEl = document.getElementById('balanceStatus');
+
+        if (incomeEl) incomeEl.textContent = formatPrice(income);
+        if (totalEl) totalEl.textContent = formatPrice(totalExpenses);
+        if (netEl) netEl.textContent = formatPrice(netBalance);
+
+        if (statusEl) {
+            if (netBalance > 0) {
+                statusEl.textContent = 'Excedente';
+                statusEl.style.background = '#dcfce7';
+                statusEl.style.color = '#16a34a';
+            } else if (netBalance < 0) {
+                statusEl.textContent = 'Déficit';
+                statusEl.style.background = '#fee2e2';
+                statusEl.style.color = '#dc2626';
+            } else {
+                statusEl.textContent = 'Equilibrio';
+                statusEl.style.background = '#f3f4f6';
+                statusEl.style.color = '#6b7280';
+            }
+        }
 
         // Render category summary
         const summaryEl = document.getElementById('expenseCategorySummary');
@@ -2329,9 +2358,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Set default date to today (local time)
+        // Set default date to today (local time) if empty
         const dateInput = document.getElementById('expenseDate');
-        if (dateInput) {
+        if (dateInput && !dateInput.value) {
             const now = new Date();
             const yyyy = now.getFullYear();
             const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -2481,7 +2510,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 date: date + 'T12:00:00'
             });
 
-            showNotification(`${cat.emoji} Egreso registrado: ${formatPrice(amount)}`);
+            showNotification(`Egreso registrado: ${formatPrice(amount)}`);
 
             // Clear form
             document.getElementById('expenseDescription').value = '';

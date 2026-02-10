@@ -37,8 +37,17 @@ const StorageManager = {
     },
 
     // Get orders by status
-    getOrdersByStatus(status) {
-        return this.getOrders().filter(o => o.status === status);
+    // --- Sales Calculation Methods ---
+    getTodaySales() {
+        return this.getTodayOrders().filter(o => o.paid && !o.isPartial).reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+    },
+
+    getCurrentMonthSales() {
+        return this.getCurrentMonthOrders().filter(o => o.paid && !o.isPartial).reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+    },
+
+    getTotalSales() {
+        return this.getOrders().filter(o => o.paid && !o.isPartial).reduce((sum, o) => sum + (o.totalPrice || 0), 0);
     },
 
     // Get active orders (not delivered)
