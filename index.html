@@ -553,6 +553,20 @@
                     </div>
                 </div>
 
+                <!-- Sales Breakdown Table (Requested by User) -->
+                <div class="report-details-full"
+                    style="padding: 0 var(--space-md) var(--space-md); margin-top: var(--space-lg);">
+                    <div class="report-section"
+                        style="background: var(--bg-secondary); border-radius: var(--radius-lg); padding: var(--space-md); border: 1px solid var(--border-subtle);">
+                        <div class="section-header"
+                            style="margin-bottom: var(--space-md); border-bottom: 2px solid var(--accent-primary);">
+                            <i data-lucide="list" style="color: var(--accent-primary);"></i>
+                            <h3 style="flex: 1;">Desglose de Ventas por Comanda</h3>
+                        </div>
+                        <div id="salesBreakdownTable"></div>
+                    </div>
+                </div>
+
                 <!-- Payment Details Tables (Requested by User) -->
                 <div class="report-details-full"
                     style="padding: 0 var(--space-md) var(--space-md); margin-top: var(--space-lg);">
@@ -966,7 +980,7 @@
     <script src="js/data.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/app.js?v=72"></script>
+    <script src="js/app.js?v=73"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

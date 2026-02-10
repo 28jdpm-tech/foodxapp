@@ -1530,6 +1530,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const sizeCounts = { 'XS': 0, 'XM': 0, 'XL': 0, 'HB': 0, 'PE': 0, 'SA': 0 };
         const extrasSales = {};
         const paymentList = { efectivo: [], nequi: [], daviplata: [] };
+        const salesBreakdown = []; // Per-order breakdown for requested table
 
         paidOrders.forEach(order => {
             order.items.forEach(item => {
@@ -1577,6 +1578,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 (item.extras || []).forEach(extraName => {
                     if (extraName) extrasSales[extraName] = (extrasSales[extraName] || 0) + item.qty;
                 });
+            });
+
+            // Per-order category breakdown (for the requested table)
+            let orderFood = 0;
+            let orderDrinks = 0;
+            let orderDisposables = 0;
+
+            order.items.forEach(item => {
+                const catId = (item.category || '').toLowerCase();
+                const catName = (item.categoryName || '').toLowerCase();
+                if (catId === 'bebidas' || catName.includes('bebida')) {
+                    orderDrinks += item.price;
+                } else if (catId === 'desechables' || catName.includes('desechable')) {
+                    orderDisposables += item.price;
+                } else if (foodCategories.includes(catId) || foodCategories.some(f => catName.includes(f.substring(0, 4)))) {
+                    orderFood += item.price;
+                }
+            });
+
+            salesBreakdown.push({
+                date: order.createdAt,
+                orderNumber: order.orderNumber,
+                food: orderFood,
+                drinks: orderDrinks,
+                disposables: orderDisposables,
+                total: order.totalPrice
             });
 
             // Payment Method Breakdown (including combined payments)
@@ -1717,7 +1744,58 @@ document.addEventListener('DOMContentLoaded', () => {
             }).join('') || '<div class="empty-state">Sin adicionales</div>';
         }
 
-        // 5. Render Payment Detail Tables
+        // 5. Render Sales Breakdown Table (Requested by User)
+        if (true) {
+            const container = document.getElementById('salesBreakdownTable');
+            if (container) {
+                if (salesBreakdown.length === 0) {
+                    container.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem;">Sin datos</div>';
+                } else {
+                    // Sort descending by date
+                    salesBreakdown.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                    let html = `
+                        <div style="overflow-x: auto; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+                            <thead>
+                                <tr style="background: var(--bg-tertiary);">
+                                    <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Fecha</th>
+                                    <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">#</th>
+                                    <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Comida</th>
+                                    <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Bebidas</th>
+                                    <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Desechables</th>
+                                    <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    salesBreakdown.forEach(s => {
+                        const dateObj = new Date(s.date);
+                        const dateStr = dateObj.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+                        const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                        html += `
+                            <tr style="border-top: 1px solid var(--border-subtle); background: var(--bg-secondary);">
+                                <td style="padding: 10px 12px; color: var(--text-secondary); white-space: nowrap;">
+                                    ${dateStr} <span style="font-size: 0.7rem; opacity: 0.6;">${timeStr}</span>
+                                </td>
+                                <td style="padding: 10px 12px; font-weight: 600;">${s.orderNumber}</td>
+                                <td style="padding: 10px 12px; text-align: right; color: var(--text-primary);">${formatPrice(s.food)}</td>
+                                <td style="padding: 10px 12px; text-align: right; color: var(--text-primary);">${formatPrice(s.drinks)}</td>
+                                <td style="padding: 10px 12px; text-align: right; color: var(--text-primary);">${formatPrice(s.disposables)}</td>
+                                <td style="padding: 10px 12px; text-align: right; font-weight: 800; color: var(--accent-primary);">${formatPrice(s.total)}</td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `</tbody></table></div>`;
+                    container.innerHTML = html;
+                }
+            }
+        }
+
+        // 6. Render Payment Detail Tables
         const renderPaymentTable = (elId, list, color) => {
             const container = document.getElementById(elId);
             if (!container) return;
