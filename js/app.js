@@ -1530,7 +1530,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const sizeCounts = { 'XS': 0, 'XM': 0, 'XL': 0, 'HB': 0, 'PE': 0, 'SA': 0 };
         const extrasSales = {};
         const paymentList = { efectivo: [], nequi: [], daviplata: [] };
-        const salesBreakdown = []; // Per-order breakdown for requested table
+        const salesBreakdownByDay = {}; // Grouped by YYYY-MM-DD
 
         paidOrders.forEach(order => {
             order.items.forEach(item => {
@@ -1597,14 +1597,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            salesBreakdown.push({
-                date: order.createdAt,
-                orderNumber: order.orderNumber,
-                food: orderFood,
-                drinks: orderDrinks,
-                disposables: orderDisposables,
-                total: order.totalPrice
-            });
+            const dateKey = new Date(order.createdAt).toISOString().split('T')[0];
+            if (!salesBreakdownByDay[dateKey]) {
+                salesBreakdownByDay[dateKey] = { food: 0, drinks: 0, desechables: 0, total: 0 };
+            }
+            salesBreakdownByDay[dateKey].food += orderFood;
+            salesBreakdownByDay[dateKey].drinks += orderDrinks;
+            salesBreakdownByDay[dateKey].desechables += orderDisposables;
+            salesBreakdownByDay[dateKey].total += order.totalPrice;
 
             // Payment Method Breakdown (including combined payments)
             const method = order.paymentMethod || 'efectivo';
@@ -1744,23 +1744,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }).join('') || '<div class="empty-state">Sin adicionales</div>';
         }
 
-        // 5. Render Sales Breakdown Table (Requested by User)
+        // 5. Render Sales Breakdown Table (Grouped by Day)
         if (true) {
             const container = document.getElementById('salesBreakdownTable');
             if (container) {
-                if (salesBreakdown.length === 0) {
+                const days = Object.keys(salesBreakdownByDay).sort((a, b) => new Date(b) - new Date(a));
+
+                if (days.length === 0) {
                     container.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem;">Sin datos</div>';
                 } else {
-                    // Sort descending by date
-                    salesBreakdown.sort((a, b) => new Date(b.date) - new Date(a.date));
-
                     let html = `
                         <div style="overflow-x: auto; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
                         <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
                             <thead>
                                 <tr style="background: var(--bg-tertiary);">
                                     <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Fecha</th>
-                                    <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">#</th>
                                     <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Comida</th>
                                     <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Bebidas</th>
                                     <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Desechables</th>
@@ -1770,20 +1768,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             <tbody>
                     `;
 
-                    salesBreakdown.forEach(s => {
-                        const dateObj = new Date(s.date);
-                        const dateStr = dateObj.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
-                        const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    days.forEach(dateStr => {
+                        const s = salesBreakdownByDay[dateStr];
+                        const dateObj = new Date(dateStr + 'T12:00:00'); // Midday to avoid TZ issues
+                        const displayDate = dateObj.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
 
                         html += `
                             <tr style="border-top: 1px solid var(--border-subtle); background: var(--bg-secondary);">
-                                <td style="padding: 10px 12px; color: var(--text-secondary); white-space: nowrap;">
-                                    ${dateStr} <span style="font-size: 0.7rem; opacity: 0.6;">${timeStr}</span>
-                                </td>
-                                <td style="padding: 10px 12px; font-weight: 600;">${s.orderNumber}</td>
+                                <td style="padding: 10px 12px; color: var(--text-primary); font-weight: 600;">${displayDate}</td>
                                 <td style="padding: 10px 12px; text-align: right; color: var(--text-primary);">${formatPrice(s.food)}</td>
                                 <td style="padding: 10px 12px; text-align: right; color: var(--text-primary);">${formatPrice(s.drinks)}</td>
-                                <td style="padding: 10px 12px; text-align: right; color: var(--text-primary);">${formatPrice(s.disposables)}</td>
+                                <td style="padding: 10px 12px; text-align: right; color: var(--text-primary);">${formatPrice(s.desechables)}</td>
                                 <td style="padding: 10px 12px; text-align: right; font-weight: 800; color: var(--accent-primary);">${formatPrice(s.total)}</td>
                             </tr>
                         `;
