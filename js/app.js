@@ -3147,15 +3147,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Cloud Sync
     if (typeof StorageManager.initCloudSync === 'function') {
         StorageManager.initCloudSync(
-            // Orders callback
+            // Orders & Expenses callback
             () => {
                 if (state.currentPage === 'checkout') renderCheckoutPage();
                 if (state.currentPage === 'history') renderHistoryPage();
                 if (state.currentPage === 'new-order') updateOrderTotal();
+                if (state.currentPage === 'expenses') renderExpensesPage();
             },
             // Config callback (Admin changes from other devices)
             () => {
                 if (state.currentPage === 'admin') renderAdminPage();
+                if (state.currentPage === 'expenses') renderExpensesPage();
                 if (state.currentPage === 'new-order') {
                     initializeCategories();
                     updateOrderTotal();
