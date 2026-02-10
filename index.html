@@ -649,19 +649,6 @@
                         de Egresos</h3>
                     <div id="expensesList" style="display: flex; flex-direction: column; gap: var(--space-xs);"></div>
                 </div>
-
-                <!-- Expense Categories Manager -->
-                <div style="padding: 0 var(--space-md) var(--space-xl);">
-                    <div
-                        style="background: var(--bg-secondary); border-radius: var(--radius-lg); padding: var(--space-md); border: 1px solid var(--border-subtle);">
-                        <h3
-                            style="color: var(--text-primary); margin-bottom: var(--space-sm); font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                            <i data-lucide="tags" style="width: 18px; height: 18px; color: var(--accent-primary);"></i>
-                            Administrar Categorías de Egresos
-                        </h3>
-                        <div id="expenseCatManager"></div>
-                    </div>
-                </div>
             </div>
 
             <!-- Admin Page -->
@@ -675,6 +662,7 @@
                     <button class="admin-tab" data-tab="flavors">Sabores</button>
                     <button class="admin-tab" data-tab="extras">Adicionales</button>
                     <button class="admin-tab" data-tab="observations">Observaciones</button>
+                    <button class="admin-tab" data-tab="expense-cats">Egresos</button>
                     <button class="admin-tab" data-tab="security">Seguridad</button>
                 </div>
 
@@ -730,6 +718,14 @@
                         <button class="btn-add-inline" id="addObsBtn">
                             <i data-lucide="plus"></i> Agregar Observación
                         </button>
+                    </div>
+
+                    <!-- Expense Categories Panel -->
+                    <div class="admin-panel" id="panel-expense-cats">
+                        <div class="panel-header">
+                            <h3>Categorías de Egresos</h3>
+                        </div>
+                        <div id="expenseCatManager"></div>
                     </div>
 
                     <!-- Security Panel -->
@@ -904,7 +900,7 @@
     <script src="js/data.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/app.js?v=66"></script>
+    <script src="js/app.js?v=67"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

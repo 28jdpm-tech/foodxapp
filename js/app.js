@@ -2335,9 +2335,6 @@ document.addEventListener('DOMContentLoaded', () => {
             dateInput.value = new Date().toISOString().split('T')[0];
         }
 
-        // Render category manager
-        renderExpenseCategoriesManager();
-
         lucide.createIcons();
     }
 
@@ -2551,6 +2548,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (tab === 'observations') {
             populateAdminCategorySelect(elements.adminCategorySelectObs, categories);
             renderObsList(config.observations, elements.adminCategorySelectObs.value);
+        } else if (tab === 'expense-cats') {
+            renderExpenseCategoriesManager();
         }
     }
 
