@@ -2329,10 +2329,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Set default date
+        // Set default date to today (local time)
         const dateInput = document.getElementById('expenseDate');
-        if (dateInput && !dateInput.value) {
-            dateInput.value = new Date().toISOString().split('T')[0];
+        if (dateInput) {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
         }
 
         lucide.createIcons();
