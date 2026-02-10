@@ -1529,6 +1529,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const flavorStats = { food: {}, drinks: {}, disposables: {} };
         const sizeCounts = { 'XS': 0, 'XM': 0, 'XL': 0, 'HB': 0, 'PE': 0, 'SA': 0 };
         const extrasSales = {};
+        const paymentList = { efectivo: [], nequi: [], daviplata: [] };
 
         paidOrders.forEach(order => {
             order.items.forEach(item => {
@@ -1582,15 +1583,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const method = order.paymentMethod || 'efectivo';
             if (method === 'combinado' && order.paymentDetails) {
                 // Split combined payments to their respective methods
-                totalEfectivo += order.paymentDetails.efectivo || 0;
-                totalNequi += order.paymentDetails.nequi || 0;
-                totalDaviplata += order.paymentDetails.daviplata || 0;
+                const ef = order.paymentDetails.efectivo || 0;
+                const nq = order.paymentDetails.nequi || 0;
+                const dv = order.paymentDetails.daviplata || 0;
+
+                totalEfectivo += ef;
+                totalNequi += nq;
+                totalDaviplata += dv;
+
+                if (ef > 0) paymentList.efectivo.push({ date: order.createdAt, amount: ef });
+                if (nq > 0) paymentList.nequi.push({ date: order.createdAt, amount: nq });
+                if (dv > 0) paymentList.daviplata.push({ date: order.createdAt, amount: dv });
             } else if (method === 'nequi') {
                 totalNequi += order.totalPrice;
+                paymentList.nequi.push({ date: order.createdAt, amount: order.totalPrice });
             } else if (method === 'daviplata') {
                 totalDaviplata += order.totalPrice;
+                paymentList.daviplata.push({ date: order.createdAt, amount: order.totalPrice });
             } else {
                 totalEfectivo += order.totalPrice;
+                paymentList.efectivo.push({ date: order.createdAt, amount: order.totalPrice });
             }
         });
 
@@ -1704,6 +1716,64 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`;
             }).join('') || '<div class="empty-state">Sin adicionales</div>';
         }
+
+        // 5. Render Payment Detail Tables
+        const renderPaymentTable = (elId, list, color) => {
+            const container = document.getElementById(elId);
+            if (!container) return;
+
+            if (list.length === 0) {
+                container.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem;">Sin transacciones</div>';
+                return;
+            }
+
+            // Sort by date ascending
+            list.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            let html = `
+                <div style="overflow-y: auto; max-height: 250px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+                    <thead>
+                        <tr style="background: var(--bg-tertiary); position: sticky; top: 0; z-index: 10;">
+                            <th style="padding: 8px 12px; text-align: left; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Fecha</th>
+                            <th style="padding: 8px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            list.forEach(p => {
+                const dateObj = new Date(p.date);
+                const dateStr = dateObj.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+                const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                html += `
+                    <tr style="border-top: 1px solid var(--border-subtle);">
+                        <td style="padding: 8px 12px; color: var(--text-secondary);">
+                            ${dateStr} <span style="font-size: 0.7rem; opacity: 0.6;">${timeStr}</span>
+                        </td>
+                        <td style="padding: 8px 12px; text-align: right; font-weight: 700; color: ${color};">
+                            ${formatPrice(p.amount)}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+        };
+
+        renderPaymentTable('paymentTableEfectivo', paymentList.efectivo, '#16a34a');
+        renderPaymentTable('paymentTableNequi', paymentList.nequi, '#60a5fa');
+        renderPaymentTable('paymentTableDaviplata', paymentList.daviplata, '#fb923c');
+
+        // Update total labels in headers
+        const efTotalEl = document.getElementById('reportEfectivoSalesTotal');
+        const nqTotalEl = document.getElementById('reportNequiSalesTotal');
+        const dvTotalEl = document.getElementById('reportDaviplataSalesTotal');
+        if (efTotalEl) efTotalEl.textContent = formatPrice(totalEfectivo);
+        if (nqTotalEl) nqTotalEl.textContent = formatPrice(totalNequi);
+        if (dvTotalEl) dvTotalEl.textContent = formatPrice(totalDaviplata);
 
         lucide.createIcons();
     }
