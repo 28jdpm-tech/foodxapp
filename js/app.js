@@ -2235,7 +2235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (catSelect) {
             const currentVal = catSelect.value;
             const allCats = StorageManager.getExpenseCategories();
-            catSelect.innerHTML = allCats.map(c => `<option value="${c.id}">${c.emoji} ${c.label}</option>`).join('');
+            catSelect.innerHTML = allCats.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
             if (currentVal && allCats.find(c => c.id === currentVal)) catSelect.value = currentVal;
         }
 
@@ -2263,7 +2263,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const color = expenseCatColors[idx % expenseCatColors.length] || '#6b7280';
                     return `
                         <div style="background: var(--bg-secondary); border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md); border-left: 3px solid ${color};">
-                            <div style="font-size: 0.7rem; color: var(--text-muted);">${cat.emoji} ${cat.label}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">${cat.label}</div>
                             <div style="font-size: 1rem; font-weight: 700; color: var(--text-primary);">${formatPrice(amount)}</div>
                         </div>
                     `;
@@ -2305,7 +2305,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <tr style="border-top: 1px solid var(--border-subtle); background: var(--bg-secondary);">
                             <td style="padding: 10px 12px; color: var(--text-secondary); white-space: nowrap; font-size: 0.8rem;">${dateStr}</td>
                             <td style="padding: 10px 12px; white-space: nowrap;">
-                                <span style="font-size: 0.8rem;">${cat.emoji} ${cat.label}</span>
+                                <span style="font-size: 0.8rem;">${cat.label}</span>
                             </td>
                             <td style="padding: 10px 12px; color: var(--text-primary); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem;">
                                 ${expense.description || '-'}
@@ -2353,8 +2353,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
                 <thead>
                     <tr style="background: var(--bg-tertiary);">
-                        <th style="padding: 8px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Emoji</th>
-                        <th style="padding: 8px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Nombre</th>
+                        <th style="padding: 8px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Nombre de Categoría</th>
                         <th style="padding: 8px 6px; width: 60px; text-align: center; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Acciones</th>
                     </tr>
                 </thead>
@@ -2364,7 +2363,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cats.forEach(cat => {
             html += `
                 <tr style="border-top: 1px solid var(--border-subtle); background: var(--bg-secondary);">
-                    <td style="padding: 8px 12px; font-size: 1.1rem;">${cat.emoji}</td>
                     <td style="padding: 8px 12px; color: var(--text-primary); font-size: 0.85rem;">${cat.label}</td>
                     <td style="padding: 8px 6px; text-align: center; white-space: nowrap;">
                         <button onclick="window.editExpenseCategory('${cat.id}')"
@@ -2385,8 +2383,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add new category form
         html += `
             <div style="display: flex; gap: var(--space-xs); align-items: center;">
-                <input type="text" id="newExpenseCatEmoji" placeholder="📌" maxlength="2"
-                    style="width: 45px; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: var(--text-primary); font-size: 1.1rem; text-align: center; box-sizing: border-box;">
                 <input type="text" id="newExpenseCatLabel" placeholder="Nombre de categoría"
                     style="flex: 1; padding: 8px 12px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: var(--text-primary); font-size: 0.85rem; box-sizing: border-box;">
                 <button onclick="window.addExpenseCategory()"
@@ -2401,7 +2397,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Global handlers for category management
     window.addExpenseCategory = function () {
-        const emoji = document.getElementById('newExpenseCatEmoji')?.value.trim() || '📌';
         const label = document.getElementById('newExpenseCatLabel')?.value.trim();
 
         if (!label) {
@@ -2417,9 +2412,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        cats.push({ id, label, emoji });
+        cats.push({ id, label, emoji: '📌' });
         StorageManager.saveExpenseCategories(cats);
-        showNotification(`${emoji} Categoría "${label}" creada`);
+        showNotification(`Categoría "${label}" creada`);
         renderExpensesPage();
     };
 
@@ -2430,13 +2425,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const newLabel = prompt('Nombre de la categoría:', cat.label);
         if (newLabel === null) return;
-        const newEmoji = prompt('Emoji:', cat.emoji);
-        if (newEmoji === null) return;
 
         cat.label = newLabel.trim() || cat.label;
-        cat.emoji = newEmoji.trim() || cat.emoji;
         StorageManager.saveExpenseCategories(cats);
-        showNotification(`Categoría actualizada: ${cat.emoji} ${cat.label}`);
+        showNotification(`Categoría actualizada: ${cat.label}`);
         renderExpensesPage();
     };
 
@@ -2574,7 +2566,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             rows.push([
                 dateStr,
-                `${cat.emoji} ${cat.label}`,
+                cat.label,
                 expense.description || cat.label,
                 amount
             ]);
