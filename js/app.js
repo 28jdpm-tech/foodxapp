@@ -195,9 +195,11 @@ document.addEventListener('DOMContentLoaded', () => {
         reportDetailTitle: document.getElementById('reportDetailTitle'),
         closeReportDetailModal: document.getElementById('closeReportDetailModal'),
         closeReportDetailModalOverlay: document.getElementById('closeReportDetailModalOverlay'),
+        downloadReportBtn: document.getElementById('downloadReportBtn'),
     };
 
     let currentReportOrders = [];
+    let lastSalesBreakdown = {};
 
     // ============================================
     // Navigation Drawer
@@ -1633,6 +1635,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Store for details
         currentReportOrders = paidOrders;
+        lastSalesBreakdown = salesBreakdownByDay;
 
         // Update top cards
         if (elements.reportDailySales) elements.reportDailySales.textContent = formatPrice(totalSales);
@@ -1858,6 +1861,60 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.searchReportBtn.addEventListener('click', () => {
             renderReportsPage();
         });
+    }
+
+    if (elements.downloadReportBtn) {
+        elements.downloadReportBtn.addEventListener('click', () => {
+            exportSalesToExcel();
+        });
+    }
+
+    function exportSalesToExcel() {
+        if (!lastSalesBreakdown || Object.keys(lastSalesBreakdown).length === 0) {
+            showNotification('No hay datos para exportar', 'error');
+            return;
+        }
+
+        const days = Object.keys(lastSalesBreakdown).sort((a, b) => new Date(a) - new Date(b));
+
+        // Prepare data for SheetJS
+        const data = days.map(date => {
+            const s = lastSalesBreakdown[date];
+            return {
+                "Fecha": date,
+                "Comida": s.food,
+                "Bebidas": s.drinks,
+                "Desechables": s.desechables,
+                "Otros": s.otros,
+                "Total": s.total
+            };
+        });
+
+        // Add a Footer row with totals
+        const totals = {
+            "Fecha": "TOTALES",
+            "Comida": days.reduce((sum, d) => sum + lastSalesBreakdown[d].food, 0),
+            "Bebidas": days.reduce((sum, d) => sum + lastSalesBreakdown[d].drinks, 0),
+            "Desechables": days.reduce((sum, d) => sum + lastSalesBreakdown[d].desechables, 0),
+            "Otros": days.reduce((sum, d) => sum + lastSalesBreakdown[d].otros, 0),
+            "Total": days.reduce((sum, d) => sum + lastSalesBreakdown[d].total, 0)
+        };
+        data.push(totals);
+
+        try {
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Ventas Diarias");
+
+            // Adjust column widths
+            worksheet['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 15 }];
+
+            XLSX.writeFile(workbook, `Reporte_Ventas_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showNotification('Reporte Excel generado');
+        } catch (e) {
+            console.error("SheetJS Error:", e);
+            showNotification('Error al generar Excel', 'error');
+        }
     }
 
     function showReportPaymentDetail(method) {

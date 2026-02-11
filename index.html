@@ -562,6 +562,11 @@
                             style="margin-bottom: var(--space-md); border-bottom: 2px solid var(--accent-primary);">
                             <i data-lucide="list" style="color: var(--accent-primary);"></i>
                             <h3 style="flex: 1;">Reporte de Ventas</h3>
+                            <button id="downloadReportBtn"
+                                style="background: none; border: none; color: var(--accent-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; margin-right: 8px;"
+                                title="Descargar Excel">
+                                <i data-lucide="file-spreadsheet"></i>
+                            </button>
                             <span id="reportSalesTotal"
                                 style="font-weight: 800; color: var(--accent-primary);">$0</span>
                         </div>
@@ -982,7 +987,7 @@
     <script src="js/data.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/app.js?v=76"></script>
+    <script src="js/app.js?v=77"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
