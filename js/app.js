@@ -1533,20 +1533,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const salesBreakdownByDay = {}; // Grouped by YYYY-MM-DD
 
         paidOrders.forEach(order => {
+            // Process and categorize all items in the order
+            let orderFood = 0;
+            let orderDrinks = 0;
+            let orderDisposables = 0;
+            let orderOthers = 0;
+
             order.items.forEach(item => {
                 const catId = (item.category || '').toLowerCase();
                 const catName = (item.categoryName || '').toLowerCase();
 
-                let targetType = 'food';
+                let categorized = false;
                 if (catId === 'bebidas' || catName.includes('bebida')) {
                     totalBebidas += item.price;
-                    targetType = 'drinks';
+                    orderDrinks += item.price;
+                    flavorStats.drinks[item.flavors[0] || 'Genérica'] = (flavorStats.drinks[item.flavors[0] || 'Genérica'] || 0) + item.qty;
+                    categorized = true;
                 } else if (catId === 'desechables' || catName.includes('desechable')) {
                     totalDesechables += item.price;
-                    targetType = 'disposables';
+                    orderDisposables += item.price;
+                    (item.flavors || []).forEach(f => {
+                        if (f) flavorStats.disposables[f] = (flavorStats.disposables[f] || 0) + item.qty;
+                    });
+                    categorized = true;
                 } else if (foodCategories.includes(catId) || foodCategories.some(f => catName.includes(f.substring(0, 4)))) {
                     totalFood += item.price;
-                    targetType = 'food';
+                    orderFood += item.price;
+                    (item.flavors || []).forEach(f => {
+                        if (f) flavorStats.food[f] = (flavorStats.food[f] || 0) + item.qty;
+                    });
+                    categorized = true;
+                } else {
+                    orderOthers += item.price;
                 }
 
                 // Category Sales breakdown
@@ -1562,13 +1580,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     categoryQtyStats[displayCatName].sizes[item.size] = (categoryQtyStats[displayCatName].sizes[item.size] || 0) + item.qty;
                 }
 
-                // Flavor Counts (Popularity)
-                (item.flavors || []).forEach(f => {
-                    if (f) {
-                        flavorStats[targetType][f] = (flavorStats[targetType][f] || 0) + item.qty;
-                    }
-                });
-
                 // Size Counts
                 if (item.size && sizeCounts.hasOwnProperty(item.size)) {
                     sizeCounts[item.size] += item.qty;
@@ -1580,30 +1591,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
 
-            // Per-order category breakdown (for the requested table)
-            let orderFood = 0;
-            let orderDrinks = 0;
-            let orderDisposables = 0;
+            // Use Local Date for grouping
+            const d = new Date(order.createdAt);
+            const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-            order.items.forEach(item => {
-                const catId = (item.category || '').toLowerCase();
-                const catName = (item.categoryName || '').toLowerCase();
-                if (catId === 'bebidas' || catName.includes('bebida')) {
-                    orderDrinks += item.price;
-                } else if (catId === 'desechables' || catName.includes('desechable')) {
-                    orderDisposables += item.price;
-                } else if (foodCategories.includes(catId) || foodCategories.some(f => catName.includes(f.substring(0, 4)))) {
-                    orderFood += item.price;
-                }
-            });
-
-            const dateKey = new Date(order.createdAt).toISOString().split('T')[0];
             if (!salesBreakdownByDay[dateKey]) {
-                salesBreakdownByDay[dateKey] = { food: 0, drinks: 0, desechables: 0, total: 0 };
+                salesBreakdownByDay[dateKey] = { food: 0, drinks: 0, desechables: 0, otros: 0, total: 0 };
             }
             salesBreakdownByDay[dateKey].food += orderFood;
             salesBreakdownByDay[dateKey].drinks += orderDrinks;
             salesBreakdownByDay[dateKey].desechables += orderDisposables;
+            salesBreakdownByDay[dateKey].otros += orderOthers;
             salesBreakdownByDay[dateKey].total += order.totalPrice;
 
             // Payment Method Breakdown (including combined payments)
@@ -1761,6 +1759,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Comida</th>
                                     <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Bebidas</th>
                                     <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Desechables</th>
+                                    <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Otros</th>
                                     <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Total</th>
                                 </tr>
                             </thead>
@@ -1778,6 +1777,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td style="padding: 10px 12px; text-align: right; color: var(--text-primary);">${formatPrice(s.food)}</td>
                                 <td style="padding: 10px 12px; text-align: right; color: var(--text-primary);">${formatPrice(s.drinks)}</td>
                                 <td style="padding: 10px 12px; text-align: right; color: var(--text-primary);">${formatPrice(s.desechables)}</td>
+                                <td style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-style: italic;">${formatPrice(s.otros)}</td>
                                 <td style="padding: 10px 12px; text-align: right; font-weight: 800; color: var(--accent-primary);">${formatPrice(s.total)}</td>
                             </tr>
                         `;
