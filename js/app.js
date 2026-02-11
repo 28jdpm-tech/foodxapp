@@ -2738,8 +2738,20 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('expenseDescription').value = '';
             document.getElementById('expenseQty').value = '1';
             document.getElementById('expenseAmount').value = '';
+            if (document.getElementById('expenseAmountPreview')) {
+                document.getElementById('expenseAmountPreview').textContent = '$0';
+            }
 
             renderExpensesPage();
+        });
+    }
+
+    const expenseAmountInput = document.getElementById('expenseAmount');
+    if (expenseAmountInput) {
+        expenseAmountInput.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value) || 0;
+            const preview = document.getElementById('expenseAmountPreview');
+            if (preview) preview.textContent = formatPrice(val);
         });
     }
 
