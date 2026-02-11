@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const page = item.dataset.page;
 
             // Protection for Admin, History, and Reports pages
-            const protectedPages = ['admin', 'history', 'reports'];
+            const protectedPages = ['admin', 'history', 'reports', 'expenses'];
             if (protectedPages.includes(page) && !state.isAdminAuthenticated) {
                 if (elements.adminLoginModal) {
                     elements.adminLoginModal.classList.add('open');
