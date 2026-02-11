@@ -196,6 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeReportDetailModal: document.getElementById('closeReportDetailModal'),
         closeReportDetailModalOverlay: document.getElementById('closeReportDetailModalOverlay'),
         downloadReportBtn: document.getElementById('downloadReportBtn'),
+        expenseSearchInput: document.getElementById('expenseSearchInput'),
     };
 
     let currentReportOrders = [];
@@ -2412,7 +2413,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderExpensesPage() {
         const period = document.getElementById('expensePeriodSelect')?.value || 'today';
-        let expenses = [];
+        const searchField = document.getElementById('expenseSearchInput');
+        const query = (searchField?.value || '').toLowerCase();
         let income = 0;
 
         switch (period) {
@@ -2431,6 +2433,11 @@ document.addEventListener('DOMContentLoaded', () => {
             default:
                 expenses = StorageManager.getTodayExpenses();
                 income = StorageManager.getTodaySales();
+        }
+
+        // Filter by Search Query
+        if (query) {
+            expenses = expenses.filter(e => (e.description || '').toLowerCase().includes(query));
         }
 
         // Sort by date descending
@@ -2727,6 +2734,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const expensePeriodSelect = document.getElementById('expensePeriodSelect');
     if (expensePeriodSelect) {
         expensePeriodSelect.addEventListener('change', () => {
+            renderExpensesPage();
+        });
+    }
+
+    const expenseSearchInput = document.getElementById('expenseSearchInput');
+    if (expenseSearchInput) {
+        expenseSearchInput.addEventListener('input', () => {
             renderExpensesPage();
         });
     }

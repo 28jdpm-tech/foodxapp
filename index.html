@@ -732,6 +732,15 @@
                             <i data-lucide="file-spreadsheet"></i>
                         </button>
                     </div>
+
+                    <!-- Description Search -->
+                    <div style="margin-bottom: var(--space-sm); position: relative;">
+                        <input type="text" id="expenseSearchInput" placeholder="Buscar descripción..."
+                            style="width: 100%; padding: 8px 12px 8px 32px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: var(--text-primary); font-size: 0.85rem; box-sizing: border-box;">
+                        <i data-lucide="search"
+                            style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-muted);"></i>
+                    </div>
+
                     <div id="expensesList" style="display: flex; flex-direction: column; gap: var(--space-xs);"></div>
                 </div>
             </div>
@@ -987,7 +996,7 @@
     <script src="js/data.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/app.js?v=79"></script>
+    <script src="js/app.js?v=80"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
