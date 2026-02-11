@@ -561,7 +561,9 @@
                         <div class="section-header"
                             style="margin-bottom: var(--space-md); border-bottom: 2px solid var(--accent-primary);">
                             <i data-lucide="list" style="color: var(--accent-primary);"></i>
-                            <h3 style="flex: 1;">Desglose de Ventas por Comanda</h3>
+                            <h3 style="flex: 1;">Reporte de Ventas</h3>
+                            <span id="reportSalesTotal"
+                                style="font-weight: 800; color: var(--accent-primary);">$0</span>
                         </div>
                         <div id="salesBreakdownTable"></div>
                     </div>
@@ -980,7 +982,7 @@
     <script src="js/data.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/app.js?v=74"></script>
+    <script src="js/app.js?v=75"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

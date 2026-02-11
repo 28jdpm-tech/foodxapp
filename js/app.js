@@ -1749,7 +1749,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('salesBreakdownTable');
             if (container) {
                 const days = Object.keys(salesBreakdownByDay).sort((a, b) => new Date(b) - new Date(a));
-
                 if (days.length === 0) {
                     container.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem;">Sin datos</div>';
                 } else {
@@ -1789,6 +1788,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
+
+        // Update total label in header
+        const salesTotalEl = document.getElementById('reportSalesTotal');
+        if (salesTotalEl) salesTotalEl.textContent = formatPrice(totalSales);
 
         // 6. Render Payment Detail Tables
         const renderPaymentTable = (elId, list, color) => {
