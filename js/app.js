@@ -2528,7 +2528,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Fecha</th>
                                 <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Categoría</th>
                                 <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Descripción</th>
-                                <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Monto</th>
+                                <th style="padding: 10px 12px; text-align: center; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Cant.</th>
+                                <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Unit.</th>
+                                <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Total</th>
                                 <th style="padding: 10px 6px; width: 30px;"></th>
                             </tr>
                         </thead>
@@ -2539,6 +2541,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const cat = CATS[expense.category] || { label: 'Otros', emoji: '📌' };
                     const dateObj = new Date(expense.date || expense.createdAt);
                     const dateStr = dateObj.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: '2-digit' });
+                    const qty = expense.qty || 1;
+                    const unitCost = expense.amount / qty;
 
                     tableHtml += `
                         <tr style="border-top: 1px solid var(--border-subtle); background: var(--bg-secondary);">
@@ -2546,8 +2550,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             <td style="padding: 10px 12px; white-space: nowrap;">
                                 <span style="font-size: 0.8rem;">${cat.label}</span>
                             </td>
-                            <td style="padding: 10px 12px; color: var(--text-primary); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem;">
+                            <td style="padding: 10px 12px; color: var(--text-primary); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem;">
                                 ${expense.description || '-'}
+                            </td>
+                            <td style="padding: 10px 12px; text-align: center; color: var(--text-primary); font-size: 0.8rem;">
+                                ${qty}
+                            </td>
+                            <td style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-size: 0.75rem;">
+                                ${formatPrice(unitCost)}
                             </td>
                             <td style="padding: 10px 12px; text-align: right; font-weight: 700; color: #ef4444; white-space: nowrap;">
                                 -${formatPrice(expense.amount)}
@@ -2696,6 +2706,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addExpenseBtn.addEventListener('click', () => {
             const category = document.getElementById('expenseCategory').value;
             const description = document.getElementById('expenseDescription').value.trim();
+            const qty = parseFloat(document.getElementById('expenseQty').value) || 1;
             const amount = parseFloat(document.getElementById('expenseAmount').value);
             const date = document.getElementById('expenseDate').value;
 
@@ -2716,6 +2727,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 category: category,
                 categoryLabel: cat.label,
                 description: description || cat.label,
+                qty: qty,
                 amount: amount,
                 date: date + 'T12:00:00'
             });
@@ -2724,6 +2736,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Clear form
             document.getElementById('expenseDescription').value = '';
+            document.getElementById('expenseQty').value = '1';
             document.getElementById('expenseAmount').value = '';
 
             renderExpensesPage();
@@ -2799,37 +2812,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const CATS = getExpenseCatMap();
 
-        // Build data rows matching the table: Fecha | Categoría | Descripción | Monto
-        const rows = [['Fecha', 'Categoría', 'Descripción', 'Monto']];
+        // Build data rows matching the table: Fecha | Categoría | Descripción | Cant. | V. Unit. | Total
+        const rows = [['Fecha', 'Categoría', 'Descripción', 'Cant.', 'V. Unit.', 'Total']];
 
         let total = 0;
         expenses.forEach(expense => {
             const cat = CATS[expense.category] || { label: 'Otros', emoji: '📌' };
             const dateObj = new Date(expense.date || expense.createdAt);
             const dateStr = dateObj.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const qty = expense.qty || 1;
             const amount = expense.amount || 0;
+            const unit = amount / qty;
             total += amount;
 
             rows.push([
                 dateStr,
                 cat.label,
                 expense.description || cat.label,
+                qty,
+                unit,
                 amount
             ]);
         });
 
         // Total row
-        rows.push(['', '', 'TOTAL', total]);
+        rows.push(['', '', '', '', 'TOTAL', total]);
 
         // Create workbook
         const ws = XLSX.utils.aoa_to_sheet(rows);
 
         // Set column widths
         ws['!cols'] = [
-            { wch: 14 },  // Fecha
-            { wch: 22 },  // Categoría
-            { wch: 35 },  // Descripción
-            { wch: 15 }   // Monto
+            { wch: 12 },  // Fecha
+            { wch: 20 },  // Categoría
+            { wch: 30 },  // Descripción
+            { wch: 8 },   // Cant.
+            { wch: 12 },  // V. Unit.
+            { wch: 12 }   // Total
         ];
 
         const wb = XLSX.utils.book_new();
