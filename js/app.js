@@ -1807,16 +1807,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Sort by date ascending
-            list.sort((a, b) => new Date(a.date) - new Date(b.date));
+            // Sort by date descending (most recent first)
+            list.sort((a, b) => new Date(b.date) - new Date(a.date));
 
             let html = `
                 <div style="overflow-y: auto; max-height: 250px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
                     <thead>
-                        <tr style="background: var(--bg-tertiary); position: sticky; top: 0; z-index: 10;">
-                            <th style="padding: 8px 12px; text-align: left; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Fecha</th>
-                            <th style="padding: 8px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem;">Monto</th>
+                        <tr style="background: var(--bg-tertiary);">
+                            <th style="padding: 8px 12px; text-align: left; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem; position: sticky; top: 0; background: var(--bg-tertiary); z-index: 10;">Fecha</th>
+                            <th style="padding: 8px 12px; text-align: right; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem; position: sticky; top: 0; background: var(--bg-tertiary); z-index: 10;">Monto</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1936,6 +1936,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 filtered.push({ ...o, displayAmount: o.totalPrice, isCombined: false });
             }
         });
+
+        // Sort descending (most recent first)
+        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         elements.reportDetailTitle.textContent = `Detalle: ${method.toUpperCase()}`;
 
