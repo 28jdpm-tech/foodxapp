@@ -156,6 +156,16 @@ const StorageManager = {
         return this.getOrders().filter(o => new Date(o.createdAt).toDateString() === searchDate);
     },
 
+    // Get orders by specific month (YYYY-MM)
+    getOrdersByMonth(monthStr) {
+        if (!monthStr) return [];
+        const [year, month] = monthStr.split('-').map(Number);
+        return this.getOrders().filter(o => {
+            const date = new Date(o.createdAt);
+            return date.getFullYear() === year && (date.getMonth() + 1) === month;
+        });
+    },
+
     // --- Firebase Sync Methods ---
 
     // Sync order to Cloud

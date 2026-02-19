@@ -413,11 +413,15 @@
                             <option value="today">Hoy</option>
                             <option value="date">Día Específico</option>
                             <option value="month">Mes Actual</option>
+                            <option value="specific-month">Mes Específico</option>
                             <option value="total">Histórico Total</option>
                         </select>
                     </div>
                     <div class="filter-group hidden" id="reportDatePickerGroup">
                         <input type="date" id="reportDatePicker" class="date-picker-input">
+                    </div>
+                    <div class="filter-group hidden" id="reportMonthPickerGroup">
+                        <input type="month" id="reportMonthPicker" class="date-picker-input">
                     </div>
                     <button class="search-date-btn" id="searchReportBtn">
                         <i data-lucide="search"></i>
@@ -1007,7 +1011,7 @@
     <script src="js/data.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/app.js?v=84"></script>
+    <script src="js/app.js?v=85"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

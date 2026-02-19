@@ -159,6 +159,8 @@ document.addEventListener('DOMContentLoaded', () => {
         reportDatePicker: document.getElementById('reportDatePicker'),
         reportPeriodSelect: document.getElementById('reportPeriodSelect'),
         reportDatePickerGroup: document.getElementById('reportDatePickerGroup'),
+        reportMonthPicker: document.getElementById('reportMonthPicker'),
+        reportMonthPickerGroup: document.getElementById('reportMonthPickerGroup'),
         searchReportBtn: document.getElementById('searchReportBtn'),
         reportDailySales: document.getElementById('reportDailySales'),
         reportFoodSales: document.getElementById('reportFoodSales'),
@@ -1504,6 +1506,10 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'month':
                 orders = StorageManager.getCurrentMonthOrders();
                 break;
+            case 'specific-month':
+                const filterMonth = elements.reportMonthPicker?.value;
+                orders = filterMonth ? StorageManager.getOrdersByMonth(filterMonth) : StorageManager.getCurrentMonthOrders();
+                break;
             case 'total':
                 orders = StorageManager.getOrders();
                 break;
@@ -2002,11 +2008,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.reportPeriodSelect) {
         elements.reportPeriodSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'date') {
-                elements.reportDatePickerGroup.classList.remove('hidden');
+            const val = e.target.value;
+            // Handle date picker visibility
+            if (val === 'date') {
+                elements.reportDatePickerGroup?.classList.remove('hidden');
             } else {
-                elements.reportDatePickerGroup.classList.add('hidden');
-                renderReportsPage(); // Auto-refresh for month/total
+                elements.reportDatePickerGroup?.classList.add('hidden');
+            }
+
+            // Handle month picker visibility
+            if (val === 'specific-month') {
+                elements.reportMonthPickerGroup?.classList.remove('hidden');
+            } else {
+                elements.reportMonthPickerGroup?.classList.add('hidden');
+            }
+
+            // Auto-refresh for static options
+            if (val !== 'date' && val !== 'specific-month') {
+                renderReportsPage();
             }
         });
     }
