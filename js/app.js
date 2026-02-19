@@ -2452,6 +2452,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 expenses = StorageManager.getExpenses();
                 income = StorageManager.getTotalSales();
                 break;
+            case 'specific-month':
+                const filterMonth = document.getElementById('expenseMonthPicker')?.value;
+                expenses = filterMonth ? StorageManager.getExpensesByMonth(filterMonth) : StorageManager.getCurrentMonthExpenses();
+                income = filterMonth ? StorageManager.getSalesByMonth(filterMonth) : StorageManager.getCurrentMonthSales();
+                break;
             default:
                 expenses = StorageManager.getTodayExpenses();
                 income = StorageManager.getTodaySales();
@@ -2780,7 +2785,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Period filter change
     const expensePeriodSelect = document.getElementById('expensePeriodSelect');
     if (expensePeriodSelect) {
-        expensePeriodSelect.addEventListener('change', () => {
+        expensePeriodSelect.addEventListener('change', (e) => {
+            const val = e.target.value;
+            const picker = document.getElementById('expenseMonthPicker');
+            if (val === 'specific-month') {
+                picker?.classList.remove('hidden');
+            } else {
+                picker?.classList.add('hidden');
+                renderExpensesPage();
+            }
+        });
+    }
+
+    const expenseMonthPicker = document.getElementById('expenseMonthPicker');
+    if (expenseMonthPicker) {
+        expenseMonthPicker.addEventListener('change', () => {
             renderExpensesPage();
         });
     }

@@ -166,6 +166,10 @@ const StorageManager = {
         });
     },
 
+    getSalesByMonth(monthStr) {
+        return this.getOrdersByMonth(monthStr).filter(o => o.paid && !o.isPartial).reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+    },
+
     // --- Firebase Sync Methods ---
 
     // Sync order to Cloud
@@ -411,6 +415,16 @@ const StorageManager = {
         return this.getExpenses().filter(e => {
             const date = new Date(e.date || e.createdAt);
             return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+        });
+    },
+
+    // Get expenses by specific month (YYYY-MM)
+    getExpensesByMonth(monthStr) {
+        if (!monthStr) return [];
+        const [year, month] = monthStr.split('-').map(Number);
+        return this.getExpenses().filter(e => {
+            const date = new Date(e.date || e.createdAt);
+            return date.getFullYear() === year && (date.getMonth() + 1) === month;
         });
     },
 

@@ -694,8 +694,11 @@
                             style="flex: 1; padding: 10px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: var(--text-primary); font-size: 0.85rem;">
                             <option value="today">Hoy</option>
                             <option value="month">Este Mes</option>
+                            <option value="specific-month">Mes Específico</option>
                             <option value="total">Todo</option>
                         </select>
+                        <input type="month" id="expenseMonthPicker" class="hidden"
+                            style="flex: 1; padding: 10px 12px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: var(--text-primary); font-size: 0.85rem;">
                     </div>
                 </div>
 
@@ -1011,7 +1014,7 @@
     <script src="js/data.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/app.js?v=85"></script>
+    <script src="js/app.js?v=86"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

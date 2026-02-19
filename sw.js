@@ -1,4 +1,4 @@
-const CACHE_NAME = 'foodx-v22';
+const CACHE_NAME = 'foodx-v23';
 const ASSETS = [
     './',
     './index.html',
