@@ -2500,10 +2500,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             ticket += justify(lineInfo, priceStr) + '\n';
             
-            // Observations still below if they exist as they can be long
-            if (item.observations && item.observations.trim() !== '') {
-                 ticket += '  * ' + item.observations.toUpperCase().substring(0, 22) + '\n';
-            }
         });
 
         ticket += subDivider + '\n';
