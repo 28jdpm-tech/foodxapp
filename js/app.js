@@ -2373,8 +2373,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const flavorsList = [s1, s2, s3].filter(f => f && f.trim() !== '');
             const flavors = flavorsList.join('-');
 
-            // PRODUCTO column: only first 5 chars, then pad to 15 for alignment
-            const fCol = flavors.substring(0, 5).toUpperCase().padEnd(15);
+            // PRODUCTO column: up to 15 chars for clarity in kitchen, then pad for alignment
+            const fCol = flavors.substring(0, 15).toUpperCase().padEnd(15);
             const adCol = (adi || '').substring(0, 7).toUpperCase().padEnd(7);
 
             // Return plain text row aligned with the grid
