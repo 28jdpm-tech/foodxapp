@@ -1,4 +1,4 @@
-﻿/* ============================================
+/* ============================================
    FoodX POS PRO - Inline Selection Interface
    ============================================ */
 
@@ -1817,6 +1817,27 @@ body {
     width: 100%;
     background: linear-gradient(135deg, #f59e0b, #d97706);
     color: white;
+}
+
+.btn-invoice {
+    width: 100%;
+    background: linear-gradient(135deg, #a855f7, #7c3aed);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-invoice:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
 }
 
 .btn-print-checkout:hover,
