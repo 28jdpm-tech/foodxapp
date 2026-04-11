@@ -2363,9 +2363,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const flavorsList = [s1, s2, s3].filter(f => f && f.trim() !== '');
             const flavors = flavorsList.join('-');
 
-            // PRODUCTO column: 15 chars, ADICION column: 7 chars
-            // We use spaces to align with the boxed header above
-            const fCol = flavors.substring(0, 15).toUpperCase().padEnd(15);
+            // PRODUCTO column: only first 5 chars, then pad to 15 for alignment
+            const fCol = flavors.substring(0, 5).toUpperCase().padEnd(15);
             const adCol = (adi || '').substring(0, 7).toUpperCase().padEnd(7);
 
             // Return plain text row aligned with the grid
@@ -2487,7 +2486,7 @@ document.addEventListener('DOMContentLoaded', () => {
         order.items.forEach(item => {
             // Build item name from category + flavors (limited length)
             const mainFlavor = item.flavors[0] || '';
-            const itemName = `${item.categoryName} ${mainFlavor}`.substring(0, 16).trim().toUpperCase();
+            const itemName = `${item.categoryName} ${mainFlavor}`.substring(0, 5).trim().toUpperCase();
             
             const qty = String(item.qty).padStart(2);
             const price = formatPrice(item.price).padStart(7);
