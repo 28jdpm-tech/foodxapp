@@ -2484,21 +2484,25 @@ document.addEventListener('DOMContentLoaded', () => {
         ticket += subDivider + '\n';
 
         order.items.forEach(item => {
-            // Build item name from category + flavors (limited length)
-            const mainFlavor = item.flavors[0] || '';
-            const itemName = `${item.categoryName} ${mainFlavor}`.substring(0, 5).trim().toUpperCase();
+            const qty = item.qty;
+            // Name: First letter Upper, rest lower, capped at 5
+            const rawName = item.categoryName || '';
+            const name = rawName.charAt(0).toUpperCase() + rawName.slice(1, 5).toLowerCase();
             
-            const qty = String(item.qty).padStart(2);
-            const price = formatPrice(item.price).padStart(7);
+            const size = item.size || '';
+            // Extras: First 2 letters of each, separated by +
+            const extrasStr = (item.extras || []).length > 0 
+                ? '+' + item.extras.map(e => e.substring(0, 2).toUpperCase()).join('+')
+                : '';
             
-            ticket += `${qty}  ${itemName.padEnd(16)} ${price}\n`;
+            const lineInfo = `${qty} ${name} ${size}${extrasStr}`;
+            const priceStr = formatPrice(item.price);
             
-            // Sub-details if they exist
-            if (item.flavors.length > 1) {
-                ticket += '   ' + item.flavors.slice(1).join(', ').toLowerCase().substring(0, 23) + '\n';
-            }
-            if (item.extras && item.extras.length > 0) {
-                 ticket += '   + ' + item.extras.join(', ').toLowerCase().substring(0, 23) + '\n';
+            ticket += justify(lineInfo, priceStr) + '\n';
+            
+            // Observations still below if they exist as they can be long
+            if (item.observations && item.observations.trim() !== '') {
+                 ticket += '  * ' + item.observations.toUpperCase().substring(0, 22) + '\n';
             }
         });
 
