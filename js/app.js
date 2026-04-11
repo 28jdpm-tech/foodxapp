@@ -1142,6 +1142,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.deleteOrderBtn) elements.deleteOrderBtn.style.display = 'flex';
         }
 
+        // Factura button visibility
+        if (elements.invoicePaymentTicket) {
+            // Only show Factura in "Por Cobrar" (printed) or "Pagadas" (paid)
+            if (order.paid || order.checkoutPrinted) {
+                elements.invoicePaymentTicket.style.display = 'flex';
+            } else {
+                elements.invoicePaymentTicket.style.display = 'none';
+            }
+        }
+
 
 
         // Reset Payment Method Logic (Radio Buttons)
