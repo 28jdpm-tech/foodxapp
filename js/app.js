@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         printPaymentTicket: document.getElementById('printPaymentTicket'),
         cancelPayment: document.getElementById('cancelPayment'),
         confirmPayment: document.getElementById('confirmPayment'),
+        invoicePaymentTicket: document.getElementById('invoicePaymentTicket'),
         deleteOrderBtn: document.getElementById('deleteOrderBtn'),
         // Ticket Modal
         ticketModal: document.getElementById('ticketModal'),
@@ -154,6 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         historyTicketContent: document.getElementById('historyTicketContent'),
         backToHistoryBtn: document.getElementById('backToHistoryBtn'),
         reprintOrderBtn: document.getElementById('reprintOrderBtn'),
+        invoiceOrderBtn: document.getElementById('invoiceOrderBtn'),
         deleteOrderBtnHistory: document.getElementById('deleteOrderBtnHistory'),
         // Reports
         reportDatePicker: document.getElementById('reportDatePicker'),
@@ -1414,6 +1416,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (elements.invoicePaymentTicket) {
+        elements.invoicePaymentTicket.addEventListener('click', () => {
+            if (selectedPaymentOrder) {
+                const originalContent = elements.paymentTicketContent.innerHTML;
+                elements.paymentTicketContent.innerHTML = generateInvoiceText(selectedPaymentOrder);
+                window.print();
+                elements.paymentTicketContent.innerHTML = originalContent; // Revert to comanda
+                showNotification(`Factura de pedido ${selectedPaymentOrder.orderNumber} generada`);
+            }
+        });
+    }
+
     if (elements.deleteOrderBtn) {
         elements.deleteOrderBtn.addEventListener('click', () => {
             if (!selectedPaymentOrder) return;
@@ -2166,6 +2180,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (elements.invoiceOrderBtn) {
+        elements.invoiceOrderBtn.addEventListener('click', () => {
+            if (selectedHistoryOrder) {
+                const originalContent = elements.historyTicketContent.innerHTML;
+                elements.historyTicketContent.innerHTML = generateInvoiceText(selectedHistoryOrder);
+                window.print();
+                elements.historyTicketContent.innerHTML = originalContent;
+                showNotification(`Factura de pedido ${selectedHistoryOrder.orderNumber} generada`);
+            }
+        });
+    }
+
     if (elements.deleteOrderBtnHistory) {
         elements.deleteOrderBtnHistory.addEventListener('click', () => {
             if (!selectedHistoryOrder) return;
@@ -2411,6 +2437,74 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         ticket += '\n' + justify('TOTAL:', formatPrice(order.totalPrice)) + '\n';
+        ticket += topDivider + '\n';
+        ticket += center('GRACIAS POR SU COMPRA') + '\n';
+        ticket += topDivider + '\n\n\n.';
+
+        return ticket;
+    }
+
+    function generateInvoiceText(order) {
+        if (!order || !order.items) return 'Error: Pedido sin productos';
+        const TICKET_WIDTH = 26; // Match standard paper width
+        const labels = { salon: 'SALÓN', llevar: 'LLEVAR', domicilio: 'DOMICILIO' };
+        const now = new Date(order.createdAt || Date.now());
+        const dateStr = now.toLocaleDateString('es-CO');
+        const timeStr = now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+
+        const center = (str) => {
+            str = String(str).toUpperCase();
+            if (str.length >= TICKET_WIDTH) return str.substring(0, TICKET_WIDTH);
+            const left = Math.floor((TICKET_WIDTH - str.length) / 2);
+            return ' '.repeat(left) + str;
+        };
+
+        const justify = (leftStr, rightStr) => {
+            const left = String(leftStr).toUpperCase();
+            const right = String(rightStr).toUpperCase();
+            const spaceNeeded = TICKET_WIDTH - (left.length + right.length);
+            if (spaceNeeded < 1) return left + ' ' + right;
+            return left + ' '.repeat(spaceNeeded) + right;
+        };
+
+        const topDivider = '━'.repeat(TICKET_WIDTH);
+        const subDivider = '─'.repeat(TICKET_WIDTH);
+
+        let ticket = '';
+        ticket += center('FACTURA DE VENTA') + '\n';
+        ticket += center('FOODX POS PRO') + '\n';
+        ticket += center(`ID: ${order.orderNumber || '1024'}`) + '\n';
+        if (order.sequenceNumber) {
+            ticket += center(`ORDEN: ${order.sequenceNumber}`) + '\n';
+        }
+        ticket += topDivider + '\n';
+        ticket += justify(dateStr, timeStr) + '\n';
+        ticket += center(`TIPO: ${labels[order.serviceType]}`) + '\n';
+        ticket += topDivider + '\n';
+        ticket += 'CANT PRODUCTO         VALOR\n';
+        ticket += subDivider + '\n';
+
+        order.items.forEach(item => {
+            // Build item name from category + flavors (limited length)
+            const mainFlavor = item.flavors[0] || '';
+            const itemName = `${item.categoryName} ${mainFlavor}`.substring(0, 16).trim().toUpperCase();
+            
+            const qty = String(item.qty).padStart(2);
+            const price = formatPrice(item.price).padStart(7);
+            
+            ticket += `${qty}  ${itemName.padEnd(16)} ${price}\n`;
+            
+            // Sub-details if they exist
+            if (item.flavors.length > 1) {
+                ticket += '   ' + item.flavors.slice(1).join(', ').toLowerCase().substring(0, 23) + '\n';
+            }
+            if (item.extras && item.extras.length > 0) {
+                 ticket += '   + ' + item.extras.join(', ').toLowerCase().substring(0, 23) + '\n';
+            }
+        });
+
+        ticket += subDivider + '\n';
+        ticket += justify('TOTAL:', formatPrice(order.totalPrice)) + '\n';
         ticket += topDivider + '\n';
         ticket += center('GRACIAS POR SU COMPRA') + '\n';
         ticket += topDivider + '\n\n\n.';
