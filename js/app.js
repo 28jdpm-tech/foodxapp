@@ -2937,6 +2937,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Download Expenses as Excel (.xlsx)
     window.downloadExpensesExcel = function () {
         const period = document.getElementById('expensePeriodSelect')?.value || 'today';
+        const query = (document.getElementById('expenseSearchInput')?.value || '').toLowerCase();
         let expenses = [];
         let periodLabel = '';
 
@@ -2948,6 +2949,11 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'month':
                 expenses = StorageManager.getCurrentMonthExpenses();
                 periodLabel = 'Este_Mes';
+                break;
+            case 'specific-month':
+                const filterMonth = document.getElementById('expenseMonthPicker')?.value;
+                expenses = filterMonth ? StorageManager.getExpensesByMonth(filterMonth) : StorageManager.getCurrentMonthExpenses();
+                periodLabel = filterMonth || 'Mes_Especifico';
                 break;
             case 'total':
                 expenses = StorageManager.getExpenses();
@@ -2961,6 +2967,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (expenses.length === 0) {
             showNotification('⚠️ No hay egresos para descargar', 'error');
             return;
+        }
+
+        // Filter by Search Query
+        if (query) {
+            expenses = expenses.filter(e => (e.description || '').toLowerCase().includes(query));
         }
 
         // Sort by date ascending
