@@ -467,6 +467,25 @@ body {
     color: var(--accent-gold);
 }
 
+.category-row-count {
+    background: var(--accent-primary);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 800;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: -4px;
+}
+
+.category-row-count:empty, .category-row-count[data-count="0"] {
+    display: none;
+}
+
 .category-total-price[data-value="0"] {
     opacity: 0.5;
 }

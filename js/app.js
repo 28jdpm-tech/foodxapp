@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="category-header">
                     <div class="category-title">
                         <span class="category-name">${category.name.toUpperCase()}</span>
+                        <span class="category-row-count" id="count-${category.id}" data-count="0">0</span>
                         <span class="category-total-price" data-value="0">$0</span>
                     </div>
                     <button class="add-row-btn">
@@ -525,11 +526,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const section = document.querySelector(`.category-section[data-category="${category}"]`);
         if (!section) return;
         const priceEl = section.querySelector('.category-total-price');
+        const countEl = section.querySelector('.category-row-count');
 
         let total = 0;
+        let itemCount = 0;
         state.categoryData[category].rows.forEach(data => {
             const rowEl = document.querySelector(`.client-row[data-row-id="${data.id}"]`);
             const filledBlocks = data.blocks.filter(b => b !== '').length;
+            const hasExtras = data.extras && data.extras.length > 0;
+            const hasObs = data.observations && data.observations.length > 0;
+
+            if (filledBlocks > 0 || hasExtras || hasObs) {
+                itemCount += (data.qty || 1);
+            }
 
             let rowPrice = 0;
             let sizeLabel = '--';
@@ -591,6 +600,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         priceEl.textContent = total > 0 ? formatPrice(total) : '$0';
         priceEl.dataset.value = total;
+
+        if (countEl) {
+            countEl.textContent = itemCount;
+            countEl.dataset.count = itemCount;
+        }
     }
 
     function updateOrderTotal() {
