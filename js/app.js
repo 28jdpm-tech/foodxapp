@@ -565,7 +565,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     const size = calculateSize(filledBlocks, category);
                     sizeLabel = size;
-                    const basePrice = config.prices[category][size];
+                    let basePrice = config.prices[category][size];
+
+                    if (category === 'hamburguesas' && filledBlocks === 2) {
+                        const selectedFlavors = data.blocks.filter(b => b !== '').map(bId => {
+                            const fl = config.flavors[category].find(f => f.id === bId);
+                            return fl ? fl.name.toUpperCase() : '';
+                        });
+                        if (selectedFlavors.length === 2 && selectedFlavors.every(name => name.includes('SEN'))) {
+                            basePrice = 15000;
+                        }
+                    }
 
                     if (category === 'salchipapas') {
                         // If observations exist but have price 0, use base price
@@ -705,6 +715,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                 basePrice = flavor ? flavor.price : 0;
                             } else {
                                 basePrice = config.prices[category][size] || 0;
+                                if (category === 'hamburguesas' && filledBlocks.length === 2) {
+                                    const selectedFlavors = rowData.blocks.filter(b => b !== '').map(bId => {
+                                        const fl = config.flavors[category].find(f => f.id === bId);
+                                        return fl ? fl.name.toUpperCase() : '';
+                                    });
+                                    if (selectedFlavors.length === 2 && selectedFlavors.every(name => name.includes('SEN'))) {
+                                        basePrice = 15000;
+                                    }
+                                }
                             }
                         }
 
