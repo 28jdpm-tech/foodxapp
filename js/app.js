@@ -345,15 +345,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================
 
     function createRowElement(category, rowId) {
+        const config = StorageManager.getConfig();
+        const isBebida = category === 'bebidas';
+        const sizes = Object.keys(config.prices[category] || {});
+        const blocksCount = isBebida ? 1 : (category === 'combos' ? 3 : sizes.length);
+
         const rowData = {
             id: rowId,
             qty: 1,
-            blocks: ['', '', ''],
+            blocks: Array(blocksCount).fill(''),
             extras: [],
             observations: []
         };
 
-        const config = StorageManager.getConfig();
         state.categoryData[category].rows.push(rowData);
 
         const rowEl = document.createElement('div');
@@ -374,54 +378,48 @@ document.addEventListener('DOMContentLoaded', () => {
             `<option value="${o.id}">${o.name}</option>`
         ).join('');
 
-        const isBebida = category === 'bebidas';
+        let blockLabels = [];
+        if (isBebida) {
+            blockLabels = ['BEBIDA'];
+        } else if (category === 'combos') {
+            blockLabels = ['HB', 'PE', 'SA'];
+        } else {
+            blockLabels = Array.from({length: blocksCount}, (_, i) => `S${i+1}`);
+        }
+
+        const blocksHtml = blockLabels.map((lbl, idx) => `
+            <div class="field-col flavor-col">
+                <label>${lbl}</label>
+                <div class="field-content">
+                    <select class="flavor-select" data-block="${idx + 1}">
+                        <option value="">Sel.</option>
+                        ${flavorOptions}
+                    </select>
+                </div>
+            </div>
+        `).join('');
+
         rowEl.innerHTML = `
             <div class="row-fields ${isBebida ? 'bebidas-row' : ''}">
-                <div class="field-col flavor-col">
-                    <label>${isBebida ? 'BEBIDA' : (category === 'combos' ? 'HB' : 'S1')}</label>
-                    <div class="field-content">
-                        <select class="flavor-select" data-block="1">
-                            <option value="">Sel.</option>
-                            ${flavorOptions}
-                        </select>
-                    </div>
-                </div>
-                ${!isBebida ? `
-                <div class="field-col flavor-col">
-                    <label>${category === 'combos' ? 'PE' : 'S2'}</label>
-                    <div class="field-content">
-                        <select class="flavor-select" data-block="2">
-                            <option value="">Sel.</option>
-                            ${flavorOptions}
-                        </select>
-                    </div>
-                </div>
-                <div class="field-col flavor-col">
-                    <label>${category === 'combos' ? 'SA' : 'S3'}</label>
-                    <div class="field-content">
-                        <select class="flavor-select" data-block="3">
-                            <option value="">Sel.</option>
-                            ${flavorOptions}
-                        </select>
-                    </div>
-                </div>
-                <div class="field-col flavor-col">
-                    <label>ADI</label>
-                    <div class="field-content">
-                        <div class="multi-select-trigger" id="extra-trigger-${rowId}" data-type="extra">
-                            <span class="selected-text">Sel.</span>
+                ${isBebida ? blocksHtml : `
+                    ${blocksHtml}
+                    <div class="field-col flavor-col">
+                        <label>ADI</label>
+                        <div class="field-content">
+                            <div class="multi-select-trigger" id="extra-trigger-${rowId}" data-type="extra">
+                                <span class="selected-text">Sel.</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="field-col flavor-col">
-                    <label>OBS</label>
-                    <div class="field-content">
-                        <div class="multi-select-trigger" id="obs-trigger-${rowId}" data-type="obs">
-                            <span class="selected-text">Sel.</span>
+                    <div class="field-col flavor-col">
+                        <label>OBS</label>
+                        <div class="field-content">
+                            <div class="multi-select-trigger" id="obs-trigger-${rowId}" data-type="obs">
+                                <span class="selected-text">Sel.</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-                ` : ''}
+                `}
                 <div class="field-col action-col">
                     <label>&nbsp;</label>
                     <div class="field-content">
@@ -1593,7 +1591,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const categorySales = {};
         const categoryQtyStats = {}; // { cat: { total: 0, sizes: {} } }
         const flavorStats = { food: {}, drinks: {}, disposables: {} };
-        const sizeCounts = { 'XS': 0, 'XM': 0, 'XL': 0, 'HB': 0, 'PE': 0, 'SA': 0 };
+        const sizeCounts = { 'XS': 0, 'XM': 0, 'XL': 0, 'X': 0, 'HB': 0, 'PE': 0, 'SA': 0 };
         const extrasSales = {};
         const paymentList = { efectivo: [], nequi: [], daviplata: [] };
         const salesBreakdownByDay = {}; // Grouped by YYYY-MM-DD
@@ -1782,7 +1780,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 3. Render Sizes
         if (elements.sizeSalesList) {
-            const sizesToShow = ['XS', 'XM', 'XL'];
+            const sizesToShow = ['XS', 'XM', 'XL', 'X'];
             if (sizeCounts['HB'] > 0 || sizeCounts['PE'] > 0 || sizeCounts['SA'] > 0) {
                 sizesToShow.push('HB', 'PE', 'SA');
             }
@@ -3224,13 +3222,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const L2 = isCombos ? 'PE' : 'XM';
             const L3 = isCombos ? 'SA' : 'XL';
 
+            const isBurgers = id === 'hamburguesas';
+
             html = `<div class="form-group"><label>Nombre</label><input type="text" id="editName" value="${item.name}"></div>
                     <div class="form-group"><label>Icono</label><input type="text" id="editIcon" value="${item.icon}"></div>
                     <div class="form-row">
                         <div class="form-group"><label>${L1}</label><input type="number" id="priceXS" value="${config.prices[id][L1] || 0}"></div>
                         <div class="form-group"><label>${L2}</label><input type="number" id="priceXM" value="${config.prices[id][L2] || 0}"></div>
                     </div>
-                    <div class="form-group"><label>${L3}</label><input type="number" id="priceXL" value="${config.prices[id][L3] || 0}"></div>`;
+                    <div class="form-row">
+                        <div class="form-group"><label>${L3}</label><input type="number" id="priceXL" value="${config.prices[id][L3] || 0}"></div>
+                        ${isBurgers ? `<div class="form-group"><label>X</label><input type="number" id="priceX" value="${config.prices[id]['X'] || 0}"></div>` : ''}
+                    </div>`;
         } else if (type === 'flavor') {
             const item = config.flavors[parentId].find(f => f.id === id);
             const isBebida = parentId === 'bebidas';
@@ -3288,12 +3291,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const isCombos = cat.id === 'combos';
+                const isBurgers = cat.id === 'hamburguesas';
                 const p1 = +document.getElementById('priceXS').value;
                 const p2 = +document.getElementById('priceXM').value;
                 const p3 = +document.getElementById('priceXL').value;
+                const p4 = isBurgers ? +document.getElementById('priceX').value : 0;
 
                 if (isCombos) {
                     config.prices[cat.id] = { HB: p1, PE: p2, SA: p3 };
+                } else if (isBurgers) {
+                    config.prices[cat.id] = { XS: p1, XM: p2, XL: p3, X: p4 };
                 } else {
                     config.prices[cat.id] = { XS: p1, XM: p2, XL: p3 };
                 }

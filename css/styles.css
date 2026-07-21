@@ -752,6 +752,12 @@ body {
     border-color: rgba(255, 205, 210, 0.3);
 }
 
+.row-size-badge.size-x {
+    background: rgba(16, 185, 129, 0.15);
+    color: #a7f3d0;
+    border-color: rgba(167, 243, 208, 0.3);
+}
+
 .field-action-btn {
     width: 32px;
     height: 32px;

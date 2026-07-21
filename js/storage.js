@@ -102,6 +102,12 @@ const StorageManager = {
             config.observations = migrated;
         }
 
+        if (config.prices && config.prices.hamburguesas && !config.prices.hamburguesas.hasOwnProperty('X')) {
+            console.log("Migrating Hamburguesas prices to include size X");
+            config.prices.hamburguesas.X = 30000;
+            localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(config.prices));
+        }
+
         return config;
     },
 

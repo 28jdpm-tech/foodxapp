@@ -110,7 +110,7 @@ const FOODX_DATA = {
 
     // Prices by category and size
     prices: {
-        hamburguesas: { XS: 12000, XM: 18000, XL: 24000 },
+        hamburguesas: { XS: 12000, XM: 18000, XL: 24000, X: 30000 },
         perros: { XS: 8000, XM: 12000, XL: 16000 },
         salchipapas: { XS: 10000, XM: 15000, XL: 20000 },
         combos: { HB: 15000, PE: 15000, SA: 15000 },
@@ -142,6 +142,7 @@ function calculateSize(blocksCount, category = '') {
         case 1: return 'XS';
         case 2: return 'XM';
         case 3: return 'XL';
+        case 4: return 'X';
         default: return 'XS';
     }
 }
