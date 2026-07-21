@@ -563,16 +563,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     rowPrice = (flavor ? flavor.price : 0) * data.qty;
                     sizeLabel = '';
                 } else {
-                    const size = calculateSize(filledBlocks, category);
+                    const selectedFlavors = data.blocks.filter(b => b !== '').map(bId => {
+                        const fl = config.flavors[category].find(f => f.id === bId);
+                        return fl ? fl.name : '';
+                    });
+                    const size = calculateSize(filledBlocks, category, selectedFlavors);
                     sizeLabel = size;
-                    let basePrice = config.prices[category][size];
+                    let basePrice = config.prices[category][size] || 0;
 
                     if (category === 'hamburguesas' && filledBlocks === 2) {
-                        const selectedFlavors = data.blocks.filter(b => b !== '').map(bId => {
-                            const fl = config.flavors[category].find(f => f.id === bId);
-                            return fl ? fl.name.toUpperCase() : '';
-                        });
-                        if (selectedFlavors.length === 2 && selectedFlavors.every(name => name.includes('SEN'))) {
+                        const upperFlavors = selectedFlavors.filter(Boolean).map(name => name.toUpperCase());
+                        if (upperFlavors.length === 2 && upperFlavors.every(name => name.includes('SEN'))) {
                             basePrice = 15000;
                         }
                     }
@@ -670,18 +671,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (filledBlocks.length === 0 && !hasExtras && !hasObs) return;
 
                         const isBebida = category === 'bebidas';
-                        let size = '';
-
-                        if (filledBlocks.length > 0) {
-                            size = isBebida ? '' : calculateSize(filledBlocks.length, category);
-                        } else {
-                            size = 'ADI'; // Extras-only
-                        }
-
                         const flavorNames = rowData.blocks.filter(b => b).map(b => {
                             const flavor = config.flavors[category].find(f => f.id === b);
                             return flavor ? flavor.name : '';
                         });
+
+                        let size = '';
+
+                        if (filledBlocks.length > 0) {
+                            size = isBebida ? '' : calculateSize(filledBlocks.length, category, flavorNames);
+                        } else {
+                            size = 'ADI'; // Extras-only
+                        }
 
                         const categoryExtras = config.extras[category] || [];
                         // Map IDs to Names
@@ -716,11 +717,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             } else {
                                 basePrice = config.prices[category][size] || 0;
                                 if (category === 'hamburguesas' && filledBlocks.length === 2) {
-                                    const selectedFlavors = rowData.blocks.filter(b => b !== '').map(bId => {
-                                        const fl = config.flavors[category].find(f => f.id === bId);
-                                        return fl ? fl.name.toUpperCase() : '';
-                                    });
-                                    if (selectedFlavors.length === 2 && selectedFlavors.every(name => name.includes('SEN'))) {
+                                    const upperFlavors = flavorNames.filter(Boolean).map(name => name.toUpperCase());
+                                    if (upperFlavors.length === 2 && upperFlavors.every(name => name.includes('SEN'))) {
                                         basePrice = 15000;
                                     }
                                 }

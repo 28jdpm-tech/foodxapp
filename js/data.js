@@ -127,14 +127,32 @@ const FOODX_DATA = {
     ]
 };
 
-// Size calculation based on number of blocks
-function calculateSize(blocksCount, category = '') {
+// Size calculation based on number of blocks and selected flavors
+function calculateSize(blocksCount, category = '', selectedFlavors = []) {
     if (category === 'combos') {
         switch (blocksCount) {
             case 1: return 'HB';
             case 2: return 'PE';
             case 3: return 'SA';
             default: return 'HB';
+        }
+    }
+
+    if (category === 'hamburguesas') {
+        const senCount = selectedFlavors.filter(name => name && name.toUpperCase().includes('SEN')).length;
+        const normalCount = selectedFlavors.filter(name => name && !name.toUpperCase().includes('SEN')).length;
+        const totalCount = senCount + normalCount;
+
+        if (totalCount === 1 && normalCount === 1) return 'X';
+        if (totalCount === 2 && senCount === 1 && normalCount === 1) return 'XS';
+        if (totalCount === 2 && normalCount === 2) return 'XM';
+        if (totalCount === 3 && normalCount === 3) return 'XL';
+
+        switch (totalCount) {
+            case 1: return 'XS';
+            case 2: return 'XM';
+            case 3: return 'XL';
+            default: return 'XS';
         }
     }
 
