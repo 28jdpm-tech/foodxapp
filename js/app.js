@@ -345,19 +345,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================
 
     function createRowElement(category, rowId) {
-        const config = StorageManager.getConfig();
-        const isBebida = category === 'bebidas';
-        const sizes = Object.keys(config.prices[category] || {});
-        const blocksCount = isBebida ? 1 : (category === 'combos' ? 3 : sizes.length);
-
         const rowData = {
             id: rowId,
             qty: 1,
-            blocks: Array(blocksCount).fill(''),
+            blocks: ['', '', ''],
             extras: [],
             observations: []
         };
 
+        const config = StorageManager.getConfig();
         state.categoryData[category].rows.push(rowData);
 
         const rowEl = document.createElement('div');
@@ -378,48 +374,54 @@ document.addEventListener('DOMContentLoaded', () => {
             `<option value="${o.id}">${o.name}</option>`
         ).join('');
 
-        let blockLabels = [];
-        if (isBebida) {
-            blockLabels = ['BEBIDA'];
-        } else if (category === 'combos') {
-            blockLabels = ['HB', 'PE', 'SA'];
-        } else {
-            blockLabels = Array.from({length: blocksCount}, (_, i) => `S${i+1}`);
-        }
-
-        const blocksHtml = blockLabels.map((lbl, idx) => `
-            <div class="field-col flavor-col">
-                <label>${lbl}</label>
-                <div class="field-content">
-                    <select class="flavor-select" data-block="${idx + 1}">
-                        <option value="">Sel.</option>
-                        ${flavorOptions}
-                    </select>
-                </div>
-            </div>
-        `).join('');
-
+        const isBebida = category === 'bebidas';
         rowEl.innerHTML = `
             <div class="row-fields ${isBebida ? 'bebidas-row' : ''}">
-                ${isBebida ? blocksHtml : `
-                    ${blocksHtml}
-                    <div class="field-col flavor-col">
-                        <label>ADI</label>
-                        <div class="field-content">
-                            <div class="multi-select-trigger" id="extra-trigger-${rowId}" data-type="extra">
-                                <span class="selected-text">Sel.</span>
-                            </div>
+                <div class="field-col flavor-col">
+                    <label>${isBebida ? 'BEBIDA' : (category === 'combos' ? 'HB' : 'S1')}</label>
+                    <div class="field-content">
+                        <select class="flavor-select" data-block="1">
+                            <option value="">Sel.</option>
+                            ${flavorOptions}
+                        </select>
+                    </div>
+                </div>
+                ${!isBebida ? `
+                <div class="field-col flavor-col">
+                    <label>${category === 'combos' ? 'PE' : 'S2'}</label>
+                    <div class="field-content">
+                        <select class="flavor-select" data-block="2">
+                            <option value="">Sel.</option>
+                            ${flavorOptions}
+                        </select>
+                    </div>
+                </div>
+                <div class="field-col flavor-col">
+                    <label>${category === 'combos' ? 'SA' : 'S3'}</label>
+                    <div class="field-content">
+                        <select class="flavor-select" data-block="3">
+                            <option value="">Sel.</option>
+                            ${flavorOptions}
+                        </select>
+                    </div>
+                </div>
+                <div class="field-col flavor-col">
+                    <label>ADI</label>
+                    <div class="field-content">
+                        <div class="multi-select-trigger" id="extra-trigger-${rowId}" data-type="extra">
+                            <span class="selected-text">Sel.</span>
                         </div>
                     </div>
-                    <div class="field-col flavor-col">
-                        <label>OBS</label>
-                        <div class="field-content">
-                            <div class="multi-select-trigger" id="obs-trigger-${rowId}" data-type="obs">
-                                <span class="selected-text">Sel.</span>
-                            </div>
+                </div>
+                <div class="field-col flavor-col">
+                    <label>OBS</label>
+                    <div class="field-content">
+                        <div class="multi-select-trigger" id="obs-trigger-${rowId}" data-type="obs">
+                            <span class="selected-text">Sel.</span>
                         </div>
                     </div>
-                `}
+                </div>
+                ` : ''}
                 <div class="field-col action-col">
                     <label>&nbsp;</label>
                     <div class="field-content">
