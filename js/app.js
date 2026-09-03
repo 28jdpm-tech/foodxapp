@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FoodX POS PRO - Multiple Client Rows System
 // ============================================
 
@@ -571,12 +571,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     sizeLabel = size;
                     let basePrice = config.prices[category][size] || 0;
 
-                    if (category === 'hamburguesas' && filledBlocks === 2) {
-                        const upperFlavors = selectedFlavors.filter(Boolean).map(name => name.toUpperCase());
-                        if (upperFlavors.length === 2 && upperFlavors.every(name => name.includes('SEN'))) {
-                            basePrice = 15000;
-                        }
-                    }
 
                     if (category === 'salchipapas') {
                         // If observations exist but have price 0, use base price
@@ -716,12 +710,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 basePrice = flavor ? flavor.price : 0;
                             } else {
                                 basePrice = config.prices[category][size] || 0;
-                                if (category === 'hamburguesas' && filledBlocks.length === 2) {
-                                    const upperFlavors = flavorNames.filter(Boolean).map(name => name.toUpperCase());
-                                    if (upperFlavors.length === 2 && upperFlavors.every(name => name.includes('SEN'))) {
-                                        basePrice = 15000;
-                                    }
-                                }
                             }
                         }
 

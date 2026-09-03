@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FoodX POS - Data Configuration
 // ============================================
 
@@ -143,14 +143,16 @@ function calculateSize(blocksCount, category = '', selectedFlavors = []) {
         const normalCount = selectedFlavors.filter(name => name && !name.toUpperCase().includes('SEN')).length;
         const totalCount = senCount + normalCount;
 
-        if (totalCount === 1 && normalCount === 1) return 'X';
-        if (totalCount === 2 && senCount === 1 && normalCount === 1) return 'XS';
-        if (totalCount === 2 && normalCount === 2) return 'XM';
-        if (totalCount === 3 && normalCount === 3) return 'XL';
+        if (totalCount === 1) return 'X';
+        if (totalCount === 2) {
+            if (normalCount === 2) return 'XM';
+            return 'XS';
+        }
+        if (totalCount === 3) return 'XL';
 
         switch (totalCount) {
-            case 1: return 'XS';
-            case 2: return 'XM';
+            case 1: return 'X';
+            case 2: return 'XS';
             case 3: return 'XL';
             default: return 'XS';
         }
