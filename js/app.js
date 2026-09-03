@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // FoodX POS PRO - Multiple Client Rows System
 // ============================================
 
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Listen for config loaded from cloud (after cache clear)
     window.addEventListener('configLoadedFromCloud', () => {
-        console.log('ðŸ”„ Config loaded from cloud, refreshing UI...');
+        console.log('🔄 Config loaded from cloud, refreshing UI...');
         initializeCategories();
         updateOrderTotal();
         lucide.createIcons();
@@ -571,6 +571,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     sizeLabel = size;
                     let basePrice = config.prices[category][size] || 0;
 
+                    if (category === 'hamburguesas' && filledBlocks === 2) {
+                        const upperFlavors = selectedFlavors.filter(Boolean).map(name => name.toUpperCase());
+                        if (upperFlavors.length === 2 && upperFlavors.every(name => name.includes('SEN'))) {
+                            basePrice = 15000;
+                        }
+                    }
 
                     if (category === 'salchipapas') {
                         // If observations exist but have price 0, use base price
@@ -710,6 +716,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                 basePrice = flavor ? flavor.price : 0;
                             } else {
                                 basePrice = config.prices[category][size] || 0;
+                                if (category === 'hamburguesas' && filledBlocks.length === 2) {
+                                    const upperFlavors = flavorNames.filter(Boolean).map(name => name.toUpperCase());
+                                    if (upperFlavors.length === 2 && upperFlavors.every(name => name.includes('SEN'))) {
+                                        basePrice = 15000;
+                                    }
+                                }
+                            }
                         }
 
                         let rowPrice = 0;
@@ -744,7 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (!state.serviceType && !state.appendingOrderId) {
-                    showNotification('âš ï¸ Selecciona: SalÃ³n, Llevar o Domicilio', 'error');
+                    showNotification('⚠️ Selecciona: Salón, Llevar o Domicilio', 'error');
                     return;
                 }
 
@@ -756,7 +769,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Validate customer name/table number (mandatory)
                 const customerCode = elements.orderCustomerName?.value.trim();
                 if (!state.appendingOrderId && !customerCode) {
-                    showNotification('âš ï¸ Ingresa nombre del cliente o nÃºmero de mesa', 'error');
+                    showNotification('⚠️ Ingresa nombre del cliente o número de mesa', 'error');
                     elements.orderCustomerName?.focus();
                     return;
                 }
@@ -791,7 +804,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Save partial order so it appears in "Imprimir" list
                         StorageManager.addOrder(partialOrder);
 
-                        showNotification("AdiciÃ³n enviada. Imprimir desde Cobros.");
+                        showNotification("Adición enviada. Imprimir desde Cobros.");
                     }
                     state.appendingOrderId = null;
                 } else {
@@ -821,7 +834,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 resetAllCategories();
             } catch (error) {
                 console.error('Error sending order:', error);
-                showNotification('âš ï¸ Error al enviar pedido', 'error');
+                showNotification('⚠️ Error al enviar pedido', 'error');
             } finally {
                 // Restore button
                 elements.sendToKitchenBtn.innerHTML = originalBtnText;
@@ -1073,7 +1086,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${!order.paid ? `
                             <button class="btn-append-items" onclick="event.stopPropagation(); window.appendToOrder('${order.id}')" 
                                 style="background: var(--accent-primary); color: white; border: none; padding: 4px 12px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                <i data-lucide="plus" style="width: 14px; height: 14px;"></i> AÃ‘ADIR
+                                <i data-lucide="plus" style="width: 14px; height: 14px;"></i> AÑADIR
                             </button>
                         ` : ''}
                     </div>
@@ -1127,7 +1140,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.orderCustomerName.value = order.orderNumber.replace('#', '');
         }
 
-        showNotification(`AÃ±adiendo productos a la Orden ${order.orderNumber}`);
+        showNotification(`Añadiendo productos a la Orden ${order.orderNumber}`);
         lucide.createIcons();
     };
 
@@ -1328,7 +1341,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const selectedRadio = document.querySelector('input[name="paymentMethod"]:checked');
 
                 if (!selectedRadio) {
-                    showNotification('âš ï¸ Selecciona un medio de pago', 'error');
+                    showNotification('⚠️ Selecciona un medio de pago', 'error');
                     return;
                 }
 
@@ -1343,7 +1356,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const total = efectivo + nequi + daviplata;
 
                     if (total < selectedPaymentOrder.totalPrice) {
-                        showNotification(`âš ï¸ Faltan $${formatPrice(selectedPaymentOrder.totalPrice - total).replace('$', '')} para completar el pago`, 'error');
+                        showNotification(`⚠️ Faltan $${formatPrice(selectedPaymentOrder.totalPrice - total).replace('$', '')} para completar el pago`, 'error');
                         return;
                     }
 
@@ -1403,7 +1416,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (totalEl && selectedPaymentOrder) {
             const diff = total - selectedPaymentOrder.totalPrice;
             if (diff >= 0) {
-                totalEl.innerHTML = `âœ“ Total: ${formatPrice(total)}`;
+                totalEl.innerHTML = `✓ Total: ${formatPrice(total)}`;
                 totalEl.style.color = '#059669';
             } else {
                 totalEl.innerHTML = `Faltan: ${formatPrice(Math.abs(diff))}`;
@@ -1430,7 +1443,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (selectedPaymentOrder.isPartial) {
                     // If it's a partial order (addition), delete it after printing
                     StorageManager.deleteOrder(selectedPaymentOrder.id);
-                    showNotification(`Ticket de adiciÃ³n impreso`);
+                    showNotification(`Ticket de adición impreso`);
                 } else {
                     // Normal order: Set as printed for checkout
                     StorageManager.updateOrder(selectedPaymentOrder.id, { checkoutPrinted: true });
@@ -1461,7 +1474,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!selectedPaymentOrder) return;
 
             const performDelete = async () => {
-                if (confirm(`Â¿EstÃ¡s seguro de que deseas eliminar permanentemente el pedido ${selectedPaymentOrder.orderNumber}?`)) {
+                if (confirm(`¿Estás seguro de que deseas eliminar permanentemente el pedido ${selectedPaymentOrder.orderNumber}?`)) {
                     await StorageManager.deleteOrder(selectedPaymentOrder.id);
                     showNotification(`Pedido ${selectedPaymentOrder.orderNumber} eliminado`);
                     elements.paymentModal.classList.add('hidden');
@@ -1598,7 +1611,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (catId === 'bebidas' || catName.includes('bebida')) {
                     totalBebidas += item.price;
                     orderDrinks += item.price;
-                    flavorStats.drinks[item.flavors[0] || 'GenÃ©rica'] = (flavorStats.drinks[item.flavors[0] || 'GenÃ©rica'] || 0) + item.qty;
+                    flavorStats.drinks[item.flavors[0] || 'Genérica'] = (flavorStats.drinks[item.flavors[0] || 'Genérica'] || 0) + item.qty;
                     categorized = true;
                 } else if (catId === 'desechables' || catName.includes('desechable')) {
                     totalDesechables += item.price;
@@ -2225,7 +2238,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!selectedHistoryOrder) return;
 
             const performDelete = async () => {
-                if (confirm(`Â¿EstÃ¡s seguro de que deseas eliminar permanentemente el pedido ${selectedHistoryOrder.orderNumber}?`)) {
+                if (confirm(`¿Estás seguro de que deseas eliminar permanentemente el pedido ${selectedHistoryOrder.orderNumber}?`)) {
                     await StorageManager.deleteOrder(selectedHistoryOrder.id);
                     showNotification(`Pedido ${selectedHistoryOrder.orderNumber} eliminado`);
                     elements.historyOrderModal.classList.add('hidden');
@@ -2343,7 +2356,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function generateTicketText(order) {
         if (!order || !order.items) return 'Error: Pedido sin productos';
         const TICKET_WIDTH = 24;
-        const labels = { salon: 'SALÃ“N', llevar: 'LLEVAR', domicilio: 'DOMICILIO' };
+        const labels = { salon: 'SALÓN', llevar: 'LLEVAR', domicilio: 'DOMICILIO' };
         const now = new Date(order.createdAt || Date.now());
         const dateStr = now.toLocaleDateString('es-CO');
         const timeStr = now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
@@ -2375,9 +2388,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return left.padEnd(COL1_WIDTH) + ' ' + right.padEnd(COL2_WIDTH) + '  ';
         };
 
-        const L_TOP = "â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”";
-        const L_MID = "â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”¤";
-        const L_BOT = "â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”˜";
+        const L_TOP = "┌───────────────────────┐";
+        const L_MID = "├───────────────┬───────┤";
+        const L_BOT = "└───────────────┴───────┘";
 
         const tableHeader = (catName, qty) => {
             const title = `${catName} (${qty})`.toUpperCase();
@@ -2399,14 +2412,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return ` ${fCol} ${adCol}`;
         };
 
-        const topDivider = 'â”'.repeat(TICKET_WIDTH);
-        const subDivider = 'â”€'.repeat(TICKET_WIDTH);
+        const topDivider = '━'.repeat(TICKET_WIDTH);
+        const subDivider = '─'.repeat(TICKET_WIDTH);
 
         let ticket = '';
         ticket += topDivider + '\n';
         if (order.isAppending) {
             // Show service type prominently for additions (e.g. LLEVAR)
-            const sType = labels[order.serviceType] || 'SALÃ“N';
+            const sType = labels[order.serviceType] || 'SALÓN';
             ticket += center(`*** ${sType} ***`) + '\n';
             ticket += center('(ADICION)') + '\n';
         } else {
@@ -2474,7 +2487,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function generateInvoiceText(order) {
         if (!order || !order.items) return 'Error: Pedido sin productos';
         const TICKET_WIDTH = 26; // Match standard paper width
-        const labels = { salon: 'SALÃ“N', llevar: 'LLEVAR', domicilio: 'DOMICILIO' };
+        const labels = { salon: 'SALÓN', llevar: 'LLEVAR', domicilio: 'DOMICILIO' };
         const now = new Date(order.createdAt || Date.now());
         const dateStr = now.toLocaleDateString('es-CO');
         const timeStr = now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
@@ -2494,8 +2507,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return left + ' '.repeat(spaceNeeded) + right;
         };
 
-        const topDivider = 'â”'.repeat(TICKET_WIDTH);
-        const subDivider = 'â”€'.repeat(TICKET_WIDTH);
+        const topDivider = '━'.repeat(TICKET_WIDTH);
+        const subDivider = '─'.repeat(TICKET_WIDTH);
 
         let ticket = '';
         ticket += center('FACTURA DE VENTA') + '\n';
@@ -2628,7 +2641,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusEl.style.background = '#dcfce7';
                 statusEl.style.color = '#16a34a';
             } else if (netBalance < 0) {
-                statusEl.textContent = 'DÃ©ficit';
+                statusEl.textContent = 'Déficit';
                 statusEl.style.background = '#fee2e2';
                 statusEl.style.color = '#dc2626';
             } else {
@@ -2645,7 +2658,7 @@ document.addEventListener('DOMContentLoaded', () => {
             summaryEl.innerHTML = Object.entries(categoryTotals)
                 .sort((a, b) => b[1] - a[1])
                 .map(([catId, amount]) => {
-                    const cat = CATS[catId] || { label: catId, emoji: 'ðŸ“Œ' };
+                    const cat = CATS[catId] || { label: catId, emoji: '📌' };
                     const idx = allCatsForColors.findIndex(c => c.id === catId);
                     const color = expenseCatColors[idx % expenseCatColors.length] || '#6b7280';
                     return `
@@ -2674,8 +2687,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <thead>
                             <tr style="background: var(--bg-tertiary);">
                                 <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Fecha</th>
-                                <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">CategorÃ­a</th>
-                                <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">DescripciÃ³n</th>
+                                <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Categoría</th>
+                                <th style="padding: 10px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Descripción</th>
                                 <th style="padding: 10px 12px; text-align: center; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Cant.</th>
                                 <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Unit.</th>
                                 <th style="padding: 10px 12px; text-align: right; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Total</th>
@@ -2686,7 +2699,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
 
                 expenses.forEach(expense => {
-                    const cat = CATS[expense.category] || { label: 'Otros', emoji: 'ðŸ“Œ' };
+                    const cat = CATS[expense.category] || { label: 'Otros', emoji: '📌' };
                     const dateObj = new Date(expense.date || expense.createdAt);
                     const dateStr = dateObj.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: '2-digit' });
                     const qty = expense.qty || 1;
@@ -2750,7 +2763,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
                 <thead>
                     <tr style="background: var(--bg-tertiary);">
-                        <th style="padding: 8px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Nombre de CategorÃ­a</th>
+                        <th style="padding: 8px 12px; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Nombre de Categoría</th>
                         <th style="padding: 8px 6px; width: 60px; text-align: center; color: var(--text-muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Acciones</th>
                     </tr>
                 </thead>
@@ -2764,11 +2777,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td style="padding: 8px 6px; text-align: center; white-space: nowrap;">
                         <button onclick="window.editExpenseCategory('${cat.id}')"
                             style="background: none; border: none; color: var(--accent-primary); cursor: pointer; padding: 4px; font-size: 1rem;" title="Editar">
-                            âœï¸
+                            ✏️
                         </button>
                         <button onclick="window.deleteExpenseCategory('${cat.id}')"
                             style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 4px; margin-left: 2px; font-size: 1rem;" title="Eliminar">
-                            ðŸ—‘ï¸
+                            🗑️
                         </button>
                     </td>
                 </tr>
@@ -2780,7 +2793,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add new category form
         html += `
             <div style="display: flex; gap: var(--space-xs); align-items: center;">
-                <input type="text" id="newExpenseCatLabel" placeholder="Nombre de categorÃ­a"
+                <input type="text" id="newExpenseCatLabel" placeholder="Nombre de categoría"
                     style="flex: 1; padding: 8px 12px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: var(--text-primary); font-size: 0.85rem; box-sizing: border-box;">
                 <button onclick="window.addExpenseCategory()"
                     style="padding: 8px 14px; background: var(--accent-primary); color: var(--bg-primary); border: none; border-radius: var(--radius-md); font-weight: 700; font-size: 0.8rem; cursor: pointer; white-space: nowrap;">
@@ -2797,7 +2810,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const label = document.getElementById('newExpenseCatLabel')?.value.trim();
 
         if (!label) {
-            showNotification('âš ï¸ Ingresa un nombre para la categorÃ­a', 'error');
+            showNotification('⚠️ Ingresa un nombre para la categoría', 'error');
             return;
         }
 
@@ -2805,13 +2818,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
         if (cats.find(c => c.id === id)) {
-            showNotification('âš ï¸ Ya existe una categorÃ­a con ese nombre', 'error');
+            showNotification('⚠️ Ya existe una categoría con ese nombre', 'error');
             return;
         }
 
-        cats.push({ id, label, emoji: 'ðŸ“Œ' });
+        cats.push({ id, label, emoji: '📌' });
         StorageManager.saveExpenseCategories(cats);
-        showNotification(`CategorÃ­a "${label}" creada`);
+        showNotification(`Categoría "${label}" creada`);
         renderExpensesPage();
     };
 
@@ -2820,21 +2833,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const cat = cats.find(c => c.id === catId);
         if (!cat) return;
 
-        const newLabel = prompt('Nombre de la categorÃ­a:', cat.label);
+        const newLabel = prompt('Nombre de la categoría:', cat.label);
         if (newLabel === null) return;
 
         cat.label = newLabel.trim() || cat.label;
         StorageManager.saveExpenseCategories(cats);
-        showNotification(`CategorÃ­a actualizada: ${cat.label}`);
+        showNotification(`Categoría actualizada: ${cat.label}`);
         renderExpensesPage();
     };
 
     window.deleteExpenseCategory = function (catId) {
         const performDelete = () => {
-            if (!confirm('Â¿Eliminar esta categorÃ­a de egreso?')) return;
+            if (!confirm('¿Eliminar esta categoría de egreso?')) return;
             const cats = StorageManager.getExpenseCategories().filter(c => c.id !== catId);
             StorageManager.saveExpenseCategories(cats);
-            showNotification('CategorÃ­a eliminada');
+            showNotification('Categoría eliminada');
             renderExpensesPage();
         };
 
@@ -2859,17 +2872,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const date = document.getElementById('expenseDate').value;
 
             if (!amount || amount <= 0) {
-                showNotification('âš ï¸ Ingresa un monto vÃ¡lido', 'error');
+                showNotification('⚠️ Ingresa un monto válido', 'error');
                 return;
             }
 
             if (!date) {
-                showNotification('âš ï¸ Selecciona una fecha', 'error');
+                showNotification('⚠️ Selecciona una fecha', 'error');
                 return;
             }
 
             const CATS = getExpenseCatMap();
-            const cat = CATS[category] || { label: 'Otros', emoji: 'ðŸ“Œ' };
+            const cat = CATS[category] || { label: 'Otros', emoji: '📌' };
 
             StorageManager.addExpense({
                 category: category,
@@ -2935,7 +2948,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Delete expense (global handler)
     window.deleteExpense = function (expenseId) {
         const performDelete = async () => {
-            if (confirm('Â¿Eliminar este egreso?')) {
+            if (confirm('¿Eliminar este egreso?')) {
                 await StorageManager.deleteExpense(expenseId);
                 showNotification('Egreso eliminado');
                 renderExpensesPage();
@@ -2983,7 +2996,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (expenses.length === 0) {
-            showNotification('âš ï¸ No hay egresos para descargar', 'error');
+            showNotification('⚠️ No hay egresos para descargar', 'error');
             return;
         }
 
@@ -2997,12 +3010,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const CATS = getExpenseCatMap();
 
-        // Build data rows matching the table: Fecha | CategorÃ­a | DescripciÃ³n | Cant. | V. Unit. | Total
-        const rows = [['Fecha', 'CategorÃ­a', 'DescripciÃ³n', 'Cant.', 'V. Unit.', 'Total']];
+        // Build data rows matching the table: Fecha | Categoría | Descripción | Cant. | V. Unit. | Total
+        const rows = [['Fecha', 'Categoría', 'Descripción', 'Cant.', 'V. Unit.', 'Total']];
 
         let total = 0;
         expenses.forEach(expense => {
-            const cat = CATS[expense.category] || { label: 'Otros', emoji: 'ðŸ“Œ' };
+            const cat = CATS[expense.category] || { label: 'Otros', emoji: '📌' };
             const dateObj = new Date(expense.date || expense.createdAt);
             const dateStr = dateObj.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
             const qty = expense.qty || 1;
@@ -3029,8 +3042,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set column widths
         ws['!cols'] = [
             { wch: 12 },  // Fecha
-            { wch: 20 },  // CategorÃ­a
-            { wch: 30 },  // DescripciÃ³n
+            { wch: 20 },  // Categoría
+            { wch: 30 },  // Descripción
             { wch: 8 },   // Cant.
             { wch: 12 },  // V. Unit.
             { wch: 12 }   // Total
@@ -3045,7 +3058,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         XLSX.writeFile(wb, `Egresos_${periodLabel}_${dateFile}.xlsx`);
 
-        showNotification('ðŸ“¥ Excel descargado');
+        showNotification('📥 Excel descargado');
     };
 
     // ============================================
@@ -3232,7 +3245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="form-group"><label>Precio</label><input type="number" id="editPrice" value="${item.price}"></div>`;
         } else if (type === 'observation') {
             const item = config.observations[parentId].find(o => o.id === id);
-            html = `<div class="form-group"><label>DescripciÃ³n</label><input type="text" id="editName" value="${item.name}"></div>
+            html = `<div class="form-group"><label>Descripción</label><input type="text" id="editName" value="${item.name}"></div>
                     <div class="form-group"><label>Precio</label><input type="number" id="editPrice" value="${item.price || 0}"></div>`;
         }
         elements.adminModalBody.innerHTML = html;
@@ -3241,7 +3254,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.deleteAdminItem = function (type, id, pId) {
         console.log('Deleting:', type, id, pId);
-        if (!confirm('Â¿Seguro que desea eliminar?')) return;
+        if (!confirm('¿Seguro que desea eliminar?')) return;
         const config = StorageManager.getConfig();
         if (type === 'category') {
             config.categories = config.categories.filter(c => c.id !== id);
@@ -3320,7 +3333,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.addCategoryBtn) {
         elements.addCategoryBtn.onclick = () => {
             adminEditContext = { type: 'category', id: null };
-            elements.adminModalTitle.textContent = 'Nueva CategorÃ­a';
+            elements.adminModalTitle.textContent = 'Nueva Categoría';
             elements.adminModalBody.innerHTML = `
                 <div class="form-group"><label>Nombre</label><input type="text" id="editName"></div>
                 <div class="form-group"><label>Icono</label><input type="text" id="editIcon"></div>
@@ -3362,7 +3375,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.addObsBtn.onclick = () => {
             const catId = elements.adminCategorySelectObs.value;
             adminEditContext = { type: 'observation', id: null, parentId: catId };
-            elements.adminModalTitle.textContent = 'Nueva ObservaciÃ³n';
+            elements.adminModalTitle.textContent = 'Nueva Observación';
             elements.adminModalBody.innerHTML = `
                 <div class="form-group"><label>Nombre</label><input type="text" id="editName"></div>
                 <div class="form-group"><label>Precio</label><input type="number" id="editPrice" value="0"></div>
@@ -3398,7 +3411,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     state.pendingAdminPage = null;
                 }
             } else {
-                showNotification('ContraseÃ±a incorrecta', 'error');
+                showNotification('Contraseña incorrecta', 'error');
                 elements.adminPasswordInput.value = '';
                 elements.adminPasswordInput.focus();
             }
@@ -3424,12 +3437,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const confirmPass = elements.confirmAdminPassword.value;
 
             if (newPass.length < 4) {
-                showNotification('La contraseÃ±a debe tener al menos 4 caracteres', 'error');
+                showNotification('La contraseña debe tener al menos 4 caracteres', 'error');
                 return;
             }
 
             if (newPass !== confirmPass) {
-                showNotification('Las contraseÃ±as no coinciden', 'error');
+                showNotification('Las contraseñas no coinciden', 'error');
                 return;
             }
 
@@ -3437,7 +3450,7 @@ document.addEventListener('DOMContentLoaded', () => {
             config.adminPassword = newPass;
             StorageManager.saveConfig(config);
 
-            showNotification('ContraseÃ±a actualizada correctamente');
+            showNotification('Contraseña actualizada correctamente');
             elements.newAdminPassword.value = '';
             elements.confirmAdminPassword.value = '';
         });
@@ -3483,17 +3496,17 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('foodx_order_counter', '0');
             localStorage.setItem('foodx_last_order_date', new Date().toDateString());
 
-            showNotification('âœ… Contador reiniciado a #001');
+            showNotification('✅ Contador reiniciado a #001');
             loadCurrentOrderCounter();
         } catch (error) {
             console.error('Error resetting counter:', error);
-            showNotification('âš ï¸ Error al reiniciar: ' + error.message, 'error');
+            showNotification('⚠️ Error al reiniciar: ' + error.message, 'error');
         }
     }
 
     if (resetOrderCounterBtn) {
         resetOrderCounterBtn.addEventListener('click', async () => {
-            if (confirm('Â¿EstÃ¡s seguro que deseas reiniciar el contador de pedidos a #001?')) {
+            if (confirm('¿Estás seguro que deseas reiniciar el contador de pedidos a #001?')) {
                 await resetOrderCounter();
             }
         });
