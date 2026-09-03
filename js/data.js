@@ -1,21 +1,21 @@
-// ============================================
+﻿// ============================================
 // FoodX POS - Data Configuration
 // ============================================
 
 const FOODX_DATA = {
     // Categories
     categories: [
-        { id: 'hamburguesas', name: 'Hamburguesas', icon: '🍔', active: true },
-        { id: 'perros', name: 'Perros', icon: '🌭', active: true },
-        { id: 'salchipapas', name: 'Salchipapas', icon: '🍟', active: true },
-        { id: 'combos', name: 'COMBINADOS', icon: '🍱', active: true },
-        { id: 'bebidas', name: 'Bebidas', icon: '🥤', active: true }
+        { id: 'hamburguesas', name: 'Hamburguesas', icon: 'ðŸ”', active: true },
+        { id: 'perros', name: 'Perros', icon: 'ðŸŒ­', active: true },
+        { id: 'salchipapas', name: 'Salchipapas', icon: 'ðŸŸ', active: true },
+        { id: 'combos', name: 'COMBINADOS', icon: 'ðŸ±', active: true },
+        { id: 'bebidas', name: 'Bebidas', icon: 'ðŸ¥¤', active: true }
     ],
 
     // Flavors by category
     flavors: {
         hamburguesas: [
-            { id: 'h1', name: 'Clásica', active: true },
+            { id: 'h1', name: 'ClÃ¡sica', active: true },
             { id: 'h2', name: 'BBQ', active: true },
             { id: 'h3', name: 'Mexicana', active: true },
             { id: 'h4', name: 'Hawaiana', active: true },
@@ -28,7 +28,7 @@ const FOODX_DATA = {
             { id: 'p1', name: 'Tradicional', active: true },
             { id: 'p2', name: 'Americano', active: true },
             { id: 'p3', name: 'Mexicano', active: true },
-            { id: 'p4', name: 'Súper Perro', active: true },
+            { id: 'p4', name: 'SÃºper Perro', active: true },
             { id: 'p5', name: 'Con Queso', active: true },
             { id: 'p6', name: 'Ranchero', active: true }
         ],
@@ -44,7 +44,7 @@ const FOODX_DATA = {
             { id: 'b2', name: 'Pepsi', price: 4500, active: true },
             { id: 'b3', name: 'Agua', price: 3000, active: true },
             { id: 'b4', name: 'Jugo Natural', price: 6000, active: true },
-            { id: 'b5', name: 'Té Hielo', price: 5500, active: true },
+            { id: 'b5', name: 'TÃ© Hielo', price: 5500, active: true },
             { id: 'b6', name: 'Cerveza', price: 7000, active: true }
         ],
         combos: [
@@ -121,9 +121,9 @@ const FOODX_DATA = {
 
     // Service types
     serviceTypes: [
-        { id: 'salon', name: 'Salón', icon: 'armchair', label: 'Mesa' },
+        { id: 'salon', name: 'SalÃ³n', icon: 'armchair', label: 'Mesa' },
         { id: 'llevar', name: 'Para Llevar', icon: 'shopping-bag', label: 'Nombre' },
-        { id: 'domicilio', name: 'Domicilio', icon: 'bike', label: 'Dirección/Nombre' }
+        { id: 'domicilio', name: 'Domicilio', icon: 'bike', label: 'DirecciÃ³n/Nombre' }
     ]
 };
 
@@ -143,113 +143,16 @@ function calculateSize(blocksCount, category = '', selectedFlavors = []) {
         const normalCount = selectedFlavors.filter(name => name && !name.toUpperCase().includes('SEN')).length;
         const totalCount = senCount + normalCount;
 
-        if (totalCount === 1 && normalCount === 1) return 'X';
-        if (totalCount === 2 && senCount === 1 && normalCount === 1) return 'XS';
-        if (totalCount === 2 && normalCount === 2) return 'XM';
-        if (totalCount === 3 && normalCount === 3) return 'XL';
+        if (totalCount === 1) return 'X';
+        if (totalCount === 2) {
+            if (normalCount === 2) return 'XM';
+            return 'XS';
+        }
+        if (totalCount === 3) return 'XL';
 
         switch (totalCount) {
-            case 1: return 'XS';
-            case 2: return 'XM';
+            case 1: return 'X';
+            case 2: return 'XS';
             case 3: return 'XL';
             default: return 'XS';
         }
-    }
-
-    switch (blocksCount) {
-        case 1: return 'XS';
-        case 2: return 'XM';
-        case 3: return 'XL';
-        case 4: return 'X';
-        default: return 'XS';
-    }
-}
-
-// Format price to Colombian pesos
-function formatPrice(price) {
-    return '$' + price.toLocaleString('es-CO');
-}
-
-// Generate unique ID
-function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
-}
-
-// Generate order number with daily reset - SYNCHRONIZED via Firebase
-let orderCounter = parseInt(localStorage.getItem('foodx_order_counter') || '0');
-let lastOrderDate = localStorage.getItem('foodx_last_order_date') || '';
-
-// Get local date key (YYYY-MM-DD in local timezone)
-function getLocalDateKey() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-// Async function to get next order number from Firebase
-async function getNextOrderNumber() {
-    const today = new Date().toDateString();
-    const todayKey = getLocalDateKey(); // Use local date, not UTC
-
-    try {
-        // Use Firebase transaction to atomically increment counter
-        const counterRef = db.collection('counters').doc('orders');
-
-        const result = await db.runTransaction(async (transaction) => {
-            const doc = await transaction.get(counterRef);
-
-            let data = doc.exists ? doc.data() : { date: '', counter: 0 };
-
-            console.log('Firebase counter data:', data, 'Today:', todayKey);
-
-            // Reset counter if it's a new day
-            if (data.date !== todayKey) {
-                console.log('New day detected, resetting counter from', data.counter, 'to 0');
-                data = { date: todayKey, counter: 0 };
-            }
-
-            // Increment counter
-            data.counter++;
-
-            // Save to Firebase
-            transaction.set(counterRef, data);
-
-            return data.counter;
-        });
-
-        // Also update local storage as backup
-        orderCounter = result;
-        localStorage.setItem('foodx_order_counter', result.toString());
-        localStorage.setItem('foodx_last_order_date', today);
-
-        console.log('Order number generated:', result);
-        return '#' + String(result).padStart(3, '0');
-    } catch (error) {
-        console.error('Firebase counter error, using local fallback:', error);
-        // Fallback to local counter if Firebase fails
-        return generateOrderNumberLocal();
-    }
-}
-
-// Local fallback function (original logic)
-function generateOrderNumberLocal() {
-    const today = new Date().toDateString();
-    const lastDate = localStorage.getItem('foodx_last_order_date');
-
-    if (lastDate !== today) {
-        orderCounter = 0;
-        localStorage.setItem('foodx_last_order_date', today);
-    }
-
-    orderCounter++;
-    localStorage.setItem('foodx_order_counter', orderCounter.toString());
-    return '#' + String(orderCounter).padStart(3, '0');
-}
-
-// Sync wrapper - returns a promise
-function generateOrderNumber() {
-    // Return the async result, but for backward compatibility also have sync fallback
-    return getNextOrderNumber();
-}
