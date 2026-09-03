@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // FoodX POS PRO - Multiple Client Rows System
 // ============================================
 
@@ -570,7 +570,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const size = calculateSize(filledBlocks, category, selectedFlavors);
                     sizeLabel = size;
                     let basePrice = config.prices[category][size] || 0;
-
 
                     if (category === 'salchipapas') {
                         // If observations exist but have price 0, use base price
@@ -3210,7 +3209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const L2 = isCombos ? 'PE' : 'XM';
             const L3 = isCombos ? 'SA' : 'XL';
 
-            const isBurgers = id === 'hamburguesas';
+            const hasSizeX = id === 'hamburguesas' || id === 'perros';
 
             html = `<div class="form-group"><label>Nombre</label><input type="text" id="editName" value="${item.name}"></div>
                     <div class="form-group"><label>Icono</label><input type="text" id="editIcon" value="${item.icon}"></div>
@@ -3220,7 +3219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="form-row">
                         <div class="form-group"><label>${L3}</label><input type="number" id="priceXL" value="${config.prices[id][L3] || 0}"></div>
-                        ${isBurgers ? `<div class="form-group"><label>X</label><input type="number" id="priceX" value="${config.prices[id]['X'] || 0}"></div>` : ''}
+                        ${hasSizeX ? `<div class="form-group"><label>X</label><input type="number" id="priceX" value="${(config.prices[id] && config.prices[id]['X']) || 0}"></div>` : ''}
                     </div>`;
         } else if (type === 'flavor') {
             const item = config.flavors[parentId].find(f => f.id === id);
@@ -3279,15 +3278,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const isCombos = cat.id === 'combos';
-                const isBurgers = cat.id === 'hamburguesas';
+                const hasSizeX = cat.id === 'hamburguesas' || cat.id === 'perros';
                 const p1 = +document.getElementById('priceXS').value;
                 const p2 = +document.getElementById('priceXM').value;
                 const p3 = +document.getElementById('priceXL').value;
-                const p4 = isBurgers ? +document.getElementById('priceX').value : 0;
+                const p4 = hasSizeX ? +document.getElementById('priceX').value : 0;
 
                 if (isCombos) {
                     config.prices[cat.id] = { HB: p1, PE: p2, SA: p3 };
-                } else if (isBurgers) {
+                } else if (hasSizeX) {
                     config.prices[cat.id] = { XS: p1, XM: p2, XL: p3, X: p4 };
                 } else {
                     config.prices[cat.id] = { XS: p1, XM: p2, XL: p3 };

@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // FoodX POS - Data Configuration
 // ============================================
 
@@ -111,7 +111,7 @@ const FOODX_DATA = {
     // Prices by category and size
     prices: {
         hamburguesas: { XS: 12000, XM: 18000, XL: 24000, X: 30000 },
-        perros: { XS: 8000, XM: 12000, XL: 16000 },
+        perros: { XS: 8000, XM: 12000, XL: 16000, X: 6000 },
         salchipapas: { XS: 10000, XM: 15000, XL: 20000 },
         combos: { HB: 15000, PE: 15000, SA: 15000 },
         bebidas: { XS: 0, XM: 0, XL: 0 }
@@ -138,24 +138,19 @@ function calculateSize(blocksCount, category = '', selectedFlavors = []) {
         }
     }
 
-    if (category === 'hamburguesas') {
+    if (category === 'hamburguesas' || category === 'perros') {
         const senCount = selectedFlavors.filter(name => name && name.toUpperCase().includes('SEN')).length;
         const normalCount = selectedFlavors.filter(name => name && !name.toUpperCase().includes('SEN')).length;
         const totalCount = senCount + normalCount;
 
         if (totalCount === 1) return 'X';
         if (totalCount === 2) {
-            if (normalCount === 2) return 'XM';
-            return 'XS';
+            if (senCount >= 1) return 'XS'; // 1 SEN + 1 normal, o 2 SEN -> XS
+            return 'XM'; // 2 normales -> XM
         }
-        if (totalCount === 3) return 'XL';
+        if (totalCount >= 3) return 'XL';
 
-        switch (totalCount) {
-            case 1: return 'X';
-            case 2: return 'XS';
-            case 3: return 'XL';
-            default: return 'XS';
-        }
+        return 'X';
     }
 
     switch (blocksCount) {
