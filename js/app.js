@@ -360,8 +360,11 @@ document.addEventListener('DOMContentLoaded', () => {
         rowEl.className = 'client-row';
         rowEl.dataset.rowId = rowId;
 
+        const isBebida = getCategoryType(category) === 'bebidas';
         const flavors = config.flavors[category] || [];
-        const flavorOptions = flavors.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+        const flavorOptions = flavors.map(f => 
+            `<option value="${f.id}">${f.name}${isBebida && f.price ? ' (' + formatPrice(f.price) + ')' : ''}</option>`
+        ).join('');
 
         // Use category-specific extras and observations
         const categoryExtras = (config.extras && config.extras[category]) || [];
@@ -374,11 +377,10 @@ document.addEventListener('DOMContentLoaded', () => {
             `<option value="${o.id}">${o.name}</option>`
         ).join('');
 
-        const isBebida = category === 'bebidas';
         rowEl.innerHTML = `
             <div class="row-fields ${isBebida ? 'bebidas-row' : ''}">
                 <div class="field-col flavor-col">
-                    <label>${isBebida ? 'BEBIDA' : (category === 'combos' ? 'HB' : 'S1')}</label>
+                    <label>${isBebida ? 'PRODUCTO / BEBIDA' : (category === 'combos' ? 'HB' : 'S1')}</label>
                     <div class="field-content">
                         <select class="flavor-select" data-block="1">
                             <option value="">Sel.</option>
@@ -557,10 +559,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 0);
 
             if (filledBlocks > 0) {
-                if (category === 'bebidas') {
+                if (getCategoryType(category) === 'bebidas') {
                     const flavorId = data.blocks[0];
-                    const flavor = config.flavors[category].find(f => f.id === flavorId);
-                    rowPrice = (flavor ? flavor.price : 0) * data.qty;
+                    const flavor = (config.flavors[category] || []).find(f => f.id === flavorId);
+                    rowPrice = (flavor ? (flavor.price || 0) : 0) * data.qty;
                     sizeLabel = '';
                 } else {
                     const selectedFlavors = data.blocks.filter(b => b !== '').map(bId => {
@@ -664,9 +666,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Skip if no selections at all
                         if (filledBlocks.length === 0 && !hasExtras && !hasObs) return;
 
-                        const isBebida = category === 'bebidas';
+                        const isBebida = getCategoryType(category) === 'bebidas';
                         const flavorNames = rowData.blocks.filter(b => b).map(b => {
-                            const flavor = config.flavors[category].find(f => f.id === b);
+                            const flavor = (config.flavors[category] || []).find(f => f.id === b);
                             return flavor ? flavor.name : '';
                         });
 
@@ -706,10 +708,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         let basePrice = 0;
                         if (filledBlocks.length > 0) {
                             if (isBebida) {
-                                const flavor = config.flavors[category].find(f => f.id === rowData.blocks[0]);
-                                basePrice = flavor ? flavor.price : 0;
+                                const flavor = (config.flavors[category] || []).find(f => f.id === rowData.blocks[0]);
+                                basePrice = flavor ? (flavor.price || 0) : 0;
                             } else {
-                                basePrice = config.prices[category][size] || 0;
+                                basePrice = (config.prices[category] && config.prices[category][size]) || 0;
                             }
                         }
 
@@ -2103,9 +2105,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 orders = orders.filter(o => {
                     return o.items.some(item => {
                         const catId = (item.category || '').toLowerCase();
-                        if (historyFilter === 'comida') return foodCategories.includes(catId);
-                        if (historyFilter === 'bebidas') return catId === 'bebidas';
-                        if (historyFilter === 'desechables') return catId === 'desechables';
+                        const cType = getCategoryType(catId);
+                        if (historyFilter === 'comida') return foodCategories.includes(catId) || (!cType.includes('bebida') && !cType.includes('desechable'));
+                        if (historyFilter === 'bebidas') return catId === 'bebidas' || cType === 'bebidas';
+                        if (historyFilter === 'desechables') return catId === 'desechables' || cType === 'desechables';
                         return false;
                     });
                 });
@@ -3118,7 +3121,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.adminCategorySelectFlavors) {
         elements.adminCategorySelectFlavors.addEventListener('change', () => {
-            renderFlavorsList(StorageManager.getConfig().flavors, elements.adminCategorySelectFlavors.value);
+            const catId = elements.adminCategorySelectFlavors.value;
+            const isBebida = getCategoryType(catId) === 'bebidas';
+            if (elements.addFlavorBtn) {
+                elements.addFlavorBtn.innerHTML = `<i data-lucide="plus"></i> ${isBebida ? 'Agregar Bebida' : 'Agregar Sabor'}`;
+                lucide.createIcons();
+            }
+            renderFlavorsList(StorageManager.getConfig().flavors, catId);
         });
     }
 
@@ -3137,7 +3146,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderFlavorsList(all, catId) {
         if (!elements.adminFlavorsList) return;
         const list = all[catId] || [];
-        const isBebida = catId === 'bebidas';
+        const isBebida = getCategoryType(catId) === 'bebidas';
+        if (elements.addFlavorBtn) {
+            elements.addFlavorBtn.innerHTML = `<i data-lucide="plus"></i> ${isBebida ? 'Agregar Bebida' : 'Agregar Sabor'}`;
+            lucide.createIcons();
+        }
         elements.adminFlavorsList.innerHTML = list.map(f => `
             <div class="admin-item">
                 <div class="admin-item-info">
@@ -3208,6 +3221,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const item = config.categories.find(c => c.id === id);
             const catType = getCategoryType(item || id);
             const isCombos = catType === 'combos';
+            const isBebidas = catType === 'bebidas';
             const L1 = isCombos ? 'HB' : 'XS';
             const L2 = isCombos ? 'PE' : 'XM';
             const L3 = isCombos ? 'SA' : 'XL';
@@ -3216,21 +3230,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!config.prices[id]) config.prices[id] = {};
 
-            html = `<div class="form-group"><label>Nombre</label><input type="text" id="editName" value="${item.name}"></div>
-                    <div class="form-group"><label>Icono</label><input type="text" id="editIcon" value="${item.icon}"></div>
-                    <div class="form-row">
-                        <div class="form-group"><label>${L1}</label><input type="number" id="priceXS" value="${config.prices[id][L1] || 0}"></div>
-                        <div class="form-group"><label>${L2}</label><input type="number" id="priceXM" value="${config.prices[id][L2] || 0}"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>${L3}</label><input type="number" id="priceXL" value="${config.prices[id][L3] || 0}"></div>
-                        ${hasSizeX ? `<div class="form-group"><label>X</label><input type="number" id="priceX" value="${(config.prices[id] && config.prices[id]['X']) || 0}"></div>` : ''}
-                    </div>`;
+            if (isBebidas) {
+                html = `<div class="form-group"><label>Nombre</label><input type="text" id="editName" value="${item.name}"></div>
+                        <div class="form-group"><label>Icono</label><input type="text" id="editIcon" value="${item.icon}"></div>
+                        <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 12px; margin-top: 10px; font-size: 0.85rem; color: #93c5fd;">
+                            ℹ️ <strong>Producto único:</strong> Las bebidas no manejan tamaños (XS, XM, XL, X). El precio de cada bebida o producto se configura directamente en la pestaña <strong>"Sabores"</strong>.
+                        </div>`;
+            } else {
+                html = `<div class="form-group"><label>Nombre</label><input type="text" id="editName" value="${item.name}"></div>
+                        <div class="form-group"><label>Icono</label><input type="text" id="editIcon" value="${item.icon}"></div>
+                        <div class="form-row">
+                            <div class="form-group"><label>${L1}</label><input type="number" id="priceXS" value="${config.prices[id][L1] || 0}"></div>
+                            <div class="form-group"><label>${L2}</label><input type="number" id="priceXM" value="${config.prices[id][L2] || 0}"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>${L3}</label><input type="number" id="priceXL" value="${config.prices[id][L3] || 0}"></div>
+                            ${hasSizeX ? `<div class="form-group"><label>X</label><input type="number" id="priceX" value="${(config.prices[id] && config.prices[id]['X']) || 0}"></div>` : ''}
+                        </div>`;
+            }
         } else if (type === 'flavor') {
-            const item = config.flavors[parentId].find(f => f.id === id);
-            const isBebida = parentId === 'bebidas';
-            html = `<div class="form-group"><label>Nombre</label><input type="text" id="editName" value="${item.name}"></div>
-                    ${isBebida ? `<div class="form-group"><label>Precio</label><input type="number" id="editPrice" value="${item.price || 0}"></div>` : ''}`;
+            const item = (config.flavors[parentId] || []).find(f => f.id === id);
+            const isBebida = getCategoryType(parentId) === 'bebidas';
+            elements.adminModalTitle.textContent = isBebida ? 'Editar Bebida / Producto' : 'Editar Sabor';
+            html = `<div class="form-group"><label>Nombre</label><input type="text" id="editName" value="${item ? item.name : ''}"></div>
+                    ${isBebida ? `<div class="form-group"><label>Precio</label><input type="number" id="editPrice" value="${(item && item.price) || 0}"></div>` : ''}`;
         } else if (type === 'extra') {
             const item = config.extras[parentId].find(e => e.id === id);
             html = `<div class="form-group"><label>Nombre</label><input type="text" id="editName" value="${item.name}"></div>
@@ -3284,23 +3307,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const catType = getCategoryType({ id: cat.id, name: name });
                 const isCombos = catType === 'combos';
+                const isBebidas = catType === 'bebidas';
                 const hasSizeX = catType === 'hamburguesas' || catType === 'perros' || catType === 'salchipapas';
-                const p1 = +document.getElementById('priceXS').value;
-                const p2 = +document.getElementById('priceXM').value;
-                const p3 = +document.getElementById('priceXL').value;
-                const p4 = hasSizeX && document.getElementById('priceX') ? +document.getElementById('priceX').value : 0;
 
-                if (isCombos) {
-                    config.prices[cat.id] = { HB: p1, PE: p2, SA: p3 };
-                } else if (hasSizeX) {
-                    config.prices[cat.id] = { XS: p1, XM: p2, XL: p3, X: p4 };
+                if (isBebidas) {
+                    config.prices[cat.id] = { XS: 0, XM: 0, XL: 0 };
                 } else {
-                    config.prices[cat.id] = { XS: p1, XM: p2, XL: p3 };
+                    const p1 = +document.getElementById('priceXS')?.value || 0;
+                    const p2 = +document.getElementById('priceXM')?.value || 0;
+                    const p3 = +document.getElementById('priceXL')?.value || 0;
+                    const p4 = hasSizeX && document.getElementById('priceX') ? +document.getElementById('priceX').value : 0;
+
+                    if (isCombos) {
+                        config.prices[cat.id] = { HB: p1, PE: p2, SA: p3 };
+                    } else if (hasSizeX) {
+                        config.prices[cat.id] = { XS: p1, XM: p2, XL: p3, X: p4 };
+                    } else {
+                        config.prices[cat.id] = { XS: p1, XM: p2, XL: p3 };
+                    }
                 }
             } else if (type === 'flavor') {
+                if (!config.flavors[parentId]) config.flavors[parentId] = [];
                 const f = id ? config.flavors[parentId].find(x => x.id === id) : { id: 'f_' + Date.now() };
                 f.name = name;
-                if (parentId === 'bebidas') f.price = +document.getElementById('editPrice').value;
+                if (getCategoryType(parentId) === 'bebidas') {
+                    f.price = +document.getElementById('editPrice').value || 0;
+                }
                 if (!id) config.flavors[parentId].push(f);
             } else if (type === 'extra') {
                 if (!config.extras) config.extras = {};
@@ -3342,9 +3374,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.addFlavorBtn) {
         elements.addFlavorBtn.onclick = () => {
             const catId = elements.adminCategorySelectFlavors.value;
-            const isBebida = catId === 'bebidas';
+            const isBebida = getCategoryType(catId) === 'bebidas';
             adminEditContext = { type: 'flavor', id: null, parentId: catId };
-            elements.adminModalTitle.textContent = 'Nuevo Sabor / Bebida';
+            elements.adminModalTitle.textContent = isBebida ? 'Nueva Bebida / Producto' : 'Nuevo Sabor';
             elements.adminModalBody.innerHTML = `
                 <div class="form-group"><label>Nombre</label><input type="text" id="editName"></div>
                 ${isBebida ? `<div class="form-group"><label>Precio</label><input type="number" id="editPrice" value="0"></div>` : ''}
