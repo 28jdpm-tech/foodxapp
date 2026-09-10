@@ -3454,7 +3454,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentOrderCounterEl) return;
 
         try {
-            const counterRef = (typeof getDbCollection === 'function' ? getDbCollection('counters') : db.collection('counters')).doc('orders');
+            const counterRef = db.collection('counters').doc('orders');
             const doc = await counterRef.get();
 
             if (doc.exists) {
@@ -3476,7 +3476,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const todayKey = getLocalDateKey();
 
         try {
-            const counterRef = (typeof getDbCollection === 'function' ? getDbCollection('counters') : db.collection('counters')).doc('orders');
+            const counterRef = db.collection('counters').doc('orders');
             await counterRef.set({ date: todayKey, counter: 0 });
 
             // Also reset local storage
@@ -3597,40 +3597,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Print callback (Remote print from other devices) - DISABLED
             null
         );
-    }
-
-    // Test Mode UI & Toggle
-    const btnToggleTestMode = document.getElementById('btnToggleTestMode');
-    if (typeof IS_TEST_MODE !== 'undefined' && IS_TEST_MODE) {
-        // Show banner
-        const testBanner = document.createElement('div');
-        testBanner.id = 'foodxTestBanner';
-        testBanner.style.cssText = 'background: #f59e0b; color: #000; font-weight: bold; text-align: center; padding: 6px 12px; font-size: 0.85rem; position: sticky; top: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);';
-        testBanner.innerHTML = `
-            <span>🧪 <strong>MODO PRUEBA ACTIVO</strong> (Datos aislados - NO afecta ventas reales del restaurante)</span>
-            <button id="btnSwitchProd" style="background: #1f2937; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: 600;">Volver a Producción</button>
-        `;
-        document.body.prepend(testBanner);
-        document.getElementById('btnSwitchProd')?.addEventListener('click', () => {
-            localStorage.setItem('foodx_test_mode', 'false');
-            window.location.href = window.location.pathname;
-        });
-
-        if (btnToggleTestMode) {
-            btnToggleTestMode.textContent = 'ON';
-            btnToggleTestMode.style.background = '#f59e0b';
-            btnToggleTestMode.style.color = '#000';
-            btnToggleTestMode.onclick = () => {
-                localStorage.setItem('foodx_test_mode', 'false');
-                window.location.href = window.location.pathname;
-            };
-        }
-    } else if (btnToggleTestMode) {
-        btnToggleTestMode.textContent = 'OFF';
-        btnToggleTestMode.onclick = () => {
-            localStorage.setItem('foodx_test_mode', 'true');
-            window.location.href = window.location.pathname;
-        };
     }
 
     // Initialize

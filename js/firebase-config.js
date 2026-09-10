@@ -25,24 +25,8 @@ db.enablePersistence().catch((err) => {
     }
 });
 
-// ============================================
-// Modo Prueba Aislado (No toca producción)
-// ============================================
-const _urlParams = new URLSearchParams(window.location.search);
-if (_urlParams.get('test') === 'true') {
-    localStorage.setItem('foodx_test_mode', 'true');
-} else if (_urlParams.get('test') === 'false') {
-    localStorage.setItem('foodx_test_mode', 'false');
-}
+// Limpieza de cualquier bandera residual de modo prueba
+try {
+    localStorage.removeItem('foodx_test_mode');
+} catch (e) {}
 
-// Activo si está guardado en localStorage, en la URL (?test=true), o ejecutado localmente (file:)
-const IS_TEST_MODE = localStorage.getItem('foodx_test_mode') === 'true' || 
-                     window.location.search.includes('test=true') || 
-                     window.location.protocol === 'file:';
-
-function getDbCollection(colName) {
-    if (IS_TEST_MODE) {
-        return db.collection('test_' + colName);
-    }
-    return db.collection(colName);
-}

@@ -2,19 +2,18 @@
 // FoodX POS - Storage Manager
 // ============================================
 
-const _storagePrefix = (typeof IS_TEST_MODE !== 'undefined' && IS_TEST_MODE) ? 'foodx_test_' : 'foodx_';
 const STORAGE_KEYS = {
-    ORDERS: _storagePrefix + 'orders',
-    SETTINGS: _storagePrefix + 'settings',
-    CATEGORIES: _storagePrefix + 'categories',
-    FLAVORS: _storagePrefix + 'flavors',
-    EXTRAS: _storagePrefix + 'extras',
-    PRICES: _storagePrefix + 'prices',
-    EXPENSES: _storagePrefix + 'expenses',
-    EXPENSE_CATEGORIES: _storagePrefix + 'expense_categories'
+    ORDERS: 'foodx_orders',
+    SETTINGS: 'foodx_settings',
+    CATEGORIES: 'foodx_categories',
+    FLAVORS: 'foodx_flavors',
+    EXTRAS: 'foodx_extras',
+    PRICES: 'foodx_prices',
+    EXPENSES: 'foodx_expenses',
+    EXPENSE_CATEGORIES: 'foodx_expense_categories'
 };
 
-const col = (name) => (typeof getDbCollection === 'function' ? getDbCollection(name) : db.collection(name));
+const col = (name) => db.collection(name);
 
 const StorageManager = {
     // Get all orders

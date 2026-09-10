@@ -191,7 +191,7 @@ async function getNextOrderNumber() {
 
     try {
         // Use Firebase transaction to atomically increment counter
-        const counterRef = (typeof getDbCollection === 'function' ? getDbCollection('counters') : db.collection('counters')).doc('orders');
+        const counterRef = db.collection('counters').doc('orders');
 
         const result = await db.runTransaction(async (transaction) => {
             const doc = await transaction.get(counterRef);
