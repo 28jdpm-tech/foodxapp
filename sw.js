@@ -1,8 +1,9 @@
-const CACHE_NAME = 'foodx-v30';
+const CACHE_NAME = 'foodx-v102';
 const ASSETS = [
     './',
     './index.html',
     './css/styles.css',
+    './js/firebase-config.js',
     './js/data.js',
     './js/storage.js',
     './js/app.js',
