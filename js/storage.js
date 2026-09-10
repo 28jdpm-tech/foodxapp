@@ -105,16 +105,13 @@ const StorageManager = {
             config.observations = migrated;
         }
 
-        if (config.prices && config.prices.hamburguesas && (!config.prices.hamburguesas.hasOwnProperty('X') || !config.prices.hamburguesas.X)) {
-            console.log("Migrating Hamburguesas prices to include size X");
-            config.prices.hamburguesas.X = 10000;
-            localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(config.prices));
-        }
-
-        if (config.prices && config.prices.perros && config.prices.perros.hasOwnProperty('X')) {
-            delete config.prices.perros.X;
-            localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(config.prices));
-        }
+        ['hamburguesas', 'perros', 'salchipapas'].forEach(catId => {
+            if (config.prices && config.prices[catId] && (!config.prices[catId].hasOwnProperty('X') || !config.prices[catId].X)) {
+                console.log(`Migrating ${catId} prices to include size X`);
+                config.prices[catId].X = 10000;
+                localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(config.prices));
+            }
+        });
 
         return config;
     },

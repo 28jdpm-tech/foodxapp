@@ -111,8 +111,8 @@ const FOODX_DATA = {
     // Prices by category and size
     prices: {
         hamburguesas: { XS: 16000, XM: 19000, XL: 27000, X: 10000 },
-        perros: { XS: 10000, XM: 17000, XL: 25000 },
-        salchipapas: { XS: 11000, XM: 20000, XL: 25000 },
+        perros: { XS: 16000, XM: 19000, XL: 27000, X: 10000 },
+        salchipapas: { XS: 11000, XM: 20000, XL: 25000, X: 10000 },
         combos: { HB: 15000, PE: 15000, SA: 15000 },
         bebidas: { XS: 0, XM: 0, XL: 0 }
     },
@@ -138,7 +138,7 @@ function calculateSize(blocksCount, category = '', selectedFlavors = []) {
         }
     }
 
-    if (category === 'hamburguesas') {
+    if (category === 'hamburguesas' || category === 'perros' || category === 'salchipapas') {
         const senCount = selectedFlavors.filter(name => name && name.toUpperCase().includes('SEN')).length;
         const normalCount = selectedFlavors.filter(name => name && !name.toUpperCase().includes('SEN')).length;
         const totalCount = senCount + normalCount;
