@@ -3597,6 +3597,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Print callback (Remote print from other devices) - DISABLED
             null
         );
+    }
+
     // Test Mode UI & Toggle
     const btnToggleTestMode = document.getElementById('btnToggleTestMode');
     if (typeof IS_TEST_MODE !== 'undefined' && IS_TEST_MODE) {
