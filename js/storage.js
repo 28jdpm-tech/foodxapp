@@ -104,13 +104,23 @@ const StorageManager = {
             config.observations = migrated;
         }
 
-        ['hamburguesas', 'perros', 'salchipapas'].forEach(catId => {
-            if (config.prices && config.prices[catId] && (!config.prices[catId].hasOwnProperty('X') || !config.prices[catId].X)) {
-                console.log(`Migrating ${catId} prices to include size X`);
-                config.prices[catId].X = 10000;
-                localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(config.prices));
-            }
-        });
+        if (config.categories && Array.isArray(config.categories)) {
+            config.categories.forEach(cat => {
+                const catType = (typeof getCategoryType === 'function')
+                    ? getCategoryType(cat)
+                    : (((cat.id || '') + ' ' + (cat.name || '')).toLowerCase());
+                const isTarget = catType === 'hamburguesas' || catType === 'perros' || catType === 'salchipapas' ||
+                    catType.includes('hamburguesa') || catType.includes('perro') || catType.includes('salchipapa');
+
+                if (isTarget && config.prices && config.prices[cat.id]) {
+                    if (!config.prices[cat.id].hasOwnProperty('X') || !config.prices[cat.id].X) {
+                        console.log(`Migrating ${cat.name} (${cat.id}) prices to include size X`);
+                        config.prices[cat.id].X = 10000;
+                        localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(config.prices));
+                    }
+                }
+            });
+        }
 
         return config;
     },

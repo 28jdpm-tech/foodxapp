@@ -127,9 +127,39 @@ const FOODX_DATA = {
     ]
 };
 
+// Helper to normalize category type by ID or Name
+function getCategoryType(catOrId) {
+    if (!catOrId) return '';
+    let id = '';
+    let name = '';
+    if (typeof catOrId === 'object') {
+        id = (catOrId.id || '').toLowerCase();
+        name = (catOrId.name || '').toLowerCase();
+    } else {
+        id = String(catOrId).toLowerCase();
+        const config = (typeof StorageManager !== 'undefined' && StorageManager.getConfig)
+            ? StorageManager.getConfig()
+            : (typeof FOODX_DATA !== 'undefined' ? FOODX_DATA : null);
+        const cat = config && config.categories ? config.categories.find(c => c.id === catOrId) : null;
+        if (cat) {
+            name = (cat.name || '').toLowerCase();
+        }
+    }
+
+    if (id === 'hamburguesas' || name.includes('hamburguesa')) return 'hamburguesas';
+    if (id === 'perros' || name.includes('perro')) return 'perros';
+    if (id === 'salchipapas' || name.includes('salchipapa')) return 'salchipapas';
+    if (id === 'combos' || name.includes('combo') || name.includes('combinado')) return 'combos';
+    if (id === 'bebidas' || name.includes('bebida')) return 'bebidas';
+    if (id === 'desechables' || name.includes('desechable')) return 'desechables';
+    return id;
+}
+
 // Size calculation based on number of blocks and selected flavors
 function calculateSize(blocksCount, category = '', selectedFlavors = []) {
-    if (category === 'combos') {
+    const type = getCategoryType(category);
+
+    if (type === 'combos') {
         switch (blocksCount) {
             case 1: return 'HB';
             case 2: return 'PE';
@@ -138,7 +168,7 @@ function calculateSize(blocksCount, category = '', selectedFlavors = []) {
         }
     }
 
-    if (category === 'hamburguesas' || category === 'perros' || category === 'salchipapas') {
+    if (type === 'hamburguesas' || type === 'perros' || type === 'salchipapas') {
         const senCount = selectedFlavors.filter(name => name && name.toUpperCase().includes('SEN')).length;
         const normalCount = selectedFlavors.filter(name => name && !name.toUpperCase().includes('SEN')).length;
         const totalCount = senCount + normalCount;

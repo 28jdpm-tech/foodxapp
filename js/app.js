@@ -569,9 +569,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     const size = calculateSize(filledBlocks, category, selectedFlavors);
                     sizeLabel = size;
-                    let basePrice = config.prices[category][size] || 0;
+                    let basePrice = (config.prices[category] && config.prices[category][size]) || 0;
 
-                    if (category === 'salchipapas') {
+                    const catType = getCategoryType(category);
+                    if (catType === 'salchipapas') {
                         // If observations exist with price > 0, the observation price takes the value of the salchipapa
                         if (data.observations.length > 0 && obsPrice > 0) {
                             rowPrice = (obsPrice + extraPrice) * data.qty;
@@ -713,10 +714,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         let rowPrice = 0;
+                        const catType = getCategoryType(category);
                         if (filledBlocks.length === 0) {
                             // Extras-only
                             rowPrice = (extraPrice + obsPrice) * rowData.qty;
-                        } else if (category === 'salchipapas') {
+                        } else if (catType === 'salchipapas') {
                             // If observations exist with price > 0, the observation price takes the value of the salchipapa
                             if (rowData.observations.length > 0 && obsPrice > 0) {
                                 rowPrice = (obsPrice + extraPrice) * rowData.qty;
@@ -3204,12 +3206,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let html = '';
         if (type === 'category') {
             const item = config.categories.find(c => c.id === id);
-            const isCombos = id === 'combos';
+            const catType = getCategoryType(item || id);
+            const isCombos = catType === 'combos';
             const L1 = isCombos ? 'HB' : 'XS';
             const L2 = isCombos ? 'PE' : 'XM';
             const L3 = isCombos ? 'SA' : 'XL';
 
-            const hasSizeX = id === 'hamburguesas' || id === 'perros' || id === 'salchipapas';
+            const hasSizeX = catType === 'hamburguesas' || catType === 'perros' || catType === 'salchipapas';
+
+            if (!config.prices[id]) config.prices[id] = {};
 
             html = `<div class="form-group"><label>Nombre</label><input type="text" id="editName" value="${item.name}"></div>
                     <div class="form-group"><label>Icono</label><input type="text" id="editIcon" value="${item.icon}"></div>
@@ -3277,12 +3282,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     config.observations[cat.id] = [];
                 }
 
-                const isCombos = cat.id === 'combos';
-                const hasSizeX = cat.id === 'hamburguesas' || cat.id === 'perros' || cat.id === 'salchipapas';
+                const catType = getCategoryType({ id: cat.id, name: name });
+                const isCombos = catType === 'combos';
+                const hasSizeX = catType === 'hamburguesas' || catType === 'perros' || catType === 'salchipapas';
                 const p1 = +document.getElementById('priceXS').value;
                 const p2 = +document.getElementById('priceXM').value;
                 const p3 = +document.getElementById('priceXL').value;
-                const p4 = hasSizeX ? +document.getElementById('priceX').value : 0;
+                const p4 = hasSizeX && document.getElementById('priceX') ? +document.getElementById('priceX').value : 0;
 
                 if (isCombos) {
                     config.prices[cat.id] = { HB: p1, PE: p2, SA: p3 };
