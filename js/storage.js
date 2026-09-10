@@ -111,9 +111,8 @@ const StorageManager = {
             localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(config.prices));
         }
 
-        if (config.prices && config.prices.perros && (!config.prices.perros.hasOwnProperty('X') || !config.prices.perros.X)) {
-            console.log("Migrating Perros prices to include size X");
-            config.prices.perros.X = 10000;
+        if (config.prices && config.prices.perros && config.prices.perros.hasOwnProperty('X')) {
+            delete config.prices.perros.X;
             localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(config.prices));
         }
 
