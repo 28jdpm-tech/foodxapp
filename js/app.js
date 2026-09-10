@@ -571,13 +571,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     sizeLabel = size;
                     let basePrice = config.prices[category][size] || 0;
 
-                    if (category === 'hamburguesas' && filledBlocks === 2) {
-                        const upperFlavors = selectedFlavors.filter(Boolean).map(name => name.toUpperCase());
-                        if (upperFlavors.length === 2 && upperFlavors.every(name => name.includes('SEN'))) {
-                            basePrice = 15000;
-                        }
-                    }
-
                     if (category === 'salchipapas') {
                         // If observations exist but have price 0, use base price
                         if (data.observations.length > 0 && obsPrice > 0) {
@@ -716,12 +709,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 basePrice = flavor ? flavor.price : 0;
                             } else {
                                 basePrice = config.prices[category][size] || 0;
-                                if (category === 'hamburguesas' && filledBlocks.length === 2) {
-                                    const upperFlavors = flavorNames.filter(Boolean).map(name => name.toUpperCase());
-                                    if (upperFlavors.length === 2 && upperFlavors.every(name => name.includes('SEN'))) {
-                                        basePrice = 15000;
-                                    }
-                                }
                             }
                         }
 
@@ -3222,7 +3209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const L2 = isCombos ? 'PE' : 'XM';
             const L3 = isCombos ? 'SA' : 'XL';
 
-            const isBurgers = id === 'hamburguesas';
+            const hasSizeX = id === 'hamburguesas' || id === 'perros';
 
             html = `<div class="form-group"><label>Nombre</label><input type="text" id="editName" value="${item.name}"></div>
                     <div class="form-group"><label>Icono</label><input type="text" id="editIcon" value="${item.icon}"></div>
@@ -3232,7 +3219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="form-row">
                         <div class="form-group"><label>${L3}</label><input type="number" id="priceXL" value="${config.prices[id][L3] || 0}"></div>
-                        ${isBurgers ? `<div class="form-group"><label>X</label><input type="number" id="priceX" value="${config.prices[id]['X'] || 0}"></div>` : ''}
+                        ${hasSizeX ? `<div class="form-group"><label>X</label><input type="number" id="priceX" value="${(config.prices[id] && config.prices[id]['X']) || 0}"></div>` : ''}
                     </div>`;
         } else if (type === 'flavor') {
             const item = config.flavors[parentId].find(f => f.id === id);
@@ -3291,15 +3278,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const isCombos = cat.id === 'combos';
-                const isBurgers = cat.id === 'hamburguesas';
+                const hasSizeX = cat.id === 'hamburguesas' || cat.id === 'perros';
                 const p1 = +document.getElementById('priceXS').value;
                 const p2 = +document.getElementById('priceXM').value;
                 const p3 = +document.getElementById('priceXL').value;
-                const p4 = isBurgers ? +document.getElementById('priceX').value : 0;
+                const p4 = hasSizeX ? +document.getElementById('priceX').value : 0;
 
                 if (isCombos) {
                     config.prices[cat.id] = { HB: p1, PE: p2, SA: p3 };
-                } else if (isBurgers) {
+                } else if (hasSizeX) {
                     config.prices[cat.id] = { XS: p1, XM: p2, XL: p3, X: p4 };
                 } else {
                     config.prices[cat.id] = { XS: p1, XM: p2, XL: p3 };
@@ -3467,7 +3454,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentOrderCounterEl) return;
 
         try {
-            const counterRef = db.collection('counters').doc('orders');
+            const counterRef = (typeof getDbCollection === 'function' ? getDbCollection('counters') : db.collection('counters')).doc('orders');
             const doc = await counterRef.get();
 
             if (doc.exists) {
@@ -3489,7 +3476,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const todayKey = getLocalDateKey();
 
         try {
-            const counterRef = db.collection('counters').doc('orders');
+            const counterRef = (typeof getDbCollection === 'function' ? getDbCollection('counters') : db.collection('counters')).doc('orders');
             await counterRef.set({ date: todayKey, counter: 0 });
 
             // Also reset local storage
@@ -3610,6 +3597,38 @@ document.addEventListener('DOMContentLoaded', () => {
             // Print callback (Remote print from other devices) - DISABLED
             null
         );
+    // Test Mode UI & Toggle
+    const btnToggleTestMode = document.getElementById('btnToggleTestMode');
+    if (typeof IS_TEST_MODE !== 'undefined' && IS_TEST_MODE) {
+        // Show banner
+        const testBanner = document.createElement('div');
+        testBanner.id = 'foodxTestBanner';
+        testBanner.style.cssText = 'background: #f59e0b; color: #000; font-weight: bold; text-align: center; padding: 6px 12px; font-size: 0.85rem; position: sticky; top: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);';
+        testBanner.innerHTML = `
+            <span>🧪 <strong>MODO PRUEBA ACTIVO</strong> (Datos aislados - NO afecta ventas reales del restaurante)</span>
+            <button id="btnSwitchProd" style="background: #1f2937; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: 600;">Volver a Producción</button>
+        `;
+        document.body.prepend(testBanner);
+        document.getElementById('btnSwitchProd')?.addEventListener('click', () => {
+            localStorage.setItem('foodx_test_mode', 'false');
+            window.location.href = window.location.pathname;
+        });
+
+        if (btnToggleTestMode) {
+            btnToggleTestMode.textContent = 'ON';
+            btnToggleTestMode.style.background = '#f59e0b';
+            btnToggleTestMode.style.color = '#000';
+            btnToggleTestMode.onclick = () => {
+                localStorage.setItem('foodx_test_mode', 'false');
+                window.location.href = window.location.pathname;
+            };
+        }
+    } else if (btnToggleTestMode) {
+        btnToggleTestMode.textContent = 'OFF';
+        btnToggleTestMode.onclick = () => {
+            localStorage.setItem('foodx_test_mode', 'true');
+            window.location.href = window.location.pathname;
+        };
     }
 
     // Initialize

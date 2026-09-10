@@ -2,16 +2,19 @@
 // FoodX POS - Storage Manager
 // ============================================
 
+const _storagePrefix = (typeof IS_TEST_MODE !== 'undefined' && IS_TEST_MODE) ? 'foodx_test_' : 'foodx_';
 const STORAGE_KEYS = {
-    ORDERS: 'foodx_orders',
-    SETTINGS: 'foodx_settings',
-    CATEGORIES: 'foodx_categories',
-    FLAVORS: 'foodx_flavors',
-    EXTRAS: 'foodx_extras',
-    PRICES: 'foodx_prices',
-    EXPENSES: 'foodx_expenses',
-    EXPENSE_CATEGORIES: 'foodx_expense_categories'
+    ORDERS: _storagePrefix + 'orders',
+    SETTINGS: _storagePrefix + 'settings',
+    CATEGORIES: _storagePrefix + 'categories',
+    FLAVORS: _storagePrefix + 'flavors',
+    EXTRAS: _storagePrefix + 'extras',
+    PRICES: _storagePrefix + 'prices',
+    EXPENSES: _storagePrefix + 'expenses',
+    EXPENSE_CATEGORIES: _storagePrefix + 'expense_categories'
 };
+
+const col = (name) => (typeof getDbCollection === 'function' ? getDbCollection(name) : db.collection(name));
 
 const StorageManager = {
     // Get all orders
@@ -30,7 +33,7 @@ const StorageManager = {
         orders = orders.filter(o => o.id !== orderId);
         this.saveOrders(orders);
         try {
-            await db.collection('orders').doc(orderId).delete();
+            await col('orders').doc(orderId).delete();
         } catch (e) {
             console.error("Error deleting order from cloud:", e);
         }
@@ -102,9 +105,15 @@ const StorageManager = {
             config.observations = migrated;
         }
 
-        if (config.prices && config.prices.hamburguesas && !config.prices.hamburguesas.hasOwnProperty('X')) {
+        if (config.prices && config.prices.hamburguesas && (!config.prices.hamburguesas.hasOwnProperty('X') || !config.prices.hamburguesas.X)) {
             console.log("Migrating Hamburguesas prices to include size X");
-            config.prices.hamburguesas.X = 30000;
+            config.prices.hamburguesas.X = 10000;
+            localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(config.prices));
+        }
+
+        if (config.prices && config.prices.perros && (!config.prices.perros.hasOwnProperty('X') || !config.prices.perros.X)) {
+            console.log("Migrating Perros prices to include size X");
+            config.prices.perros.X = 10000;
             localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(config.prices));
         }
 
@@ -181,7 +190,7 @@ const StorageManager = {
     // Sync order to Cloud
     async syncOrderToCloud(order) {
         try {
-            await db.collection('orders').doc(order.id).set(order);
+            await col('orders').doc(order.id).set(order);
         } catch (e) {
             console.error("Error syncing order:", e);
         }
@@ -190,7 +199,7 @@ const StorageManager = {
     // Sync config to Cloud
     async syncConfigToCloud(config) {
         try {
-            await db.collection('config').doc('main').set(config);
+            await col('config').doc('main').set(config);
         } catch (e) {
             console.error("Error syncing config:", e);
         }
@@ -199,7 +208,7 @@ const StorageManager = {
     // Listen for Cloud changes (orders + config + print queue)
     initCloudSync(callback, configCallback, printCallback) {
         // Orders sync
-        db.collection('orders').onSnapshot((snapshot) => {
+        col('orders').onSnapshot((snapshot) => {
             let orders = this.getOrders();
             let hasChanges = false;
 
@@ -234,7 +243,7 @@ const StorageManager = {
         });
 
         // Config sync
-        db.collection('config').doc('main').onSnapshot((doc) => {
+        col('config').doc('main').onSnapshot((doc) => {
             if (doc.exists) {
                 const cloudConfig = doc.data();
                 const localConfig = this.getConfig();
@@ -258,7 +267,7 @@ const StorageManager = {
         });
 
         // Expense Categories sync
-        db.collection('config').doc('expense_categories').onSnapshot((doc) => {
+        col('config').doc('expense_categories').onSnapshot((doc) => {
             if (doc.exists) {
                 const cloudData = doc.data();
                 if (cloudData && cloudData.categories) {
@@ -273,7 +282,7 @@ const StorageManager = {
         });
 
         // Expenses sync
-        db.collection('expenses').onSnapshot((snapshot) => {
+        col('expenses').onSnapshot((snapshot) => {
             let expenses = this.getExpenses();
             let hasChanges = false;
 
@@ -331,7 +340,7 @@ const StorageManager = {
         const orders = this.getOrders().filter(o => o.id !== orderId);
         this.saveOrders(orders);
         try {
-            await db.collection('orders').doc(orderId).delete();
+            await col('orders').doc(orderId).delete();
         } catch (e) {
             console.error("Error deleting from cloud:", e);
         }
@@ -361,7 +370,7 @@ const StorageManager = {
         localStorage.setItem(STORAGE_KEYS.EXPENSE_CATEGORIES, JSON.stringify(categories));
         // Sync to cloud
         try {
-            db.collection('config').doc('expense_categories').set({ categories });
+            col('config').doc('expense_categories').set({ categories });
         } catch (e) {
             console.error("Error syncing expense categories:", e);
         }
@@ -395,7 +404,7 @@ const StorageManager = {
         const expenses = this.getExpenses().filter(e => e.id !== expenseId);
         this.saveExpenses(expenses);
         try {
-            await db.collection('expenses').doc(expenseId).delete();
+            await col('expenses').doc(expenseId).delete();
         } catch (e) {
             console.error("Error deleting expense from cloud:", e);
         }
@@ -403,7 +412,7 @@ const StorageManager = {
 
     async syncExpenseToCloud(expense) {
         try {
-            await db.collection('expenses').doc(expense.id).set(expense);
+            await col('expenses').doc(expense.id).set(expense);
         } catch (e) {
             console.error("Error syncing expense:", e);
         }
@@ -456,7 +465,7 @@ StorageManager.configLoaded = false;
     } else {
         // Try to load from Firebase first
         try {
-            const doc = await db.collection('config').doc('main').get();
+            const doc = await col('config').doc('main').get();
             if (doc.exists) {
                 const cloudConfig = doc.data();
 
